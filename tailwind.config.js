@@ -7,7 +7,6 @@ export default {
   theme: {
     extend: {
       colors: {
-        // 레퍼브 컬러 시스템
         primary: "#1A6DFF",
         secondary: "#6691FF",
         black: "#000000",
@@ -26,12 +25,6 @@ export default {
       },
       fontFamily: {
         sans: ['Pretendard', 'sans-serif'],
-      },
-      spacing: {
-        // 필요한 경우 커스텀 spacing 추가
-      },
-      borderRadius: {
-        // 필요한 경우 커스텀 border radius 추가
       },
     },
   },
