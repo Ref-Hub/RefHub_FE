@@ -1,24 +1,24 @@
-// src/pages/auth/SignupPage.tsx
+// src/pages/auth/PasswordResetPage.tsx
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
-import type { SignupForm } from "@/types/auth";
+import type { PasswordResetForm } from "@/types/auth";
 
-type SignupStep = "INFO" | "VERIFY" | "PASSWORD";
+type ResetStep = "EMAIL" | "VERIFY" | "NEW_PASSWORD";
 
-export default function SignupPage() {
-  const [currentStep, setCurrentStep] = useState<SignupStep>("INFO");
+export default function PasswordResetPage() {
+  const [currentStep, setCurrentStep] = useState<ResetStep>("EMAIL");
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<SignupForm>();
+  } = useForm<PasswordResetForm>();
   const [isVerificationSent, setIsVerificationSent] = useState(false);
 
-  const onSubmit = async (data: SignupForm) => {
+  const onSubmit = async (data: PasswordResetForm) => {
     // TODO: API 연동 후 구현
     console.log(data);
   };
@@ -26,7 +26,8 @@ export default function SignupPage() {
   const handleSendVerification = async () => {
     // TODO: API 연동 후 구현
     setIsVerificationSent(true);
-    
+    setCurrentStep("VERIFY");
+
     // 1분 후에 재발송 가능하도록 설정
     setTimeout(() => {
       setIsVerificationSent(false);
@@ -35,7 +36,7 @@ export default function SignupPage() {
 
   const handleVerifyCode = async () => {
     // TODO: API 연동 후 구현
-    setCurrentStep("PASSWORD");
+    setCurrentStep("NEW_PASSWORD");
   };
 
   return (
@@ -43,20 +44,13 @@ export default function SignupPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-            회원가입
+            비밀번호 변경
           </h2>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          {currentStep === "INFO" && (
+          {currentStep === "EMAIL" && (
             <div className="space-y-4">
-              <Input
-                label="이름"
-                {...register("name", {
-                  required: "이름을 입력해주세요",
-                })}
-                error={errors.name?.message}
-              />
               <Input
                 label="이메일"
                 type="email"
@@ -104,46 +98,43 @@ export default function SignupPage() {
             </div>
           )}
 
-          {currentStep === "PASSWORD" && (
+          {currentStep === "NEW_PASSWORD" && (
             <div className="space-y-4">
               <Input
-                label="비밀번호"
+                label="새 비밀번호"
                 type="password"
-                {...register("password", {
-                  required: "비밀번호를 입력해주세요",
+                {...register("newPassword", {
+                  required: "새 비밀번호를 입력해주세요",
                   minLength: {
                     value: 8,
                     message: "비밀번호는 8자 이상이어야 합니다",
                   },
                 })}
-                error={errors.password?.message}
+                error={errors.newPassword?.message}
               />
               <Input
-                label="비밀번호 확인"
+                label="새 비밀번호 확인"
                 type="password"
-                {...register("passwordConfirm", {
+                {...register("newPasswordConfirm", {
                   required: "비밀번호 확인을 입력해주세요",
                   validate: (value) =>
-                    value === watch("password") ||
+                    value === watch("newPassword") ||
                     "비밀번호가 일치하지 않습니다",
                 })}
-                error={errors.passwordConfirm?.message}
+                error={errors.newPasswordConfirm?.message}
               />
               <Button type="submit" fullWidth>
-                가입하기
+                비밀번호 변경
               </Button>
             </div>
           )}
 
           <div className="text-center">
-            <span className="text-sm text-gray-600">
-              이미 계정이 있으신가요?{" "}
-            </span>
             <Link
               to="/auth/login"
               className="text-sm font-medium text-blue-600 hover:text-blue-500"
             >
-              로그인
+              로그인으로 돌아가기
             </Link>
           </div>
         </form>
