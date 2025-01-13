@@ -1,65 +1,70 @@
 // src/components/common/Button.tsx
+import { forwardRef } from 'react';
+import { Loader2 } from 'lucide-react';
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
+  isLoading?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export const Button = ({ 
-  variant = 'primary', 
-  fullWidth = false, 
-  children, 
-  className = '', 
-  ...props 
-}: ButtonProps) => {
-  const baseStyles = 'px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50';
-  const variantStyles = {
-    primary: 'bg-primary text-white hover:bg-primary-dark',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
-    outline: 'border-2 border-primary text-primary hover:bg-primary-light'
-  };
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
+  variant = 'primary',
+  size = 'md',
+  fullWidth = false,
+  isLoading = false,
+  leftIcon,
+  rightIcon,
+  children,
+  disabled,
+  className = '',
+  ...props
+}, ref) => {
+  const baseStyles = 'inline-flex items-center justify-center font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg';
   
+  const sizeStyles = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2',
+    lg: 'px-6 py-3 text-lg'
+  };
+
+  const variantStyles = {
+    primary: 'bg-primary text-white hover:bg-primary-dark disabled:bg-primary-light',
+    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100',
+    outline: 'border-2 border-primary text-primary hover:bg-primary-light disabled:border-primary-light',
+    danger: 'bg-red-500 text-white hover:bg-red-600 disabled:bg-red-300'
+  };
+
   return (
-    <button 
-      className={`${baseStyles} ${variantStyles[variant]} ${fullWidth ? 'w-full' : ''} ${className}`}
+    <button
+      ref={ref}
+      className={`
+        ${baseStyles}
+        ${sizeStyles[size]}
+        ${variantStyles[variant]}
+        ${fullWidth ? 'w-full' : ''}
+        ${isLoading ? 'cursor-not-allowed' : ''}
+        ${className}
+      `}
+      disabled={disabled || isLoading}
       {...props}
     >
+      {isLoading && (
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      )}
+      {!isLoading && leftIcon && (
+        <span className="mr-2">{leftIcon}</span>
+      )}
       {children}
+      {!isLoading && rightIcon && (
+        <span className="ml-2">{rightIcon}</span>
+      )}
     </button>
   );
-};
+});
 
-// src/components/common/Input.tsx
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  rightElement?: React.ReactNode;
-}
-
-export const Input = ({ label, error, rightElement, className = '', ...props }: InputProps) => {
-  return (
-    <div className="space-y-1">
-      {label && (
-        <label className="block text-sm font-medium text-gray-700">
-          {label}
-        </label>
-      )}
-      <div className="relative">
-        <input
-          className={`w-full px-3 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 ${
-            error ? 'border-red-500' : 'border-gray-300'
-          } ${rightElement ? 'pr-24' : ''} ${className}`}
-          {...props}
-        />
-        {rightElement && (
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-            {rightElement}
-          </div>
-        )}
-      </div>
-      {error && (
-        <p className="text-sm text-red-500">{error}</p>
-      )}
-    </div>
-  );
-};
+Button.displayName = 'Button';
