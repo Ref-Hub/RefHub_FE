@@ -1,3 +1,4 @@
+// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -7,10 +8,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#1A6DFF",
-        secondary: "#6691FF",
-        black: "#000000",
-        white: "#FFFFFF",
+        primary: {
+          DEFAULT: '#1ABC9C',
+          light: '#E8F8F5',
+          dark: '#16A085',
+        },
         gray: {
           100: "#F5F5F5",
           200: "#EEEEEE",
@@ -21,7 +23,7 @@ export default {
           700: "#616161",
           800: "#424242",
           900: "#212121",
-        },
+        }
       },
       fontFamily: {
         sans: ['Pretendard', 'sans-serif'],
