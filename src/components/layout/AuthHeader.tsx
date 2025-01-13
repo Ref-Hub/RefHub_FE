@@ -7,8 +7,11 @@ export default function AuthHeader() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center">
-            <img src="/assets/images/logo-icon.png" alt="RefHub" className="h-8 w-8 mr-2" />
-            <span className="text-xl font-bold text-primary">RefHub</span>
+            <img 
+              src="/src/assets/images/icon_with_text.svg" 
+              alt="RefHub" 
+              className="h-8" 
+            />
           </Link>
           <Link 
             to="/auth/login"

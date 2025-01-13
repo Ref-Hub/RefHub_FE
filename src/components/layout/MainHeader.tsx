@@ -17,12 +17,14 @@ export default function MainHeader() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center">
-            <img src="/assets/images/logo-icon.png" alt="RefHub" className="h-8 w-8 mr-2" />
-            <span className="text-xl font-bold text-primary">RefHub</span>
+            <img 
+              src="/src/assets/images/icon_with_text.svg" 
+              alt="RefHub" 
+              className="h-8" 
+            />
           </Link>
 
-          {/* 중앙 네비게이션 */}
-          <nav className="flex items-center space-x-8">
+          <nav className="flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
             <Link 
               to="/collections" 
               className="text-gray-600 hover:text-primary text-base font-medium"
