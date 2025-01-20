@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RecoilRoot } from 'recoil';
 import { router } from './router';
 import { AuthProvider } from '@/components/layout/AuthProvider';
+import { ToastProvider } from '@/contexts/ToastProvider';
 import './styles/globals.css';
 
 const queryClient = new QueryClient({
@@ -19,9 +20,11 @@ function App() {
   return (
     <RecoilRoot>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </ToastProvider>
       </QueryClientProvider>
     </RecoilRoot>
   );
