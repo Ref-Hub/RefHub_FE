@@ -23,11 +23,20 @@ export default {
           700: "#616161",
           800: "#424242",
           900: "#212121",
+        },
+        emerald: {
+          500: '#10B981',
+        },
+        red: {
+          500: '#EF4444',
         }
       },
       fontFamily: {
         sans: ['Pretendard', 'sans-serif'],
       },
+      zIndex: {
+        50: '50',
+      }
     },
   },
   plugins: [],
