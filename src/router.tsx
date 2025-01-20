@@ -14,11 +14,11 @@ export const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: <HomePage />,
+        element: <CollectionPage />,
       },
       {
         path: '/collection/:id',
-        element: <CollectionPage />,
+        element: <HomePage />,
       },
     ],
   },
