@@ -3,7 +3,7 @@ import Dropdown from "@/components/common/Dropdown";
 import { useState } from "react";
 import { FilePlus, LayoutGrid, Text } from "lucide-react";
 import ReferenceCard from "@/components/reference/ReferenceCard";
-import ReferenceList from "@/components/reference/Referencelist";
+import ReferenceList from "@/components/reference/ReferenceList";
 import test from "@/assets/images/icon.svg";
 
 const sampleData = [
