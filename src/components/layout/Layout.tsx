@@ -2,6 +2,7 @@
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { userState } from "@/store/auth";
+import { AuthNavigationHandler } from "./AuthNavigationHandler";
 import AuthHeader from "./AuthHeader";
 import MainHeader from "./MainHeader";
 
@@ -23,6 +24,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <AuthNavigationHandler />
       {isAuthPage && !isLoginPage ? <AuthHeader /> : null}
       {!isAuthPage && <MainHeader />}
       <main className={isLoginPage ? "flex-1" : "flex-1 pt-16"}>
