@@ -24,12 +24,27 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
-// API 응답 타입
-export interface AuthResponse {
+// API 응답 타입들
+export interface ApiResponse {
+  message: string;
+}
+
+export interface AuthResponse extends ApiResponse {
   accessToken: string;
-  user: User;
+  refreshToken?: string;
+  autoLogin: boolean;
+}
+
+export interface ApiErrorResponse {
+  error: string;
+}
+
+// Token 관련 타입
+export interface TokenPayload {
+  id: string;
+  email: string;
+  iat: number;
+  exp: number;
 }
