@@ -1,20 +1,23 @@
 // src/pages/auth/LoginPage.tsx
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "@/contexts/useToast";
 import { Input } from "@/components/common/Input";
+import { authService } from "@/services/auth";
 import type { LoginForm } from "@/types/auth";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [rememberMe, setRememberMe] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     watch,
+    formState: { errors },
   } = useForm<LoginForm>();
 
   const emailValue = watch("email");
@@ -27,14 +30,23 @@ export default function LoginPage() {
   const isButtonActive = emailValue && isEmailValid(emailValue) && passwordValue?.length > 0;
 
   const onSubmit = useCallback(async (data: LoginForm) => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
     try {
-      setLoginError(null);
-      await login(data, rememberMe);
-    } catch (err) {
-      console.error("Login failed:", err);
-      setLoginError("계정 정보가 없습니다. 다시 시도해주세요.");
+      await authService.login(data, rememberMe);
+      navigate("/");
+      showToast("로그인이 완료되었습니다.", "success");
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("로그인에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsLoading(false);
     }
-  }, [login, rememberMe]);
+  }, [navigate, rememberMe, showToast, isLoading]);
 
   return (
     <div className="min-h-screen flex">
@@ -59,10 +71,13 @@ export default function LoginPage() {
                 <Input
                   placeholder="abc@refhub.com"
                   {...register("email", {
-                    required: true,
-                    pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    required: "이메일을 입력해주세요",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "올바른 이메일 형식이 아닙니다"
+                    }
                   })}
-                  error={emailValue && !isEmailValid(emailValue) ? "이메일 형식이 올바르지 않습니다." : undefined}
+                  error={errors.email?.message}
                   className="h-14"
                 />
               </div>
@@ -72,7 +87,10 @@ export default function LoginPage() {
                 <Input
                   type="password"
                   placeholder="비밀번호를 입력하세요"
-                  {...register("password", { required: true })}
+                  {...register("password", { 
+                    required: "비밀번호를 입력해주세요" 
+                  })}
+                  error={errors.password?.message}
                   className="h-14"
                 />
               </div>
@@ -99,24 +117,18 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <div className="space-y-2">
-              <button
-                type="submit"
-                disabled={!isButtonActive}
-                className={`
-                  w-full h-14 rounded-lg font-medium transition-colors duration-200
-                  ${isButtonActive 
-                    ? 'bg-primary hover:bg-primary-dark text-white' 
-                    : 'bg-[#8A8D8A] text-white cursor-not-allowed'}
-                `}
-              >
-                로그인
-              </button>
-              
-              {loginError && (
-                <p className="text-[#F04438] text-sm text-center mt-2">{loginError}</p>
-              )}
-            </div>
+            <button
+              type="submit"
+              disabled={!isButtonActive || isLoading}
+              className={`
+                w-full h-14 rounded-lg font-medium transition-colors duration-200
+                ${isButtonActive && !isLoading
+                  ? 'bg-primary hover:bg-primary-dark text-white' 
+                  : 'bg-[#8A8D8A] text-white cursor-not-allowed'}
+              `}
+            >
+              {isLoading ? "로그인 중..." : "로그인"}
+            </button>
           </form>
 
           <div className="text-center mt-6">

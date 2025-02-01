@@ -1,10 +1,11 @@
 // src/pages/auth/SignupPage.tsx
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
-import { useToast } from "@/contexts/useToast"; // 경로 수정
+import { useToast } from "@/contexts/useToast";
+import { authService } from "@/services/auth";
 import type { SignupForm } from "@/types/auth";
 
 type SignupStep = "INFO" | "VERIFY" | "PASSWORD";
@@ -13,19 +14,21 @@ export default function SignupPage() {
   const [currentStep, setCurrentStep] = useState<SignupStep>("INFO");
   const [verificationSent, setVerificationSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
-  
-// src/pages/auth/SignupPage.tsx
-const {
-  register,
-  handleSubmit,
-  formState: { errors }, // isValid 제거
-  watch,
-  trigger,
-  clearErrors,
-} = useForm<SignupForm>({
-  mode: "onChange",
-});
+  const navigate = useNavigate();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    trigger,
+    clearErrors,
+    getValues,
+  } = useForm<SignupForm>({
+    mode: "onChange",
+  });
 
   useEffect(() => {
     if (countdown > 0) {
@@ -34,33 +37,6 @@ const {
     }
   }, [countdown]);
 
-  const handleVerificationSend = async () => {
-    const isValid = await trigger(["name", "email"]);
-    if (!isValid) return;
-    
-    setVerificationSent(true);
-    setCountdown(180); // 3분
-    clearErrors("verificationCode");
-  };
-
-  const handleVerifyCode = async () => {
-    const isValid = await trigger("verificationCode");
-    if (!isValid) return;
-    
-    // TODO: API 연동 후 실제 인증번호 확인
-    setCurrentStep("PASSWORD");
-  };
-
-  const onSubmit = async (data: SignupForm) => {
-    try {
-      // TODO: API 연동 후 실제 회원가입 처리
-      console.log("Form submitted:", data);
-      showToast("회원가입이 완료되었습니다.", "success");
-    } catch {
-      showToast("회원가입에 실패했습니다.", "error");
-    }
-  };
-
   const email = watch("email");
   const verificationCode = watch("verificationCode");
   const password = watch("password");
@@ -68,14 +44,71 @@ const {
 
   const isEmailValid = email && !errors.email;
   const isVerificationComplete = verificationCode?.length === 6 && !errors.verificationCode;
-  const isPasswordValid = password && passwordConfirm && !errors.password && !errors.passwordConfirm;
+  const isPasswordValid = 
+    password && 
+    passwordConfirm && 
+    !errors.password && 
+    !errors.passwordConfirm;
 
-  const renderVerificationMessage = () => {
-    if (!verificationSent) return null;
-    if (currentStep === "PASSWORD") {
-      return <p className="text-sm text-primary mt-1">인증이 완료되었습니다.</p>;
+  const handleVerificationSend = async () => {
+    const isValid = await trigger(["name", "email"]);
+    if (!isValid || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const { name, email } = getValues();
+      await authService.sendVerificationCode(name, email);
+      setVerificationSent(true);
+      setCountdown(180); // 3분
+      clearErrors("verificationCode");
+      showToast("인증번호가 발송되었습니다.", "success");
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("인증번호 전송에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsLoading(false);
     }
-    return <p className="text-sm text-primary mt-1">인증번호가 발송되었습니다.</p>;
+  };
+
+  const handleVerifyCode = async () => {
+    const isValid = await trigger("verificationCode");
+    if (!isValid || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      setCurrentStep("PASSWORD");
+      showToast("인증이 완료되었습니다.", "success");
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("인증에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = async (data: SignupForm) => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    try {
+      await authService.signup(data);
+      showToast("회원가입이 완료되었습니다. 로그인해주세요.", "success");
+      navigate("/auth/login");
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("회원가입에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -119,17 +152,17 @@ const {
                     type="button"
                     variant={countdown > 0 ? "secondary" : "primary"}
                     onClick={handleVerificationSend}
-                    disabled={!isEmailValid || countdown > 0}
+                    disabled={!isEmailValid || countdown > 0 || isLoading}
                     className="w-[136px] h-[56px] text-base font-medium whitespace-nowrap"
                   >
-                    {countdown > 0 
-                      ? `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, '0')}`
-                      : "인증번호 전송"
+                    {isLoading ? "전송 중..." : 
+                      countdown > 0 
+                        ? `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, '0')}`
+                        : "인증번호 전송"
                     }
                   </Button>
                 </div>
               </div>
-              {renderVerificationMessage()}
             </div>
 
             {/* 인증번호 입력 필드 */}
@@ -153,10 +186,10 @@ const {
                   type="button"
                   variant={isVerificationComplete ? "primary" : "secondary"}
                   onClick={handleVerifyCode}
-                  disabled={!isVerificationComplete}
+                  disabled={!isVerificationComplete || isLoading}
                   className="w-full h-[56px]"
                 >
-                  다음
+                  {isLoading ? "확인 중..." : "다음"}
                 </Button>
               </div>
             )}
@@ -195,9 +228,9 @@ const {
                   type="submit" 
                   variant={isPasswordValid ? "primary" : "secondary"}
                   className="w-full h-[56px]"
-                  disabled={!isPasswordValid}
+                  disabled={!isPasswordValid || isLoading}
                 >
-                  회원가입
+                  {isLoading ? "가입 중..." : "회원가입"}
                 </Button>
               </div>
             )}
