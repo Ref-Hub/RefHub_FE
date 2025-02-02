@@ -34,9 +34,9 @@ export default function LoginPage() {
     
     setIsLoading(true);
     try {
-      await authService.login(data, rememberMe);
+      const response = await authService.login(data, rememberMe);
+      showToast(response.message || "로그인이 완료되었습니다.", "success");
       navigate("/");
-      showToast("로그인이 완료되었습니다.", "success");
     } catch (error) {
       if (error instanceof Error) {
         showToast(error.message, "error");
@@ -79,6 +79,7 @@ export default function LoginPage() {
                   })}
                   error={errors.email?.message}
                   className="h-14"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -92,6 +93,7 @@ export default function LoginPage() {
                   })}
                   error={errors.password?.message}
                   className="h-14"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -104,6 +106,7 @@ export default function LoginPage() {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 accent-primary border-gray-300 rounded"
+                  disabled={isLoading}
                 />
                 <label htmlFor="remember-me" className="ml-2 text-sm text-[#676967]">
                   자동 로그인
@@ -112,6 +115,7 @@ export default function LoginPage() {
               <Link
                 to="/auth/reset-password"
                 className="text-sm text-[#676967] hover:text-primary"
+                tabIndex={isLoading ? -1 : 0}
               >
                 비밀번호를 잊으셨나요?
               </Link>
@@ -133,7 +137,11 @@ export default function LoginPage() {
 
           <div className="text-center mt-6">
             <span className="text-[#676967] text-sm">계정이 없으신가요? </span>
-            <Link to="/auth/signup" className="text-primary hover:text-primary-dark text-sm">
+            <Link 
+              to="/auth/signup" 
+              className="text-primary hover:text-primary-dark text-sm"
+              tabIndex={isLoading ? -1 : 0}
+            >
               회원가입
             </Link>
           </div>
