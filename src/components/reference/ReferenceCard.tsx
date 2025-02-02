@@ -1,9 +1,9 @@
+// src/components/reference/ReferenceCard.tsx
 import React from "react";
 import { Reference as ReferenceCardProps } from "../../types/reference";
 import { EllipsisVertical, Users } from "lucide-react";
 
 const ReferenceCard: React.FC<ReferenceCardProps> = ({
-  id,
   shared,
   collectionTitle,
   referenceTitle,
