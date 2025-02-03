@@ -41,21 +41,12 @@ const protectedRoutes: RouteObject[] = [
     path: 'collections',
     children: [
       {
-<<<<<<< HEAD
-        path: '/',
-        element: <CollectionPage />,
-      },
-      {
-        path: '/collection/:id',
-        element: <HomePage />,
-=======
         index: true,
         element: <CollectionPage />,
       },
       {
         path: ':collectionId',
         element: <CollectionDetailPage />,
->>>>>>> 323f4f7861c5dd5850f6b2ffb49e4238f0e1fd3d
       },
     ],
   },

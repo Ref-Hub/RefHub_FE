@@ -2,6 +2,8 @@ import React from 'react';
 import ReferenceCard from '../../components/collection/ReferenceCard';
 import testImage from '../../assets/testImage.svg';
 
+
+ {/* 태스트 더미데이터 */}
 export const sampleData = [
   {
     title: 'Reference 1',
