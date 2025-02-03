@@ -1,7 +1,7 @@
 // src/utils/api.ts
 import axios from 'axios';
 import { authUtils } from '@/store/auth';
-import { ERROR_MESSAGES, handleApiError } from './errorHandler';
+import { handleApiError } from './errorHandler';
 
 const api = axios.create({
   baseURL: 'https://api.refhub.site',
@@ -20,35 +20,17 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => handleApiError(error)
 );
 
 // 응답 인터셉터
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => response,
   (error) => {
-    if (axios.isAxiosError(error)) {
-      if (error.code === 'ECONNABORTED') {
-        throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
-      }
-
-      const status = error.response?.status;
-      switch (status) {
-        case 401:
-          throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
-        case 403:
-          throw new Error(ERROR_MESSAGES.FORBIDDEN);
-        case 404:
-          throw new Error(ERROR_MESSAGES.NOT_FOUND);
-        case 422:
-          throw new Error(ERROR_MESSAGES.VALIDATION_ERROR);
-        case 500:
-          throw new Error(ERROR_MESSAGES.SERVER_ERROR);
-        default:
-          return handleApiError(error);
-      }
+    // 인증 관련 에러 처리
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      authUtils.clearAll();
     }
-
     return handleApiError(error);
   }
 );
