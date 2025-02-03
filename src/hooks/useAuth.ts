@@ -21,27 +21,88 @@ export const useAuth = () => {
         email: decoded.email,
         name: decoded.email.split("@")[0], // 이메일에서 임시로 이름 추출
       };
-    } catch {
+    } catch (error) {
+      console.error('Token decode error:', error);
       return null;
+    }
+  };
+
+  const updateAuthState = async (userData: User | null, accessToken?: string, refreshToken?: string) => {
+    try {
+      if (userData && accessToken) {
+        // 토큰 저장
+        authUtils.setToken(accessToken);
+        if (refreshToken) {
+          authUtils.setRefreshToken(refreshToken);
+        }
+        
+        // 유저 데이터 저장
+        authUtils.setStoredUser(userData);
+        setUser(userData);
+        
+        // 저장 확인
+        const storedToken = authUtils.getToken();
+        const storedUser = authUtils.getStoredUser();
+        
+        console.log('Auth State Update Check:', {
+          tokenStored: !!storedToken,
+          userStored: !!storedUser,
+          recoilStateUpdated: !!user
+        });
+        
+        return true;
+      } else {
+        authUtils.clearAll();
+        setUser(null);
+        return false;
+      }
+    } catch (error) {
+      console.error('Auth state update failed:', error);
+      return false;
     }
   };
 
   const login = async (data: LoginForm, rememberMe?: boolean) => {
     try {
       const response = await authService.login(data, !!rememberMe);
+      console.log('Login API Response:', response);
 
-      // 토큰에서 사용자 정보 추출
       const userData = extractUserFromToken(response.accessToken);
       if (!userData) {
-        throw new Error("Invalid token");
+        throw new Error("Failed to extract user data from token");
       }
 
-      authUtils.setStoredUser(userData);
-      setUser(userData);
+      const updateSuccess = await updateAuthState(
+        userData,
+        response.accessToken,
+        response.refreshToken
+      );
+
+      if (!updateSuccess) {
+        throw new Error("Failed to update auth state");
+      }
+
+      if (rememberMe) {
+        authUtils.setRememberMe(true);
+      }
+
       showToast("로그인이 완료되었습니다.", "success");
-      navigate("/");
+
+      // 약간의 지연 후 네비게이션 실행
+      setTimeout(() => {
+        if (authUtils.getToken() && authUtils.getStoredUser()) {
+          navigate("/collections", { replace: true });
+        } else {
+          console.error('Navigation failed: Missing auth data');
+          showToast("로그인 처리 중 오류가 발생했습니다.", "error");
+        }
+      }, 100);
+
       return response;
     } catch (error) {
+      console.error('Login failed:', error);
+      updateAuthState(null);
+      
       if (error instanceof ApiError) {
         showToast(error.message, "error");
       } else {
@@ -51,11 +112,12 @@ export const useAuth = () => {
     }
   };
 
+  // 나머지 코드는 그대로 유지
   const signup = async (data: SignupForm) => {
     try {
       await authService.signup(data);
       showToast("회원가입이 완료되었습니다. 로그인해주세요.", "success");
-      navigate("/auth/login");
+      navigate("/auth/login", { replace: true });
     } catch (error) {
       if (error instanceof ApiError) {
         showToast(error.message, "error");
@@ -69,20 +131,37 @@ export const useAuth = () => {
   const logout = async () => {
     try {
       await authService.logout();
-      authUtils.clearAll();
-      setUser(null);
+      await updateAuthState(null);
       showToast("로그아웃 되었습니다.", "success");
-      navigate("/auth/login");
-    } catch {  // '_' 파라미터 제거
-      authUtils.clearAll();
-      setUser(null);
+      navigate("/auth/login", { replace: true });
+    } catch {
+      console.log('로그아웃 중 에러가 발생했지만, 로그아웃 처리를 계속 진행합니다.');
+      await updateAuthState(null);
       showToast("로그아웃 중 오류가 발생했습니다.", "error");
-      navigate("/auth/login");
+      navigate("/auth/login", { replace: true });
     }
   };
 
-  const isAuthenticated = () => {
+  const checkAuthStatus = () => {
     const token = authUtils.getToken();
+    const storedUser = authUtils.getStoredUser();
+    
+    console.log('Auth Status Check:', {
+      hasToken: !!token,
+      hasStoredUser: !!storedUser,
+      hasRecoilUser: !!user
+    });
+    
+    if (token && storedUser && !user) {
+      setUser(storedUser);
+      return true;
+    }
+    
+    if (!token && user) {
+      updateAuthState(null);
+      return false;
+    }
+
     return !!token && !!user;
   };
 
@@ -91,6 +170,6 @@ export const useAuth = () => {
     login,
     signup,
     logout,
-    isAuthenticated: isAuthenticated(),
+    isAuthenticated: checkAuthStatus(),
   };
 };
