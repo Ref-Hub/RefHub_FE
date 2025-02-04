@@ -8,7 +8,7 @@ export interface Collection {
   updatedAt: string;
 }
 
-interface ReferenceCardProps {
+export interface ReferenceCardProps {
   title: string;
   referenceCount: number;
   images: string[];
