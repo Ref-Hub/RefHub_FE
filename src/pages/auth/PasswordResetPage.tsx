@@ -1,3 +1,4 @@
+// src/pages/auth/PasswordResetPage.tsx
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +14,7 @@ export default function PasswordResetPage() {
   const [currentStep, setCurrentStep] = useState<ResetStep>("EMAIL");
   const [isVerificationSent, setIsVerificationSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -23,22 +25,10 @@ export default function PasswordResetPage() {
     formState: { errors },
     trigger,
     clearErrors,
+    getValues,
   } = useForm<PasswordResetForm>({
     mode: "onChange",
   });
-
-  const email = watch("email");
-  const verificationCode = watch("verificationCode");
-  const newPassword = watch("newPassword");
-  const newPasswordConfirm = watch("newPasswordConfirm");
-  
-  const isEmailValid = email && !errors.email;
-  const isVerificationComplete = verificationCode?.length === 6 && !errors.verificationCode;
-  const isPasswordValid = 
-    newPassword && 
-    newPasswordConfirm && 
-    !errors.newPassword && 
-    !errors.newPasswordConfirm;
 
   useEffect(() => {
     if (countdown > 0) {
@@ -47,38 +37,79 @@ export default function PasswordResetPage() {
     }
   }, [countdown]);
 
+  const email = watch("email");
+  const verificationCode = watch("verificationCode");
+  const newPassword = watch("newPassword");
+  const newPasswordConfirm = watch("newPasswordConfirm");
+
+  const isEmailValid = email && !errors.email;
+  const isVerificationComplete =
+    verificationCode?.length === 6 && !errors.verificationCode;
+  const isPasswordValid =
+    newPassword &&
+    newPasswordConfirm &&
+    !errors.newPassword &&
+    !errors.newPasswordConfirm;
+
   const handleVerificationSend = async () => {
     const isValid = await trigger("email");
-    if (!isValid) return;
+    if (!isValid || isLoading) return;
 
+    setIsLoading(true);
     try {
+      const { email } = getValues();
+      await authService.sendPasswordResetCode(email);
       setIsVerificationSent(true);
       setCountdown(180); // 3분
       clearErrors("verificationCode");
+      showToast("인증번호가 발송되었습니다.", "success");
     } catch (error) {
-      console.error('인증번호 발송 실패:', error);
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("인증번호 발송에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleVerifyCode = async () => {
     const isValid = await trigger("verificationCode");
-    if (!isValid) return;
-    
+    if (!isValid || isLoading) return;
+
+    setIsLoading(true);
     try {
-      // TODO: API 연동
       setCurrentStep("NEW_PASSWORD");
+      showToast("인증이 완료되었습니다.", "success");
     } catch (error) {
-      console.error('인증 실패:', error);
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("인증에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // 이전 코드는 동일하게 유지하고, onSubmit 함수부터 이어서 작성합니다...
+
   const onSubmit = async (data: PasswordResetForm) => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       await authService.resetPassword(data);
       showToast("비밀번호가 변경되었습니다. 다시 로그인해주세요.", "success");
       navigate("/auth/login");
     } catch (error) {
-      showToast("비밀번호 변경에 실패했습니다.", "error");
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("비밀번호 변경에 실패했습니다.", "error");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -116,13 +147,16 @@ export default function PasswordResetPage() {
                   type="button"
                   variant={countdown > 0 ? "secondary" : "primary"}
                   onClick={handleVerificationSend}
-                  disabled={!isEmailValid || countdown > 0}
+                  disabled={!isEmailValid || countdown > 0 || isLoading}
                   className="w-[136px] h-[56px] text-base font-medium whitespace-nowrap"
                 >
-                  {countdown > 0 
-                    ? `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, '0')}`
-                    : "인증번호 전송"
-                  }
+                  {isLoading
+                    ? "전송 중..."
+                    : countdown > 0
+                    ? `${Math.floor(countdown / 60)}:${String(
+                        countdown % 60
+                      ).padStart(2, "0")}`
+                    : "인증번호 전송"}
                 </Button>
               </div>
               {isVerificationSent && (
@@ -157,10 +191,10 @@ export default function PasswordResetPage() {
                   type="button"
                   variant={isVerificationComplete ? "primary" : "secondary"}
                   onClick={handleVerifyCode}
-                  disabled={!isVerificationComplete}
+                  disabled={!isVerificationComplete || isLoading}
                   className="w-full h-[56px]"
                 >
-                  다음
+                  {isLoading ? "확인 중..." : "다음"}
                 </Button>
               </div>
             )}
@@ -179,8 +213,10 @@ export default function PasswordResetPage() {
                     {...register("newPassword", {
                       required: "새 비밀번호를 입력해주세요",
                       pattern: {
-                        value: /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,12}$/,
-                        message: "영문, 숫자, 특수문자 2종류 이상 조합 (8-12자)",
+                        value:
+                          /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,12}$/,
+                        message:
+                          "영문, 숫자, 특수문자 2종류 이상 조합 (8-12자)",
                       },
                     })}
                     error={errors.newPassword?.message}
@@ -206,13 +242,13 @@ export default function PasswordResetPage() {
                     error={errors.newPasswordConfirm?.message}
                   />
                 </div>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   variant="primary"
-                  disabled={!isPasswordValid}
+                  disabled={!isPasswordValid || isLoading}
                   className="w-full h-[56px]"
                 >
-                  비밀번호 변경
+                  {isLoading ? "변경 중..." : "비밀번호 변경"}
                 </Button>
               </div>
             )}

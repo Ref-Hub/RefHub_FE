@@ -1,128 +1,131 @@
 // src/services/auth.ts
-import type { LoginForm, SignupForm, PasswordResetForm, AuthResponse } from '@/types/auth';
-import { loginWithDummy, authUtils } from '@/store/auth';
+import type { 
+  LoginForm, 
+  SignupForm, 
+  PasswordResetForm, 
+  AuthResponse
+} from '@/types/auth';
+import api from '@/utils/api';
+import { handleApiError } from '@/utils/errorHandler';
+import { authUtils } from '@/store/auth';
 
 class AuthService {
-  // API 엔드포인트 설정
-  private baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-  private isDevelopment = process.env.NODE_ENV === 'development';
-
-  // 로그인
-  async login(data: LoginForm): Promise<AuthResponse> {
+  // 인증번호 전송 (회원가입)
+  async sendVerificationCode(name: string, email: string): Promise<void> {
     try {
-      if (this.isDevelopment) {
-        // 개발 환경에서는 더미 데이터 사용
-        const user = await loginWithDummy(data);
-        const dummyToken = 'dummy-token-' + Date.now();
-        authUtils.setToken(dummyToken);
-        return {
-          accessToken: dummyToken,
-          user,
-        };
-      }
-
-      // 프로덕션 환경에서는 실제 API 호출
-      const response = await fetch(`${this.baseUrl}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
-      const result = await response.json();
-      authUtils.setToken(result.accessToken);
-      return result;
+      const response = await api.post('/api/users/email', { name, email });
+      return response.data;
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      throw handleApiError(error);
     }
   }
 
   // 회원가입
-  async signup(data: SignupForm): Promise<AuthResponse> {
+  async signup(data: SignupForm): Promise<void> {
     try {
-      if (this.isDevelopment) {
-        // 개발 환경에서는 더미 회원가입 처리
-        const mockUser = {
-          id: Date.now().toString(),
-          name: data.name,
-          email: data.email,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        const dummyToken = 'dummy-token-' + Date.now();
-        authUtils.setToken(dummyToken);
-        return {
-          accessToken: dummyToken,
-          user: mockUser,
-        };
-      }
+      const response = await api.post('/api/users/signup', {
+        email: data.email,
+        verificationCode: data.verificationCode,
+        password: data.password,
+        confirmPassword: data.passwordConfirm,
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
 
-      // 프로덕션 환경에서는 실제 API 호출
-      const response = await fetch(`${this.baseUrl}/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+  // 로그인
+  async login(data: LoginForm, autoLogin: boolean): Promise<AuthResponse> {
+    try {
+      const response = await api.post<AuthResponse>('/api/users/login', {
+        email: data.email,
+        password: data.password,
+        autoLogin,
       });
 
-      if (!response.ok) {
-        throw new Error('Signup failed');
+      console.log('Login API Response:', response.data); // 디버깅용 로그
+
+      // response.data에서 토큰 추출
+      const { accessToken, refreshToken } = response.data;
+
+      // 토큰이 존재하는 경우에만 저장 처리
+      if (accessToken) {
+        authUtils.setToken(accessToken);
+        
+        if (refreshToken) {
+          authUtils.setRefreshToken(refreshToken);
+        }
+        
+        if (autoLogin) {
+          authUtils.setRememberMe(true);
+        }
+      } else {
+        console.error('No access token in response:', response.data);
+        throw new Error('로그인 응답에 토큰이 없습니다.');
       }
 
-      const result = await response.json();
-      authUtils.setToken(result.accessToken);
-      return result;
+      return response.data;
     } catch (error) {
-      console.error('Signup error:', error);
-      throw error;
+      throw handleApiError(error);
+    }
+  }
+
+  // 로그아웃
+  async logout(): Promise<void> {
+    try {
+      const response = await api.post('/api/users/logout');
+      authUtils.clearAll();
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  // 비밀번호 재설정 인증번호 전송
+  async sendPasswordResetCode(email: string): Promise<void> {
+    try {
+      const response = await api.post('/api/users/password/email', { email });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
     }
   }
 
   // 비밀번호 재설정
   async resetPassword(data: PasswordResetForm): Promise<void> {
     try {
-      if (this.isDevelopment) {
-        // 개발 환경에서는 더미 처리
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return;
-      }
-
-      const response = await fetch(`${this.baseUrl}/auth/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      const response = await api.post('/api/users/password/reset', {
+        email: data.email,
+        verificationCode: data.verificationCode,
+        newPassword: data.newPassword,
+        confirmPassword: data.newPasswordConfirm,
       });
-
-      if (!response.ok) {
-        throw new Error('Password reset failed');
-      }
+      return response.data;
     } catch (error) {
-      console.error('Password reset error:', error);
-      throw error;
+      throw handleApiError(error);
     }
   }
 
-  // 토큰 관리는 authUtils로 위임
-  getToken(): string | null {
-    return authUtils.getToken();
-  }
+  // 토큰 갱신
+  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+    try {
+      const response = await api.post<{ accessToken: string }>('/api/users/token', { 
+        refreshToken 
+      });
+      
+      const { accessToken } = response.data;
+      if (accessToken) {
+        authUtils.setToken(accessToken);
+      } else {
+        throw new Error('토큰 갱신 응답에 새로운 액세스 토큰이 없습니다.');
+      }
 
-  removeToken(): void {
-    authUtils.removeToken();
-  }
-
-  // 인증 상태 확인
-  isAuthenticated(): boolean {
-    return !!this.getToken();
+      return response.data;
+    } catch (error) {
+      authUtils.clearAll();
+      throw handleApiError(error);
+    }
   }
 }
 

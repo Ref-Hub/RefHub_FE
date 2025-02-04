@@ -7,3 +7,9 @@ export interface Collection {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ReferenceCardProps {
+  title: string;
+  referenceCount: number;
+  images: string[];
+}

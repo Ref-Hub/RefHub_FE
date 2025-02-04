@@ -1,47 +1,23 @@
 // src/store/auth.ts
 import { atom } from "recoil";
-import type { User, LoginForm } from "@/types/auth";
+import type { User } from "@/types/auth";
 
 export const userState = atom<User | null>({
   key: "userState",
   default: null,
 });
 
-// 더미 유저 데이터
-const DUMMY_USERS: (User & { password: string })[] = [
-  {
-    id: "1",
-    name: "테스트",
-    email: "test@refhub.com",
-    password: "password123",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-// 더미 로그인 함수
-export const loginWithDummy = async (data: LoginForm): Promise<User> => {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  const user = DUMMY_USERS.find(
-    (u) => u.email === data.email && u.password === data.password
-  );
-
-  if (!user) {
-    throw new Error("이메일 또는 비밀번호가 일치하지 않습니다.");
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...userWithoutPassword } = user;
-  return userWithoutPassword;
-};
-
 // 로컬 스토리지 관련 유틸리티 함수
 export const authUtils = {
-  // 토큰 관련
-  getToken: () => localStorage.getItem("token"),
-  setToken: (token: string) => localStorage.setItem("token", token),
-  removeToken: () => localStorage.removeItem("token"),
+  // 액세스 토큰 관련
+  getToken: () => localStorage.getItem("accessToken"),
+  setToken: (token: string) => localStorage.setItem("accessToken", token),
+  removeToken: () => localStorage.removeItem("accessToken"),
+  
+  // 리프레시 토큰 관련
+  getRefreshToken: () => localStorage.getItem("refreshToken"),
+  setRefreshToken: (token: string) => localStorage.setItem("refreshToken", token),
+  removeRefreshToken: () => localStorage.removeItem("refreshToken"),
   
   // 유저 정보 관련
   getStoredUser: (): User | null => {
@@ -63,7 +39,8 @@ export const authUtils = {
   
   // 초기화
   clearAll: () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     localStorage.removeItem("remember-me");
   }
