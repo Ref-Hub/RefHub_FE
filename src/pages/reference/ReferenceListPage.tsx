@@ -4,10 +4,12 @@ import { FilePlus, LayoutGrid, Text } from "lucide-react";
 import Dropdown from "@/components/common/Dropdown";
 import ReferenceCard from "@/components/reference/ReferenceCard";
 import ReferenceList from "@/components/reference/ReferenceList";
+import FloatingButton from "@/components/common/FloatingButton";
 import test from "@/assets/images/icon.svg";
 
 const sampleData = [
   {
+    id: "1",
     shared: false,
     collectionTitle: "코드잇",
     referenceTitle: "코드잇 부스트 레퍼런스",
@@ -23,8 +25,11 @@ export default function ReferenceListPage() {
   const [sort, setSort] = useState("latest");
 
   const sortedData = useMemo(() => {
-    return sort === "latest" 
-      ? [...sampleData].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    return sort === "latest"
+      ? [...sampleData].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
       : [...sampleData];
   }, [sort]);
 
@@ -41,6 +46,7 @@ export default function ReferenceListPage() {
 
   return (
     <div className="min-h-screen bg-[#F9FAF9] font-sans">
+      <FloatingButton type="reference" />
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-10 mb-6">
           <Dropdown type="array" setSort={setSort} />
@@ -61,6 +67,7 @@ export default function ReferenceListPage() {
               {sortedData.map((data, index) => (
                 <ReferenceCard
                   key={index}
+                  id={data.id}
                   shared={data.shared}
                   collectionTitle={data.collectionTitle}
                   referenceTitle={data.referenceTitle}
