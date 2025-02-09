@@ -1,4 +1,3 @@
-// src/components/layout/MainHeader.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import { userState } from "@/store/auth";
@@ -29,13 +28,12 @@ export default function MainHeader() {
             className="flex items-center"
             onClick={() => setType("collection")}
           >
-            <img
-              src="/src/assets/images/icon_with_text.svg"
-              alt="RefHub"
+            <img 
+              src="/images/icon_with_text.svg" 
+              alt="RefHub" 
               className="h-8"
             />
           </Link>
-
           <nav className="flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
             <Link
               onClick={() => setType("collection")}
@@ -52,7 +50,6 @@ export default function MainHeader() {
               전체 레퍼런스
             </Link>
           </nav>
-
           <div className="flex items-center space-x-4">
             <button
               onClick={handleLogout}
