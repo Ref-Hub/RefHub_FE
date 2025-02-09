@@ -1,38 +1,39 @@
 // src/components/reference/KeywordInput.tsx
-import React, { useState, useRef } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useRef } from "react";
+import { X } from "lucide-react";
 
 interface KeywordInputProps {
   keywords: string[];
   onChange: (keywords: string[]) => void;
   maxKeywords?: number;
   maxLength?: number;
+  disabled?: boolean; // 추가
 }
 
 export default function KeywordInput({
   keywords,
   onChange,
   maxKeywords = 10,
-  maxLength = 15
+  maxLength = 15,
 }: KeywordInputProps) {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === ' ' && inputValue.trim()) {
+    if (e.key === " " && inputValue.trim()) {
       e.preventDefault();
       if (keywords.length >= maxKeywords) {
         return;
       }
-      
+
       const newKeyword = inputValue.trim();
       if (newKeyword.length > maxLength) {
         return;
       }
-      
+
       onChange([...keywords, newKeyword]);
-      setInputValue('');
-    } else if (e.key === 'Backspace' && !inputValue && keywords.length > 0) {
+      setInputValue("");
+    } else if (e.key === "Backspace" && !inputValue && keywords.length > 0) {
       onChange(keywords.slice(0, -1));
     }
   };
