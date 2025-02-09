@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+//src/components/common/FloatingButton.tsx
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { atom, useRecoilState } from "recoil";
+import { useToast } from "@/contexts/useToast";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { modalState, floatingModeState, alertState } from "@/store/collection";
 import {
   EllipsisVertical,
   FolderPlus,
@@ -10,26 +13,25 @@ import {
   FilePlus,
 } from "lucide-react";
 
-export const modeState = atom({
-  key: "floatingState",
-  default: {
-    isMove: false,
-    isDelete: false,
-    checkItems: [] as string[],
-  },
-});
-
 interface FABProps {
-  type?: string;
+  type: string;
 }
 
 const FloatingButton: React.FC<FABProps> = ({ type }) => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [mode, setMode] = useRecoilState(modeState);
+  const setModalOpen = useSetRecoilState(modalState);
+  const [mode, setMode] = useRecoilState(floatingModeState);
+  const setAlert = useSetRecoilState(alertState);
+
+  useEffect(() => {
+    setMode({ isMove: false, isDelete: false, checkItems: [], isShared: [] });
+  }, [isOpen]);
 
   const handleCreateCollection = () => {
-    //
+    setIsOpen(false);
+    setModalOpen((prev) => ({ ...prev, isOpen: true, type: "create" }));
   };
 
   const handleMove = () => {
@@ -37,7 +39,34 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
   };
 
   const handleDelete = () => {
-    setMode((prev) => ({ ...prev, isDelete: !prev.isDelete }));
+    if (!mode.isDelete) {
+      showToast("삭제모드로 전환되었습니다.", "success");
+      setMode((prev) => ({ ...prev, isDelete: !prev.isDelete }));
+    } else {
+      if (mode.checkItems.length > 0) {
+        let text = "";
+        if (mode.isShared.includes(true)) {
+          type === "collection"
+            ? (text = `공유 중인 컬렉션을 포함한 ${mode.checkItems.length}개의 컬렉션을 삭제하시겠습니까? 컬렉션 내 모든 레퍼런스가 삭제되며, \n복구할 수 없습니다.`)
+            : (text = `공유 중인 레퍼런스를 포함한 ${mode.checkItems.length}개의 레퍼런스를 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.`);
+        } else {
+          type === "collection"
+            ? (text = `선택한 ${mode.checkItems.length}개의 컬렉션을 삭제하시겠습니까? \n컬렉션 내 모든 레퍼런스가 삭제되며, \n복구할 수 없습니다.`)
+            : (text = `선택한 ${mode.checkItems.length}개의 레퍼런스를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`);
+        }
+
+        setAlert({
+          ids: mode.checkItems,
+          massage: text,
+          isVisible: true,
+          type: type,
+        });
+      } else {
+        type === "collection"
+          ? showToast("선택한 컬렉션이 없습니다.", "error")
+          : showToast("선택한 레퍼런스가 없습니다.", "error");
+      }
+    }
   };
 
   const iconStyles =
@@ -46,7 +75,7 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
   return (
     <div className="fixed bottom-[7%] right-[7%] flex flex-col items-center gap-8 z-10">
       {isOpen && (
-        <div className="flex flex-col items-center gap-3 ">
+        <div className="flex flex-col items-center gap-3">
           <ActionButton
             icon={
               <FolderPlus className={`${iconStyles} stroke-primary bg-white`} />

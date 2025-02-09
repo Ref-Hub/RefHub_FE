@@ -1,16 +1,21 @@
 // src/types/reference.ts
 export interface Reference {
-  id?: string;
-  shared: boolean;
-  collectionTitle: string;
-  referenceTitle: string;
+  _id: string;
+  createAndShare: boolean;
+  collectionId: string;
+  title: string;
   keywords?: string[];
   memo?: string;
-  img: string[];
+  previewURLs: string[];
   //files?: ReferenceFile[];
-  //collectionId: string;
   createdAt: string;
-  //updatedAt: string;
+}
+
+export interface GetReferenceParams {
+  sortBy: string;
+  collection: string | string[];
+  view: string;
+  mode: string;
 }
 
 export interface ReferenceFile {

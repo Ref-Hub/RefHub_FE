@@ -1,37 +1,39 @@
-// src/components/reference/ReferenceCard.tsx
+// src/components/collection/Collection.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { Reference as ReferenceCardProps } from "../../types/reference";
-import { EllipsisVertical, Users, PencilLine, Trash2 } from "lucide-react";
-import {
-  floatingModeState,
-  collectionState,
-  alertState,
-} from "@/store/collection";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { CollectionCard as CollectionCardProps } from "../../types/collection";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { floatingModeState, modalState, alertState } from "@/store/collection";
+import { collectionService } from "@/services/collection";
+import { useToast } from "@/contexts/useToast";
 import folder from "@/assets/images/folder.svg";
+import {
+  Star,
+  Share2,
+  EllipsisVertical,
+  Users,
+  PencilLine,
+  Trash2,
+} from "lucide-react";
 
-const ReferenceCard: React.FC<ReferenceCardProps> = ({
+const CollectionCard: React.FC<CollectionCardProps> = ({
   _id,
-  createAndShare,
-  collectionId,
   title,
-  keywords,
-  previewURLs,
-  createdAt,
+  refCount,
+  previewImages,
+  isFavorite,
+  isShared,
 }) => {
+  const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
-  const collectionData = useRecoilValue(collectionState);
-  const collectionTitle =
-    collectionData.data.find((item) => item._id === collectionId)?.title ||
-    null;
-  const [modeValue, setModeValue] = useRecoilState(floatingModeState);
-  const setAlert = useSetRecoilState(alertState);
   const [isChecked, setIsChecked] = useState(false);
+  const [modeValue, setModeValue] = useRecoilState(floatingModeState);
+  const setModalOpen = useSetRecoilState(modalState);
+  const setAlert = useSetRecoilState(alertState);
 
   useEffect(() => {
     setIsChecked(false);
-    setModeValue((prev) => ({ ...prev, checkItems: [] }));
+    setModeValue((prev) => ({ ...prev, isShared: [], checkItems: [] }));
   }, [modeValue.isMove, modeValue.isDelete]);
 
   useEffect(() => {
@@ -50,25 +52,43 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
     setIsChecked(e.target.checked);
     setModeValue((prev) => ({
       ...prev,
-      isShared: [...prev.isShared, createAndShare],
+      isShared: [...prev.isShared, isShared],
       checkItems: prev.checkItems.includes(e.target.id)
         ? prev.checkItems.filter((i) => i !== e.target.id)
         : [...prev.checkItems, e.target.id],
     }));
   };
 
+  const toggleStar = async (id: string, isFavorite: boolean) => {
+    try {
+      await collectionService.likeCollection(id);
+      setAlert((prev) => ({ ...prev, isVisible: false }));
+      isFavorite
+        ? showToast("즐겨찾기에서 제거되었습니다.", "success")
+        : showToast("즐겨찾기에 추가되었습니다.", "success");
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("실패했습니다.", "error");
+      }
+    }
+  };
+
   const handleDelete = () => {
     let text = "";
-    if (createAndShare) {
-      text = `${collectionTitle} 컬렉션의 다른 사용자와 공유 중인 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
+    if (isShared) {
+      text = `공유 중인 ${title} 컬렉션을 삭제하시겠습니까? \n컬렉션 내 모든 레퍼런스가 삭제되며, \n복구할 수 없습니다.`;
+    } else if (refCount === 0) {
+      text = `${title} 컬렉션을 삭제하시겠습니까?`;
     } else {
-      text = `${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
+      text = `${title} 컬렉션을 삭제하시겠습니까? \n컬렉션 내 모든 레퍼런스가 삭제되며, \n복구할 수 없습니다.`;
     }
     setAlert({
       ids: [_id],
       massage: text,
       isVisible: true,
-      type: "reference",
+      type: "collection",
     });
   };
 
@@ -101,50 +121,64 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
           />
           {isOpen && (
             <ul className="absolute top-12 right-1.5 gap-2 inline-flex flex-col bg-white border border-gray-100 rounded shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)] z-10">
-              <li className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200">
+              <li
+                className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
+                onClick={() =>
+                  setModalOpen({
+                    id: _id,
+                    title: title,
+                    isOpen: true,
+                    type: "update",
+                  })
+                }
+              >
                 <PencilLine className="w-5 h-5 stroke-primary" />
                 <p className="text-black text-sm font-normal">수정</p>
               </li>
               <li
-                onClick={handleDelete}
                 className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
+                onClick={handleDelete}
               >
                 <Trash2 className="w-5 h-5 stroke-[#f65063]" />
                 <p className="text-black text-sm font-normal">삭제</p>
+              </li>
+              <li className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200">
+                <Share2 className="w-5 h-5 stroke-[#676967]" />
+                <p className="text-black text-sm font-normal">공유</p>
               </li>
             </ul>
           )}
         </div>
       )}
 
-      {/* 컬랙션제목 */}
-      <h2 className="flex flex-row gap-2 items-center text-base font-normal text-gray-500 mt-4 mb-1 mr-4">
-        {createAndShare && <Users className="w-5 h-5 stroke-gray-700" />}
-        <p className=" flex-1 truncate">{collectionTitle}</p>
-      </h2>
-
-      {/* 레퍼런스 제목 */}
-      <p className="text-black text-lg font-bold mb-3 flex-1 truncate hover:cursor-pointer hover:underline">
-        {title}
-      </p>
-
-      {/* 키워드 */}
-      <div className="flex flex-row gap-1 mb-3.5">
-        {keywords?.map((word, index) => (
-          <p
-            key={index}
-            className="px-1.5 py-1 bg-[#0a306c] rounded text-gray-100 text-xs font-medium"
-          >
-            {word}
-          </p>
-        ))}
+      {/* Header Section */}
+      <div className="flex items-center mt-4 gap-1">
+        <button
+          onClick={() => toggleStar(_id, isFavorite)}
+          aria-label="Toggle Star"
+        >
+          {isFavorite ? (
+            <Star className="w-6 h-6  stroke-primary fill-primary" />
+          ) : (
+            <Star className="w-6 h-6" />
+          )}
+        </button>
+        <h2 className="text-lg font-bold text-gray-800 flex-1 truncate">
+          {title}
+        </h2>
+        {isShared && <Users className="w-5 h-5 stroke-gray-700 mr-5" />}
       </div>
 
+      {/* Reference Count */}
+      <p className="text-gray-500 text-base font-medium mt-1.5">
+        레퍼런스 {refCount}개
+      </p>
+
       {/* 이미지 */}
-      <div className="mb-2 min-h-[152px]">
-        {previewURLs?.length > 0 ? (
+      <div className="mb-2 py-5">
+        {previewImages.length > 0 ? (
           <div className="grid grid-cols-2 gap-2">
-            {previewURLs.slice(0, 4).map((image, index) => (
+            {previewImages.slice(0, 4).map((image, index) => (
               <img
                 key={index}
                 src={image}
@@ -161,13 +195,8 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
           </div>
         )}
       </div>
-
-      {/* 생성날짜 */}
-      <p className="text-right text-gray-500 text-xs font-normal mb-2">
-        {createdAt}
-      </p>
     </div>
   );
 };
 
-export default ReferenceCard;
+export default CollectionCard;
