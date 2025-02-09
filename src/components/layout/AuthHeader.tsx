@@ -8,7 +8,7 @@ export default function AuthHeader() {
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center">
             <img 
-              src="/src/assets/images/icon_with_text.svg" 
+              src="/images/icon_with_text.svg" 
               alt="RefHub" 
               className="h-8" 
             />

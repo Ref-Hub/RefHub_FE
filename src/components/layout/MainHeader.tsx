@@ -18,7 +18,7 @@ export default function MainHeader() {
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center">
             <img 
-              src="/src/assets/images/icon_with_text.svg" 
+              src="/images/icon_with_text.svg" 
               alt="RefHub" 
               className="h-8" 
             />
