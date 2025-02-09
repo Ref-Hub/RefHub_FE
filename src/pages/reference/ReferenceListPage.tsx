@@ -1,6 +1,6 @@
 // src/pages/reference/ReferenceListPage.tsx
 import { useState, useEffect } from "react";
-import { useRecoilValue, useRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import { FilePlus, LayoutGrid, Text } from "lucide-react";
 import Dropdown from "@/components/common/Dropdown";
 import { DropState, modalState, alertState } from "@/store/collection";
