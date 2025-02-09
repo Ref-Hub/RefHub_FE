@@ -1,36 +1,75 @@
 // src/components/reference/ReferenceCard.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Reference as ReferenceCardProps } from "../../types/reference";
 import { EllipsisVertical, Users, PencilLine, Trash2 } from "lucide-react";
-import { modeState } from "../common/FloatingButton";
-import { useRecoilState } from "recoil";
+import {
+  floatingModeState,
+  collectionState,
+  alertState,
+} from "@/store/collection";
+import { useRecoilState, useRecoilValue } from "recoil";
+import folder from "@/assets/images/folder.svg";
 
 const ReferenceCard: React.FC<ReferenceCardProps> = ({
-  id,
-  shared,
-  collectionTitle,
-  referenceTitle,
+  _id,
+  createAndShare,
+  collectionId,
+  title,
   keywords,
-  img,
+  previewURLs,
   createdAt,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [modeValue, setMoveValue] = useRecoilState(modeState);
+  const addRef = useRef<HTMLDivElement>(null);
+  const collectionData = useRecoilValue(collectionState);
+  const collectionTitle =
+    collectionData.data.find((item) => item._id === collectionId)?.title ||
+    null;
+  const [modeValue, setModeValue] = useRecoilState(floatingModeState);
+  const [alert, setAlert] = useRecoilState(alertState);
   const [isChecked, setIsChecked] = useState(false);
 
   useEffect(() => {
     setIsChecked(false);
-    setMoveValue((prev) => ({ ...prev, checkItems: [] }));
+    setModeValue((prev) => ({ ...prev, checkItems: [] }));
   }, [modeValue.isMove, modeValue.isDelete]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (addRef.current && !addRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsChecked(e.target.checked);
-    setMoveValue((prev) => ({
+    setModeValue((prev) => ({
       ...prev,
+      isShared: [...prev.isShared, createAndShare],
       checkItems: prev.checkItems.includes(e.target.id)
         ? prev.checkItems.filter((i) => i !== e.target.id)
         : [...prev.checkItems, e.target.id],
     }));
+  };
+
+  const handleDelete = () => {
+    let text = "";
+    if (createAndShare) {
+      text = `${collectionTitle} 컬렉션의 다른 사용자와 공유 중인 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
+    } else {
+      text = `${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
+    }
+    setAlert({
+      ids: [_id],
+      massage: text,
+      isVisible: true,
+      type: "reference",
+    });
   };
 
   return (
@@ -40,13 +79,13 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
         <div>
           <input
             type="checkbox"
-            id={id}
+            id={_id}
             checked={isChecked}
             onChange={(e) => handleChange(e)}
             className="hidden"
           />
           <label
-            htmlFor={id}
+            htmlFor={_id}
             className={`w-5 h-5 absolute top-4 right-3 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
               isChecked ? "bg-primary" : "bg-white"
             }`}
@@ -55,33 +94,38 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
           </label>
         </div>
       ) : (
-        <EllipsisVertical
-          className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer"
-          onClick={() => setIsOpen(!isOpen)}
-        />
-      )}
-      {isOpen && (
-        <ul className="absolute top-12 right-1.5 gap-2 inline-flex flex-col bg-white border border-gray-100 rounded shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)] z-10">
-          <li className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200">
-            <PencilLine className="w-5 h-5 stroke-primary" />
-            <p className="text-black text-sm font-normal">수정</p>
-          </li>
-          <li className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200">
-            <Trash2 className="w-5 h-5 stroke-[#f65063]" />
-            <p className="text-black text-sm font-normal">삭제</p>
-          </li>
-        </ul>
+        <div ref={addRef}>
+          <EllipsisVertical
+            className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer"
+            onClick={() => setIsOpen(!isOpen)}
+          />
+          {isOpen && (
+            <ul className="absolute top-12 right-1.5 gap-2 inline-flex flex-col bg-white border border-gray-100 rounded shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)] z-10">
+              <li className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200">
+                <PencilLine className="w-5 h-5 stroke-primary" />
+                <p className="text-black text-sm font-normal">수정</p>
+              </li>
+              <li
+                onClick={handleDelete}
+                className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
+              >
+                <Trash2 className="w-5 h-5 stroke-[#f65063]" />
+                <p className="text-black text-sm font-normal">삭제</p>
+              </li>
+            </ul>
+          )}
+        </div>
       )}
 
       {/* 컬랙션제목 */}
-      <h2 className="flex flex-row gap-2 items-center text-base font-normal text-gray-500 mt-4 mb-1">
-        {shared && <Users className="w-5 h-5 stroke-gray-700" />}
-        {collectionTitle}
+      <h2 className="flex flex-row gap-2 items-center text-base font-normal text-gray-500 mt-4 mb-1 mr-4">
+        {createAndShare && <Users className="w-5 h-5 stroke-gray-700" />}
+        <p className=" flex-1 truncate">{collectionTitle}</p>
       </h2>
 
       {/* 레퍼런스 제목 */}
-      <p className="text-black text-lg font-bold mb-3 hover:cursor-pointer hover:underline">
-        {referenceTitle}
+      <p className="text-black text-lg font-bold mb-3 flex-1 truncate hover:cursor-pointer hover:underline">
+        {title}
       </p>
 
       {/* 키워드 */}
@@ -97,15 +141,25 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
       </div>
 
       {/* 이미지 */}
-      <div className="grid grid-cols-2 gap-2 mb-2">
-        {img.slice(0, 4).map((image, index) => (
-          <img
-            key={index}
-            src={image}
-            alt={`Reference ${index + 1}`}
-            className="object-contain w-[113px] h-[69.83px] rounded-sm"
-          />
-        ))}
+      <div className="mb-2 min-h-[152px]">
+        {previewURLs?.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2">
+            {previewURLs.slice(0, 4).map((image, index) => (
+              <img
+                key={index}
+                src={image}
+                className="object-contain w-[113px] h-[69.83px] rounded-lg"
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-gray-100 w-full py-4 flex justify-center rounded-lg flex-col items-center gap-5">
+            <img src={folder} className="w-[54%]" />
+            <p className="text-gray-700 text-sm font-normal">
+              아직 레퍼런스가 없어요.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 생성날짜 */}
