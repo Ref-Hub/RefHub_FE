@@ -1,6 +1,7 @@
 // src/pages/reference/ReferenceListPage.tsx
 import { useState, useEffect } from "react";
 import { useRecoilValue } from "recoil";
+import { useNavigate } from "react-router-dom";
 import { FilePlus, LayoutGrid, Text } from "lucide-react";
 import Dropdown from "@/components/common/Dropdown";
 import { DropState, modalState, alertState } from "@/store/collection";
@@ -14,6 +15,7 @@ import Modal from "@/components/collection/Modal";
 import Alert from "@/components/common/Alert";
 
 export default function ReferenceListPage() {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [view, setView] = useState("card");
   const sort = useRecoilValue(DropState);
@@ -46,7 +48,7 @@ export default function ReferenceListPage() {
   }, [sort, modal.isOpen, view, alert]);
 
   const handleCreate = () => {
-    // TODO: 구현 예정
+    navigate("/references/new");
   };
 
   const viewStyles = (id: string) =>
