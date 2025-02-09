@@ -17,8 +17,8 @@ export default function ReferenceListPage() {
   const { showToast } = useToast();
   const [view, setView] = useState("card");
   const sort = useRecoilValue(DropState);
-  const [modal, setModal] = useRecoilState(modalState);
-  const [alert, setAlert] = useRecoilState(alertState);
+  const modal = useRecoilValue(modalState);
+  const alert = useRecoilValue(alertState);
   const [referenceData, setReferenceData] = useState<ReferenceCardProps[]>([]);
 
   useEffect(() => {

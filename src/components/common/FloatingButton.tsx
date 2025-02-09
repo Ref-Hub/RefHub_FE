@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useToast } from "@/contexts/useToast";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { modalState, floatingModeState, alertState } from "@/store/collection";
 import {
   EllipsisVertical,
@@ -21,9 +21,9 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useRecoilState(modalState);
+  const setModalOpen = useSetRecoilState(modalState);
   const [mode, setMode] = useRecoilState(floatingModeState);
-  const [alert, setAlert] = useRecoilState(alertState);
+  const setAlert = useSetRecoilState(alertState);
 
   useEffect(() => {
     setMode({ isMove: false, isDelete: false, checkItems: [], isShared: [] });

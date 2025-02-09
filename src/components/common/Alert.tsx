@@ -6,7 +6,7 @@ import { collectionService } from "@/services/collection";
 import { referenceService } from "@/services/reference";
 import { useToast } from "@/contexts/useToast";
 import { alertState, floatingModeState } from "@/store/collection";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 
 interface AlertProps {
   message: string;
@@ -15,7 +15,7 @@ interface AlertProps {
 const Alert: React.FC<AlertProps> = ({ message }) => {
   const { showToast } = useToast();
   const [alert, setAlert] = useRecoilState(alertState);
-  const [mode, setMode] = useRecoilState(floatingModeState);
+  const setMode = useSetRecoilState(floatingModeState);
 
   const handleDelete = async () => {
     try {

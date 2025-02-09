@@ -1,7 +1,7 @@
 // src/components/collection/Collection.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { CollectionCard as CollectionCardProps } from "../../types/collection";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { floatingModeState, modalState, alertState } from "@/store/collection";
 import { collectionService } from "@/services/collection";
 import { useToast } from "@/contexts/useToast";
@@ -28,8 +28,8 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   const addRef = useRef<HTMLDivElement>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [modeValue, setModeValue] = useRecoilState(floatingModeState);
-  const [modalOpen, setModalOpen] = useRecoilState(modalState);
-  const [alert, setAlert] = useRecoilState(alertState);
+  const setModalOpen = useSetRecoilState(modalState);
+  const setAlert = useSetRecoilState(alertState);
 
   useEffect(() => {
     setIsChecked(false);

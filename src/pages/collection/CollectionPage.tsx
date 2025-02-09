@@ -22,7 +22,7 @@ const CollectionPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const sort = useRecoilValue(DropState);
   const [modal, setModal] = useRecoilState(modalState);
-  const [alert, setAlert] = useRecoilState(alertState);
+  const alert = useRecoilValue(alertState);
   const [collectionData, setCollectionData] = useRecoilState(collectionState);
 
   useEffect(() => {

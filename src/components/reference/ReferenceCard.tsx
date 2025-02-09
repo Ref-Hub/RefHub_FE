@@ -7,7 +7,7 @@ import {
   collectionState,
   alertState,
 } from "@/store/collection";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import folder from "@/assets/images/folder.svg";
 
 const ReferenceCard: React.FC<ReferenceCardProps> = ({
@@ -26,7 +26,7 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
     collectionData.data.find((item) => item._id === collectionId)?.title ||
     null;
   const [modeValue, setModeValue] = useRecoilState(floatingModeState);
-  const [alert, setAlert] = useRecoilState(alertState);
+  const setAlert = useSetRecoilState(alertState);
   const [isChecked, setIsChecked] = useState(false);
 
   useEffect(() => {
