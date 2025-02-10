@@ -22,7 +22,7 @@ const Modal: React.FC = () => {
 
   const handleClick = async () => {
     try {
-      if (collectiondata.data.some((item) => item.title === inputValue)) {
+      if (collectiondata?.data?.some((item) => item.title === inputValue)) {
         showToast("이미 동일한 이름의 컬렉션이 있습니다.", "error");
       } else if (isOpen.type === "create") {
         await collectionService.createCollection(inputValue);
