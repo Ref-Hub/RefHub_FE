@@ -1,9 +1,22 @@
 // src/types/collection.ts
-export interface Collection {
-  id: string;
-  name: string;
-  isHidden: boolean;
+export interface CollectionCard {
+  _id: string;
+  title: string;
+  isShared: boolean;
   isFavorite: boolean;
-  createdAt: string;
-  updatedAt: string;
+  refCount: number;
+  previewImages: string[];
+}
+
+export interface CollectionResponse extends CollectionCard {
+  currentPage: number;
+  totalPages: number;
+  totalItemCount: number;
+  data: CollectionCard[];
+}
+
+export interface GetCollectionParams {
+  page: number;
+  sortBy: string;
+  search: string;
 }

@@ -1,4 +1,6 @@
 import { Reference as ReferenceCardProps } from "@/types/reference";
+import { collectionState } from "@/store/collection";
+import { useRecoilValue } from "recoil";
 
 interface DataTableProps {
   items: ReferenceCardProps[];
@@ -13,6 +15,8 @@ const headers = [
 ];
 
 export default function ReferenceList({ items = [] }: DataTableProps) {
+  const collectionData = useRecoilValue(collectionState);
+
   return (
     <table className="table-auto border-collapse w-full">
       <thead className="bg-gray-100 rounded-lg overflow-hidden">
@@ -23,7 +27,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
               style={{ width: header.width }}
               className={`text-center text-black text-base font-semibold py-3.5 first:rounded-l-lg last:rounded-r-lg`}
             >
-              {header.title} {/* 컬럼명 바인딩 */}
+              {header.title}
             </th>
           ))}
         </tr>
@@ -35,8 +39,11 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
             className="text-center text-black text-base font-normal border-b border-[#dddddd] hover:bg-gray-200 hover:cursor-pointer"
           >
             <td className="py-3.5">{index + 1}</td>
-            <td>{item.collectionTitle}</td>
-            <td>{item.referenceTitle}</td>
+            <td>
+              {collectionData.data.find((i) => i._id === item.collectionId)
+                ?.title || null}
+            </td>
+            <td>{item.title}</td>
             <td className="flex flex-row justify-center gap-1 my-3.5">
               {item.keywords?.map((word, index) => (
                 <p
