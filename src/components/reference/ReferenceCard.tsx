@@ -23,17 +23,22 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
   const collectionData = useRecoilValue(collectionState);
-  const collectionTitle =
-    collectionData.data.find((item) => item._id === collectionId)?.title ||
-    null;
+  const [collectionTitle, setCollectionTitle] = useState<string | null>(null);
   const [modeValue, setModeValue] = useRecoilState(floatingModeState);
   const setAlert = useSetRecoilState(alertState);
   const [isChecked, setIsChecked] = useState(false);
 
   useEffect(() => {
+    if (collectionData?.data?.length > 0) {
+      const collection = collectionData.data.find((item) => item._id === collectionId);
+      setCollectionTitle(collection?.title || null);
+    }
+  }, [collectionData, collectionId]);
+
+  useEffect(() => {
     setIsChecked(false);
     setModeValue((prev) => ({ ...prev, checkItems: [] }));
-  }, [modeValue.isMove, modeValue.isDelete]);
+  }, [modeValue.isMove, modeValue.isDelete, setModeValue]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -60,7 +65,7 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
 
   const handleDelete = () => {
     const text = createAndShare
-      ? `${collectionTitle} 컬렉션의 다른 사용자와 공유 중인 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
+      ? `${collectionTitle || '선택한'} 컬렉션의 다른 사용자와 공유 중인 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
       : `${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
 
     setAlert({
@@ -81,6 +86,24 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
     navigate(`/references/${_id}`);
   };
 
+  // 컬렉션 데이터가 로드되지 않은 경우의 처리
+  if (!collectionData?.data?.length) {
+    return (
+      <div className="relative border border-gray-200 rounded-lg bg-white px-5">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mt-4 mb-1"></div>
+          <div className="h-6 bg-gray-200 rounded w-full mb-3"></div>
+          <div className="flex gap-2 mb-3.5">
+            <div className="h-6 bg-gray-200 rounded w-16"></div>
+            <div className="h-6 bg-gray-200 rounded w-16"></div>
+          </div>
+          <div className="h-[152px] bg-gray-200 rounded mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-24 ml-auto mb-2"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative border border-gray-200 rounded-lg bg-white px-5">
       {modeValue.isMove || modeValue.isDelete ? (
@@ -89,7 +112,7 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
             type="checkbox"
             id={_id}
             checked={isChecked}
-            onChange={(e) => handleChange(e)}
+            onChange={handleChange}
             className="hidden"
           />
           <label
@@ -134,10 +157,10 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
 
       <h2 className="flex flex-row gap-2 items-center text-base font-normal text-gray-500 mt-4 mb-1 mr-4">
         {createAndShare && <Users className="w-5 h-5 stroke-gray-700" />}
-        <p className="flex-1 truncate">{collectionTitle}</p>
+        <p className="flex-1 truncate">{collectionTitle || '불러오는 중...'}</p>
       </h2>
 
-      <p 
+      <p
         onClick={handleTitleClick}
         className="text-black text-lg font-bold mb-3 flex-1 truncate hover:cursor-pointer hover:underline"
       >
@@ -147,7 +170,7 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
       <div className="flex flex-wrap gap-1.5 mb-3.5">
         {keywords?.map((word, index) => (
           <span
-            key={index}
+            key={`${word}-${index}`}
             className="px-2 py-1 bg-[#0a306c] rounded text-gray-100 text-xs font-medium"
           >
             {word}
@@ -160,7 +183,7 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
           <div className="grid grid-cols-2 gap-2">
             {previewURLs.slice(0, 4).map((image, index) => (
               <img
-                key={index}
+                key={`${image}-${index}`}
                 src={image}
                 alt={`Preview ${index + 1}`}
                 className="object-contain w-[113px] h-[69.83px] rounded-lg"
