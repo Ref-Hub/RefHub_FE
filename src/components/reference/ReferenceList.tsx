@@ -15,7 +15,7 @@ const headers = [
   { title: "제목", width: "35%" },
   { title: "키워드", width: "25%" },
   { title: "등록 일시", width: "15%" },
-  { title: "", width: "5%" }, // 더보기 버튼 열
+  { title: "", width: "5%" },
 ];
 
 export default function ReferenceList({ items = [] }: DataTableProps) {
@@ -64,7 +64,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
   };
 
   const handleEdit = (id: string) => {
-    navigate(`/references/edit/${id}`);
+    navigate(`/references/${id}/edit`);
     setOpenMenuId(null);
   };
 
