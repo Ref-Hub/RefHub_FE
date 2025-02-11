@@ -4,13 +4,19 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useToast } from "@/contexts/useToast";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { modalState, floatingModeState, alertState } from "@/store/collection";
+import {
+  modalState,
+  floatingModeState,
+  alertState,
+  shareModalState,
+} from "@/store/collection";
 import {
   EllipsisVertical,
   FolderPlus,
   ArrowLeftRight,
   Trash2,
   FilePlus,
+  Share2,
 } from "lucide-react";
 
 interface FABProps {
@@ -24,6 +30,7 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
   const setModalOpen = useSetRecoilState(modalState);
   const [mode, setMode] = useRecoilState(floatingModeState);
   const setAlert = useSetRecoilState(alertState);
+  const setShareOpen = useSetRecoilState(shareModalState);
 
   useEffect(() => {
     setMode({ isMove: false, isDelete: false, checkItems: [], isShared: [] });
@@ -31,17 +38,43 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
 
   const handleCreateCollection = () => {
     setIsOpen(false);
-    setModalOpen((prev) => ({ ...prev, isOpen: true, type: "create" }));
+    setModalOpen((prev) => ({
+      ...prev,
+      isOpen: true,
+      type: "create",
+      title: "",
+    }));
   };
 
   const handleMove = () => {
-    setMode((prev) => ({ ...prev, isMove: !prev.isMove }));
+    if (!mode.isMove) {
+      showToast("이동모드로 전환되었습니다.", "success");
+      setMode((prev) => ({ ...prev, isMove: true, isDelete: false }));
+    } else {
+      if (mode.checkItems.length > 0) {
+        setAlert({
+          type: "move",
+          massage: "선택한 레퍼런스의 컬렉션을 이동하시겠습니까?",
+          ids: mode.checkItems,
+          isVisible: false,
+          title: "",
+        });
+        setModalOpen((prev) => ({
+          ...prev,
+          isOpen: true,
+          type: "move",
+          title: "",
+        }));
+      } else {
+        showToast("선택한 레퍼런스가 없습니다.", "error");
+      }
+    }
   };
 
   const handleDelete = () => {
     if (!mode.isDelete) {
       showToast("삭제모드로 전환되었습니다.", "success");
-      setMode((prev) => ({ ...prev, isDelete: !prev.isDelete }));
+      setMode((prev) => ({ ...prev, isDelete: true, isMove: false }));
     } else {
       if (mode.checkItems.length > 0) {
         let text = "";
@@ -60,6 +93,7 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
           massage: text,
           isVisible: true,
           type: type,
+          title: "",
         });
       } else {
         type === "collection"
@@ -84,6 +118,16 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
             time={1.2}
             onClick={handleCreateCollection}
           />
+          {type === "collectionDetail" && (
+            <ActionButton
+              icon={
+                <Share2 className={`${iconStyles} stroke-primary bg-white`} />
+              }
+              label="컬렉션 공유"
+              time={1.2}
+              onClick={() => setShareOpen({ isOpen: true })}
+            />
+          )}
           <ActionButton
             icon={
               <FilePlus className={`${iconStyles} stroke-primary bg-white`} />
