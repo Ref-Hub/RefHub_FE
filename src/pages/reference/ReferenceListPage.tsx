@@ -3,16 +3,40 @@ import { useRecoilValue, useSetRecoilState } from "recoil";
 import { useNavigate } from "react-router-dom";
 import { FilePlus, LayoutGrid, Text } from "lucide-react";
 import Dropdown from "@/components/common/Dropdown";
-import { DropState, modalState, alertState, collectionState } from "@/store/collection";
+import {
+  DropState,
+  modalState,
+  alertState,
+  collectionState,
+} from "@/store/collection";
 import ReferenceCard from "@/components/reference/ReferenceCard";
 import ReferenceList from "@/components/reference/ReferenceList";
 import FloatingButton from "@/components/common/FloatingButton";
 import { referenceService } from "@/services/reference";
 import { collectionService } from "@/services/collection";
 import { useToast } from "@/contexts/useToast";
-import { Reference as ReferenceCardProps } from "@/types/reference";
 import Modal from "@/components/collection/Modal";
 import Alert from "@/components/common/Alert";
+import { Reference } from "@/types/reference";
+
+// ReferenceCard와 리스트에서 공통으로 사용할 타입 정의
+interface ReferenceListItem {
+  _id: string;
+  createAndShare?: boolean;
+  collectionId: string;
+  title: string;
+  keywords?: string[];
+  previewURLs?: string[];
+  createdAt?: string;
+  files: Array<{
+    _id: string;
+    type: string;
+    path: string;
+    size: number;
+    previewURL?: string;
+    previewURLs?: string[];
+  }>;
+}
 
 export default function ReferenceListPage() {
   const navigate = useNavigate();
@@ -23,7 +47,7 @@ export default function ReferenceListPage() {
   const alert = useRecoilValue(alertState);
   const setCollections = useSetRecoilState(collectionState);
   const [isLoading, setIsLoading] = useState(true);
-  const [referenceData, setReferenceData] = useState<ReferenceCardProps[]>([]);
+  const [referenceData, setReferenceData] = useState<ReferenceListItem[]>([]);
 
   // 컬렉션 데이터 로드
   useEffect(() => {
@@ -62,9 +86,51 @@ export default function ReferenceListPage() {
           mode: "home",
         };
 
-        const data = await referenceService.getReferenceList(params);
-        setReferenceData(data || []);
+        const response = await referenceService.getReferenceList(params);
+        console.log("API Response:", response); // 응답 데이터 확인
+
+        // 데이터가 있는지 확인
+        if (!response.data) {
+          console.log("No data in response");
+          setReferenceData([]);
+          return;
+        }
+
+        // API 응답에서 데이터 변환
+        const transformedData: ReferenceListItem[] = response.data.map(
+          (reference) => {
+            console.log("Processing reference:", reference); // 각 레퍼런스 데이터 확인
+
+            const files = reference.files || [];
+            const previewURLs = files
+              .filter((file) => file && file.type === "image")
+              .flatMap((file) => file.previewURLs || [])
+              .slice(0, 4);
+
+            return {
+              _id: reference._id,
+              createAndShare: reference.createAndShare,
+              collectionId: reference.collectionId,
+              title: reference.title,
+              keywords: reference.keywords,
+              previewURLs,
+              createdAt: reference.createdAt,
+              files: files.map((file) => ({
+                _id: file._id || file.path,
+                type: file.type,
+                path: file.path,
+                size: file.size,
+                previewURL: file.previewURL,
+                previewURLs: file.previewURLs,
+              })),
+            };
+          }
+        );
+
+        console.log("Transformed Data:", transformedData); // 변환된 데이터 확인
+        setReferenceData(transformedData);
       } catch (error) {
+        console.error("Error loading references:", error); // 에러 상세 정보 확인
         if (error instanceof Error) {
           showToast(error.message, "error");
         } else {
@@ -77,10 +143,6 @@ export default function ReferenceListPage() {
 
     loadReferences();
   }, [sort, modal.isOpen, view, alert, showToast]);
-
-  const handleCreate = () => {
-    navigate("/references/new");
-  };
 
   const viewStyles = (id: string) =>
     `w-[50px] h-[50px] p-[9px] rounded-full overflow-visible hover:cursor-pointer ${
@@ -120,20 +182,11 @@ export default function ReferenceListPage() {
           view === "card" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
               {referenceData.map((data) => (
-                <ReferenceCard
-                  key={data._id}
-                  _id={data._id}
-                  createAndShare={data.createAndShare}
-                  collectionId={data.collectionId}
-                  title={data.title}
-                  keywords={data.keywords}
-                  previewURLs={data.previewURLs}
-                  createdAt={data.createdAt}
-                />
+                <ReferenceCard key={data._id} {...(data as Reference)} />
               ))}
             </div>
           ) : (
-            <ReferenceList items={referenceData} />
+            <ReferenceList items={referenceData as Reference[]} />
           )
         ) : (
           <div className="flex flex-col items-center">
@@ -144,7 +197,7 @@ export default function ReferenceListPage() {
             </p>
             {sort.searchWord.length === 0 && (
               <button
-                onClick={handleCreate}
+                onClick={() => navigate("/references/new")}
                 className="flex w-fit px-12 py-4 gap-3 rounded-full bg-primary hover:bg-primary-dark"
               >
                 <FilePlus className="w-10 h-10 stroke-white" />
