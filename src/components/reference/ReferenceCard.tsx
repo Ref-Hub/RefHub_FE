@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Reference as ReferenceCardProps } from "../../types/reference";
+import { Reference } from "../../types/reference";
 import {
   EllipsisVertical,
   Users,
@@ -12,15 +12,17 @@ import {
   floatingModeState,
   collectionState,
   alertState,
+  FloatingState,
 } from "@/store/collection";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
-const ReferenceCard: React.FC<ReferenceCardProps> = ({
+const ReferenceCard: React.FC<Reference> = ({
   _id,
   createAndShare,
+  collectionId,
   title,
-  keywords,
-  previewURLs,
+  keywords = [],
+  previewURLs = [],
   createdAt,
   collectionTitle,
 }) => {
@@ -55,7 +57,7 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsChecked(e.target.checked);
-    setModeValue((prev) => ({
+    setModeValue((prev: FloatingState) => ({
       ...prev,
       isShared: [...prev.isShared, createAndShare ?? false],
       checkItems: prev.checkItems.includes(e.target.id)
@@ -76,7 +78,6 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
       massage: text,
       isVisible: true,
       type: "reference",
-      title: "",
     });
     setIsOpen(false);
   };
