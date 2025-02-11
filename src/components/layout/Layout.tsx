@@ -14,15 +14,6 @@ export default function Layout() {
   // 현재 로그인 프로세스가 진행 중인지 확인
   const isLoggingIn = isLoginPage && authUtils.getToken();
 
-  console.log("Layout render:", {
-    currentPath: location.pathname,
-    isAuthPage,
-    isLoginPage,
-    isLoggingIn,
-    hasUser: !!user,
-    hasToken: !!authUtils.getToken(),
-  });
-
   // 인증이 필요한 페이지에서 비로그인 상태일 경우 로그인 페이지로 리다이렉트
   if (!isAuthPage && !user && !authUtils.getToken()) {
     console.log("Redirecting to login: No auth");

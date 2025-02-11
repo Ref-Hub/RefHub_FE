@@ -34,7 +34,6 @@ const CollectionPage: React.FC = () => {
     const a = async () => {
       try {
         const data = await collectionService.getCollectionList(params);
-        console.log("aa", data);
         setCollectionData(data || {});
       } catch (error) {
         if (error instanceof Error) {
