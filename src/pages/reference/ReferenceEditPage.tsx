@@ -9,10 +9,6 @@ import { Loader } from "lucide-react";
 import type { CollectionCard } from "@/types/collection";
 import type { CreateReferenceFile } from "@/types/reference";
 
-interface RouteParams {
-  referenceId: string; // URL 파라미터 이름을 router 설정과 일치하도록 변경
-}
-
 interface FormData {
   collection: string;
   title: string;
@@ -22,6 +18,7 @@ interface FormData {
 }
 
 export default function ReferenceEditPage() {
+  type RouteParams = Record<string, string | undefined>;
   const { referenceId } = useParams<RouteParams>();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -62,15 +59,17 @@ export default function ReferenceEditPage() {
         console.log("Received reference data:", reference);
 
         // 파일 데이터 변환
-        const convertedFiles: CreateReferenceFile[] = reference.files.map((file) => ({
-          id: file._id,
-          type: file.type,
-          content:
-            file.type === "link"
-              ? file.path
-              : file.previewURL || file.previewURLs?.[0] || "",
-          name: file.path.split("/").pop() || "",
-        }));
+        const convertedFiles: CreateReferenceFile[] = reference.files.map(
+          (file) => ({
+            id: file._id,
+            type: file.type,
+            content:
+              file.type === "link"
+                ? file.path
+                : file.previewURL || file.previewURLs?.[0] || "",
+            name: file.path.split("/").pop() || "",
+          })
+        );
 
         // 폼 데이터 설정
         setFormData({
@@ -149,7 +148,9 @@ export default function ReferenceEditPage() {
       }
 
       // 파일 데이터 준비
-      const filesFormData = referenceService.prepareFilesFormData(formData.files);
+      const filesFormData = referenceService.prepareFilesFormData(
+        formData.files
+      );
 
       // API 호출
       await referenceService.updateReference(referenceId, {
@@ -157,7 +158,7 @@ export default function ReferenceEditPage() {
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,
-        files: filesFormData
+        files: filesFormData,
       });
 
       showToast("레퍼런스가 수정되었습니다.", "success");
@@ -183,7 +184,9 @@ export default function ReferenceEditPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <h1 className="text-[#62BA9B] text-2xl font-semibold">레퍼런스 수정</h1>
+            <h1 className="text-[#62BA9B] text-2xl font-semibold">
+              레퍼런스 수정
+            </h1>
             <span className="text-sm text-gray-500">* 필수 항목</span>
           </div>
           <button
