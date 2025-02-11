@@ -87,7 +87,6 @@ export default function ReferenceListPage() {
         };
 
         const response = await referenceService.getReferenceList(params);
-        console.log("API Response:", response); // 응답 데이터 확인
 
         // 데이터가 있는지 확인
         if (!response.data) {
@@ -99,7 +98,6 @@ export default function ReferenceListPage() {
         // API 응답에서 데이터 변환
         const transformedData: ReferenceListItem[] = response.data.map(
           (reference) => {
-            console.log("Processing reference:", reference); // 각 레퍼런스 데이터 확인
 
             const files = reference.files || [];
             const previewURLs = files
@@ -127,7 +125,6 @@ export default function ReferenceListPage() {
           }
         );
 
-        console.log("Transformed Data:", transformedData); // 변환된 데이터 확인
         setReferenceData(transformedData);
       } catch (error) {
         console.error("Error loading references:", error); // 에러 상세 정보 확인
