@@ -1,5 +1,5 @@
-// src/components/reference/ReferenceCard.tsx
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Reference as ReferenceCardProps } from "../../types/reference";
 import { EllipsisVertical, Users, PencilLine, Trash2 } from "lucide-react";
 import {
@@ -19,6 +19,7 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
   previewURLs,
   createdAt,
 }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
   const collectionData = useRecoilValue(collectionState);
@@ -70,6 +71,10 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
       isVisible: true,
       type: "reference",
     });
+  };
+
+  const handleTitleClick = () => {
+    navigate(`/references/${_id}`);
   };
 
   return (
@@ -124,7 +129,10 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
       </h2>
 
       {/* 레퍼런스 제목 */}
-      <p className="text-black text-lg font-bold mb-3 flex-1 truncate hover:cursor-pointer hover:underline">
+      <p 
+        onClick={handleTitleClick}
+        className="text-black text-lg font-bold mb-3 flex-1 truncate hover:cursor-pointer hover:underline"
+      >
         {title}
       </p>
 
@@ -148,13 +156,14 @@ const ReferenceCard: React.FC<ReferenceCardProps> = ({
               <img
                 key={index}
                 src={image}
+                alt={`Preview ${index + 1}`}
                 className="object-contain w-[113px] h-[69.83px] rounded-lg"
               />
             ))}
           </div>
         ) : (
           <div className="bg-gray-100 w-full py-4 flex justify-center rounded-lg flex-col items-center gap-5">
-            <img src={folder} className="w-[54%]" />
+            <img src={folder} alt="Empty folder" className="w-[54%]" />
             <p className="text-gray-700 text-sm font-normal">
               아직 레퍼런스가 없어요.
             </p>
