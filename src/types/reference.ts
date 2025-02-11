@@ -4,6 +4,7 @@
 export interface Reference {
   _id: string;
   collectionId: string;
+  collectionTitle?: string;  // 추가
   title: string;
   keywords?: string[];
   memo?: string;
@@ -63,6 +64,7 @@ export interface CreateReferenceResponse {
 export interface ReferenceDetailResponse {
   message: string;
   referenceDetail: {
+    collectionId: string;     // 추가
     collectionTitle: string;
     referenceTitle: string;
     keywords: string[];

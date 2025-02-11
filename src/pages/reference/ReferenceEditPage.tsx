@@ -5,9 +5,13 @@ import KeywordInput from "@/components/reference/KeywordInput";
 import FileUpload from "@/components/reference/FileUpload";
 import { collectionService } from "@/services/collection";
 import { referenceService } from "@/services/reference";
-import { ChevronDown, Loader } from "lucide-react";
+import { Loader } from "lucide-react";
 import type { CollectionCard } from "@/types/collection";
 import type { CreateReferenceFile } from "@/types/reference";
+
+interface RouteParams {
+  referenceId: string; // URL 파라미터 이름을 router 설정과 일치하도록 변경
+}
 
 interface FormData {
   collection: string;
@@ -18,14 +22,13 @@ interface FormData {
 }
 
 export default function ReferenceEditPage() {
-  const { id } = useParams<{ id: string }>();
+  const { referenceId } = useParams<RouteParams>();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCollections, setIsLoadingCollections] = useState(false);
   const [collections, setCollections] = useState<CollectionCard[]>([]);
-  const [showCollectionDropdown, setShowCollectionDropdown] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     collection: "",
@@ -41,6 +44,63 @@ export default function ReferenceEditPage() {
     ],
   });
 
+  // 레퍼런스 데이터 로딩
+  useEffect(() => {
+    const fetchData = async () => {
+      console.log("Fetching reference data for id:", referenceId);
+
+      if (!referenceId) {
+        console.log("No referenceId provided, redirecting...");
+        navigate("/references");
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        console.log("Making API request to fetch reference");
+        const reference = await referenceService.getReference(referenceId);
+        console.log("Received reference data:", reference);
+
+        // 파일 데이터 변환
+        const convertedFiles: CreateReferenceFile[] = reference.files.map((file) => ({
+          id: file._id,
+          type: file.type,
+          content:
+            file.type === "link"
+              ? file.path
+              : file.previewURL || file.previewURLs?.[0] || "",
+          name: file.path.split("/").pop() || "",
+        }));
+
+        // 폼 데이터 설정
+        setFormData({
+          collection: reference.collectionTitle || "",
+          title: reference.title,
+          keywords: reference.keywords || [],
+          memo: reference.memo || "",
+          files:
+            convertedFiles.length > 0
+              ? convertedFiles
+              : [
+                  {
+                    id: Date.now().toString(),
+                    type: "link",
+                    content: "",
+                  },
+                ],
+        });
+      } catch (error) {
+        console.error("Detailed error when fetching reference:", error);
+        showToast("데이터를 불러오는데 실패했습니다.", "error");
+        navigate("/references");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [referenceId, navigate, showToast]);
+
   // 컬렉션 목록 조회
   useEffect(() => {
     const fetchCollections = async () => {
@@ -53,7 +113,7 @@ export default function ReferenceEditPage() {
         });
         setCollections(response.data || []);
       } catch (error) {
-        console.error('Error fetching collections:', error);
+        console.error("Error fetching collections:", error);
         showToast("컬렉션 목록을 불러오는데 실패했습니다.", "error");
       } finally {
         setIsLoadingCollections(false);
@@ -62,51 +122,6 @@ export default function ReferenceEditPage() {
 
     fetchCollections();
   }, [showToast]);
-
-  // 레퍼런스 상세 정보 조회
-  useEffect(() => {
-    const fetchReference = async () => {
-      if (!id) {
-        console.log('No ID provided');
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        console.log('Fetching reference for ID:', id);
-        const reference = await referenceService.getReference(id);
-        console.log('Received reference:', reference);
-
-        // 파일 데이터 변환
-        const convertedFiles: CreateReferenceFile[] = reference.files.map(file => ({
-          id: file._id,
-          type: file.type,
-          content: file.type === 'link' ? file.path : file.previewURL || file.previewURLs?.[0] || '',
-          name: file.path.split('/').pop() || ''
-        }));
-
-        setFormData({
-          collection: collections.find(c => c._id === reference.collectionId)?.title || '',
-          title: reference.title,
-          keywords: reference.keywords || [],
-          memo: reference.memo || "",
-          files: convertedFiles.length > 0 ? convertedFiles : [{
-            id: Date.now().toString(),
-            type: "link",
-            content: "",
-          }],
-        });
-      } catch (error) {
-        console.error('Error fetching reference:', error);
-        showToast("레퍼런스 정보를 불러오는데 실패했습니다.", "error");
-        navigate('/references');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchReference();
-  }, [id, navigate, showToast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,7 +143,7 @@ export default function ReferenceEditPage() {
         return;
       }
 
-      if (!id) {
+      if (!referenceId) {
         showToast("잘못된 접근입니다.", "error");
         return;
       }
@@ -137,7 +152,7 @@ export default function ReferenceEditPage() {
       const filesFormData = referenceService.prepareFilesFormData(formData.files);
 
       // API 호출
-      await referenceService.updateReference(id, {
+      await referenceService.updateReference(referenceId, {
         collectionTitle: formData.collection,
         title: formData.title,
         keywords: formData.keywords,
@@ -146,9 +161,9 @@ export default function ReferenceEditPage() {
       });
 
       showToast("레퍼런스가 수정되었습니다.", "success");
-      navigate('/references');
+      navigate("/references");
     } catch (error) {
-      console.error('Error updating reference:', error);
+      console.error("Error updating reference:", error);
       showToast("레퍼런스 수정에 실패했습니다.", "error");
     } finally {
       setIsSubmitting(false);
@@ -167,66 +182,48 @@ export default function ReferenceEditPage() {
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-1">
-            <h1 className="text-primary font-medium">레퍼런스 수정</h1>
-            <span className="text-[12px] text-gray-500">* 필수 입력</span>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[#62BA9B] text-2xl font-semibold">레퍼런스 수정</h1>
+            <span className="text-sm text-gray-500">* 필수 항목</span>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => navigate('/references')}
-              className="px-4 py-2 text-gray-700 rounded-full hover:bg-gray-100 transition-colors text-sm"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
-            >
-              {isSubmitting && <Loader className="w-4 h-4 animate-spin" />}
-              저장
-            </button>
-          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-6 py-2 bg-[#62BA9B] text-white rounded-full hover:bg-[#4a9177] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isSubmitting && <Loader className="w-4 h-4 animate-spin" />}
+            저장
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-start">
             {/* Collection Selection */}
-            <div className="w-60">
-              <label className="block mb-2 text-sm">
+            <div className="w-[244px]">
+              <label className="block mb-2">
                 <span className="text-gray-700">
                   컬렉션 <span className="text-red-500">*</span>
                 </span>
               </label>
               <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowCollectionDropdown(!showCollectionDropdown)}
-                  className="w-full h-14 px-4 text-left border border-gray-300 rounded-lg flex items-center justify-between bg-white"
+                <select
+                  value={formData.collection}
+                  onChange={(e) =>
+                    setFormData({ ...formData, collection: e.target.value })
+                  }
                   disabled={isLoadingCollections}
+                  className="w-full h-[56px] border border-gray-300 rounded-lg px-4 appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <span className="truncate">
-                    {formData.collection || "저장할 컬렉션을 선택하세요"}
-                  </span>
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
-                </button>
-                {showCollectionDropdown && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-                    {collections.map((collection) => (
-                      <button
-                        key={collection._id}
-                        type="button"
-                        onClick={() => {
-                          setFormData({ ...formData, collection: collection.title });
-                          setShowCollectionDropdown(false);
-                        }}
-                        className="w-full px-4 py-2 text-left hover:bg-gray-100"
-                      >
-                        {collection.title}
-                      </button>
-                    ))}
+                  <option value="">저장할 컬렉션을 선택하세요.</option>
+                  {collections.map((collection) => (
+                    <option key={collection._id} value={collection.title}>
+                      {collection.title}
+                    </option>
+                  ))}
+                </select>
+                {isLoadingCollections && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader className="w-4 h-4 animate-spin text-gray-400" />
                   </div>
                 )}
               </div>
@@ -234,7 +231,7 @@ export default function ReferenceEditPage() {
 
             {/* Title Input */}
             <div className="flex-1">
-              <label className="block mb-2 text-sm">
+              <label className="block mb-2">
                 <span className="text-gray-700">
                   제목 <span className="text-red-500">*</span>
                 </span>
@@ -248,7 +245,7 @@ export default function ReferenceEditPage() {
                 maxLength={20}
                 placeholder="레퍼런스의 제목을 입력해 주세요."
                 disabled={isSubmitting}
-                className="w-full h-14 px-4 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full h-[56px] border border-gray-300 rounded-lg px-4 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
               <div className="text-right text-sm text-gray-500 mt-1">
                 {formData.title.length}/20
@@ -258,10 +255,10 @@ export default function ReferenceEditPage() {
 
           {/* Keywords Input */}
           <div>
-            <label className="block mb-2 text-sm">
+            <label className="block mb-2">
               <span className="text-gray-700">키워드</span>
             </label>
-            <div className="border border-gray-300 rounded-lg px-4 py-2 min-h-14">
+            <div className="border border-gray-300 rounded-lg px-4 py-2 min-h-[56px]">
               <KeywordInput
                 keywords={formData.keywords}
                 onChange={(keywords) => setFormData({ ...formData, keywords })}
@@ -271,13 +268,13 @@ export default function ReferenceEditPage() {
               />
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              키워드는 공백으로 구분됩니다.
+              띄어쓰기로 구분해서 입력해주세요.
             </p>
           </div>
 
           {/* Memo Input */}
           <div>
-            <label className="block mb-2 text-sm">
+            <label className="block mb-2">
               <span className="text-gray-700">메모</span>
             </label>
             <textarea
@@ -286,9 +283,9 @@ export default function ReferenceEditPage() {
                 setFormData({ ...formData, memo: e.target.value })
               }
               maxLength={500}
-              placeholder="메모를 입력해주세요."
+              placeholder="내용을 입력해주세요."
               disabled={isSubmitting}
-              className="w-full h-32 px-4 py-2 border border-gray-300 rounded-lg resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full h-32 border border-gray-300 rounded-lg px-4 py-2 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
             <div className="text-right text-sm text-gray-500 mt-1">
               {formData.memo.length}/500
@@ -298,7 +295,7 @@ export default function ReferenceEditPage() {
           {/* File Upload Section */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <label className="block text-sm">
+              <label className="block">
                 <span className="text-gray-700">
                   자료 첨부 <span className="text-red-500">*</span>
                 </span>

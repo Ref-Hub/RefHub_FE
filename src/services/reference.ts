@@ -31,7 +31,8 @@ class ReferenceService {
       // API 응답을 Reference 타입으로 변환
       return {
         _id: id,
-        collectionId: '', // 실제 collectionId는 나중에 설정
+        collectionId: referenceDetail.collectionId,
+        collectionTitle: referenceDetail.collectionTitle,
         title: referenceDetail.referenceTitle,
         keywords: referenceDetail.keywords || [],
         memo: referenceDetail.memo || '',
