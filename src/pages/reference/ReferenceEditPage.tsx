@@ -7,7 +7,7 @@ import { collectionService } from "@/services/collection";
 import { referenceService } from "@/services/reference";
 import { Loader } from "lucide-react";
 import type { CollectionCard } from "@/types/collection";
-import type { CreateReferenceFile } from "@/types/reference";
+import type { CreateReferenceFile, UpdateReferenceRequest } from "@/types/reference";
 
 interface FormData {
   collection: string;
@@ -18,13 +18,12 @@ interface FormData {
 }
 
 export default function ReferenceEditPage() {
-  type RouteParams = Record<string, string | undefined>;
-  const { referenceId } = useParams<RouteParams>();
+  const { referenceId } = useParams<{ referenceId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingCollections, setIsLoadingCollections] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingCollections, setIsLoadingCollections] = useState<boolean>(false);
   const [collections, setCollections] = useState<CollectionCard[]>([]);
 
   const [formData, setFormData] = useState<FormData>({
@@ -44,32 +43,26 @@ export default function ReferenceEditPage() {
   // 레퍼런스 데이터 로딩
   useEffect(() => {
     const fetchData = async () => {
-      console.log("Fetching reference data for id:", referenceId);
-
       if (!referenceId) {
-        console.log("No referenceId provided, redirecting...");
+        showToast("잘못된 접근입니다.", "error");
         navigate("/references");
         return;
       }
 
       try {
         setIsLoading(true);
-        console.log("Making API request to fetch reference");
         const reference = await referenceService.getReference(referenceId);
-        console.log("Received reference data:", reference);
 
         // 파일 데이터 변환
-        const convertedFiles: CreateReferenceFile[] = reference.files.map(
-          (file) => ({
-            id: file._id,
-            type: file.type,
-            content:
-              file.type === "link"
-                ? file.path
-                : file.previewURL || file.previewURLs?.[0] || "",
-            name: file.path.split("/").pop() || "",
-          })
-        );
+        const convertedFiles: CreateReferenceFile[] = reference.files.map((file) => ({
+          id: file._id,
+          type: file.type,
+          content:
+            file.type === "link"
+              ? file.path
+              : file.previewURL || file.previewURLs?.[0] || "",
+          name: file.path.split("/").pop() || "",
+        }));
 
         // 폼 데이터 설정
         setFormData({
@@ -89,7 +82,7 @@ export default function ReferenceEditPage() {
                 ],
         });
       } catch (error) {
-        console.error("Detailed error when fetching reference:", error);
+        console.error("Error fetching reference:", error);
         showToast("데이터를 불러오는데 실패했습니다.", "error");
         navigate("/references");
       } finally {
@@ -122,7 +115,7 @@ export default function ReferenceEditPage() {
     fetchCollections();
   }, [showToast]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
@@ -148,18 +141,18 @@ export default function ReferenceEditPage() {
       }
 
       // 파일 데이터 준비
-      const filesFormData = referenceService.prepareFilesFormData(
-        formData.files
-      );
+      const filesFormData = referenceService.prepareFilesFormData(formData.files);
 
       // API 호출
-      await referenceService.updateReference(referenceId, {
+      const updateData: UpdateReferenceRequest = {
         collectionTitle: formData.collection,
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,
-        files: filesFormData,
-      });
+        files: filesFormData
+      };
+
+      await referenceService.updateReference(referenceId, updateData);
 
       showToast("레퍼런스가 수정되었습니다.", "success");
       navigate("/references");
@@ -184,13 +177,12 @@ export default function ReferenceEditPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <h1 className="text-[#62BA9B] text-2xl font-semibold">
-              레퍼런스 수정
-            </h1>
+            <h1 className="text-[#62BA9B] text-2xl font-semibold">레퍼런스 수정</h1>
             <span className="text-sm text-gray-500">* 필수 항목</span>
           </div>
           <button
-            onClick={handleSubmit}
+            type="submit"
+            form="reference-edit-form"
             disabled={isSubmitting}
             className="px-6 py-2 bg-[#62BA9B] text-white rounded-full hover:bg-[#4a9177] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
@@ -199,7 +191,7 @@ export default function ReferenceEditPage() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form id="reference-edit-form" onSubmit={handleSubmit} className="space-y-6">
           <div className="flex gap-4 items-start">
             {/* Collection Selection */}
             <div className="w-[244px]">
