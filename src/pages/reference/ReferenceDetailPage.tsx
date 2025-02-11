@@ -6,16 +6,13 @@ import { useSetRecoilState } from "recoil";
 import { alertState } from "@/store/collection";
 import { 
   Users, 
-  PencilLine, 
-  Trash2, 
-  Share2, 
   Loader, 
-  Link, 
+  Link as LinkIcon, 
   FileText, 
   File,
-  Download
+  Download,
+  Image as ImageIcon,
 } from "lucide-react";
-import Modal from "@/components/common/Modal";
 import ImagePreviewModal from "@/components/reference/ImagePreviewModal";
 import { Reference, ReferenceFile } from "@/types/reference";
 
@@ -27,7 +24,6 @@ export default function ReferenceDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [reference, setReference] = useState<Reference | null>(null);
   const [selectedImage, setSelectedImage] = useState<{url: string; name?: string} | null>(null);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchReference = async () => {
@@ -69,74 +65,97 @@ export default function ReferenceDetailPage() {
     });
   };
 
-  const handleShare = () => {
-    setIsShareModalOpen(true);
-  };
-
   const renderFilePreview = (file: ReferenceFile) => {
     switch (file.type) {
       case "link":
         return (
-          <a
-            href={file.path}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-lg hover:border-primary transition-colors"
-          >
-            <Link className="w-5 h-5 text-primary" />
-            <span className="flex-1 truncate text-sm">{file.path}</span>
-            <span className="text-sm text-gray-500">링크 이동</span>
-          </a>
+          <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <LinkIcon className="w-4 h-4" />
+              <span>링크</span>
+            </div>
+            <a
+              href={file.path}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between group px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors"
+            >
+              <span className="flex-1 truncate text-sm">{file.path}</span>
+              <span className="text-sm text-gray-500 group-hover:text-primary">링크 이동</span>
+            </a>
+          </div>
         );
       
       case "image":
         return (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-            {file.previewURLs?.map((url, index) => (
-              <div 
-                key={index}
-                className="relative aspect-video cursor-pointer group"
-                onClick={() => setSelectedImage({ url, name: `이미지 ${index + 1}` })}
-              >
-                <img
-                  src={url}
-                  alt={`Preview ${index + 1}`}
-                  className="w-full h-full object-cover rounded-lg"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
-              </div>
-            ))}
+          <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <ImageIcon className="w-4 h-4" />
+              <span>이미지</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+              {file.previewURLs?.map((url, index) => (
+                <div 
+                  key={index}
+                  className="relative aspect-video cursor-pointer group"
+                  onClick={() => setSelectedImage({ url, name: `이미지 ${index + 1}` })}
+                >
+                  <img
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
+                </div>
+              ))}
+            </div>
           </div>
         );
 
       case "pdf":
         return (
-          <a
-            href={file.previewURL}
-            download
-            className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-lg hover:border-primary transition-colors"
-          >
-            <FileText className="w-5 h-5 text-primary" />
-            <span className="flex-1 truncate text-sm">
-              {file.path.split("/").pop()}
-            </span>
-            <Download className="w-5 h-5 text-gray-500" />
-          </a>
+          <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <FileText className="w-4 h-4" />
+              <span>PDF</span>
+            </div>
+            <a
+              href={file.previewURL}
+              download
+              className="flex items-center justify-between group px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                <span className="flex-1 truncate text-sm">
+                  {file.path.split("/").pop()}
+                </span>
+              </div>
+              <Download className="w-5 h-5 text-gray-500 group-hover:text-primary" />
+            </a>
+          </div>
         );
 
       case "file":
         return (
-          <a
-            href={file.path}
-            download
-            className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-lg hover:border-primary transition-colors"
-          >
-            <File className="w-5 h-5 text-primary" />
-            <span className="flex-1 truncate text-sm">
-              {file.path.split("/").pop()}
-            </span>
-            <Download className="w-5 h-5 text-gray-500" />
-          </a>
+          <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <File className="w-4 h-4" />
+              <span>파일</span>
+            </div>
+            <a
+              href={file.path}
+              download
+              className="flex items-center justify-between group px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <File className="w-5 h-5 text-primary" />
+                <span className="flex-1 truncate text-sm">
+                  {file.path.split("/").pop()}
+                </span>
+              </div>
+              <Download className="w-5 h-5 text-gray-500 group-hover:text-primary" />
+            </a>
+          </div>
         );
 
       default:
@@ -158,44 +177,50 @@ export default function ReferenceDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="flex items-center gap-2 text-base text-gray-500">
-            {reference.createAndShare && (
-              <Users className="w-5 h-5 stroke-gray-700" />
-            )}
-            <span>{reference.collectionTitle || "불러오는 중..."}</span>
-          </h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <Share2 className="w-4 h-4" />
-              <span>공유</span>
-            </button>
-            <button
-              onClick={handleEdit}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <PencilLine className="w-4 h-4" />
-              <span>수정</span>
-            </button>
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>삭제</span>
-            </button>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex-1">
+            <h2 className="flex items-center gap-2 text-base text-gray-500 mb-2">
+              {reference.createAndShare && (
+                <Users className="w-5 h-5 stroke-gray-700" />
+              )}
+              <span>{reference.collectionTitle || "불러오는 중..."}</span>
+            </h2>
+            <h1 className="text-2xl font-bold text-primary">
+              {reference.title}
+            </h1>
+          </div>
+          <div className="flex flex-col items-end gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleDelete}
+                className="px-6 py-2 text-red-500 border border-red-500 bg-white rounded-full hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                삭제
+              </button>
+              <button
+                onClick={handleEdit}
+                className="px-6 py-2 bg-[#62BA9B] text-white rounded-full hover:bg-[#4a9177] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                수정
+              </button>
+            </div>
+            <p className="text-sm text-gray-500">
+              {reference.createdAt 
+                ? new Date(reference.createdAt).toLocaleDateString("ko-KR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                  })
+                : "-"
+              }
+            </p>
           </div>
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          {reference.title}
-        </h1>
+        {/* Divider */}
+        <div className="h-px bg-gray-200 mb-4" />
 
         {/* Keywords */}
         {reference.keywords && reference.keywords.length > 0 && (
@@ -203,7 +228,7 @@ export default function ReferenceDetailPage() {
             {reference.keywords.map((keyword, index) => (
               <span
                 key={index}
-                className="px-3 py-1 bg-[#0a306c] text-white text-sm rounded-full"
+                className="inline-flex items-center px-[10px] py-1 h-[27px] bg-[#0a306c] text-white text-sm rounded"
               >
                 {keyword}
               </span>
@@ -215,7 +240,9 @@ export default function ReferenceDetailPage() {
         {reference.memo && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">메모</h3>
-            <p className="text-gray-700 whitespace-pre-wrap">{reference.memo}</p>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-gray-700 whitespace-pre-wrap">{reference.memo}</p>
+            </div>
           </div>
         )}
 
@@ -224,32 +251,11 @@ export default function ReferenceDetailPage() {
           <h3 className="text-lg font-semibold text-gray-900">첨부 자료</h3>
           <div className="space-y-4">
             {reference.files.map((file, index) => (
-              <div key={index} className="space-y-2">
-                {renderFilePreview(file)}
-              </div>
+              <div key={index}>{renderFilePreview(file)}</div>
             ))}
           </div>
         </div>
-
-        {/* Creation Date */}
-        <p className="text-right text-sm text-gray-500 mt-8">
-          {new Date(reference.createdAt).toLocaleDateString("ko-KR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          })}
-        </p>
       </div>
-
-      {/* Share Modal */}
-      <Modal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        className="w-full max-w-lg p-6"
-      >
-        <h2 className="text-xl font-semibold mb-4">레퍼런스 공유</h2>
-        {/* Share modal content */}
-      </Modal>
 
       {/* Image Preview Modal */}
       <ImagePreviewModal
