@@ -28,7 +28,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#F9FAF9]">
       {isAuthPage && !isLoginPage ? <AuthHeader /> : null}
       {!isAuthPage && <MainHeader />}
       <main className="flex-1">
