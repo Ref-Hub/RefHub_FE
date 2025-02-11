@@ -8,6 +8,10 @@ interface ModalState {
   title: string;
 }
 
+interface ShareModalState {
+  isOpen: boolean;
+}
+
 interface DropdownState {
   sortType: string;
   searchType: string;
@@ -27,6 +31,7 @@ interface AlertState {
   massage: string;
   ids: string[];
   isVisible: boolean;
+  title: string;
 }
 
 export const modalState = atom<ModalState>({
@@ -37,6 +42,11 @@ export const modalState = atom<ModalState>({
     id: "",
     title: "",
   },
+});
+
+export const shareModalState = atom<ShareModalState>({
+  key: "shareModalState",
+  default: { isOpen: false },
 });
 
 export const DropState = atom<DropdownState>({
@@ -59,7 +69,7 @@ export const floatingModeState = atom<FloatingState>({
   },
 });
 
-export const collectionState = atom<{ data: CollectionResponse['data'] }>({
+export const collectionState = atom<{ data: CollectionResponse["data"] }>({
   key: "collectionState",
   default: {
     data: [],
@@ -73,5 +83,6 @@ export const alertState = atom<AlertState>({
     massage: "",
     ids: [],
     isVisible: false,
+    title: "",
   },
 });

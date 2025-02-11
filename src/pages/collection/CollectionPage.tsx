@@ -6,6 +6,7 @@ import {
   DropState,
   collectionState,
   alertState,
+  shareModalState,
 } from "@/store/collection";
 import { collectionService } from "@/services/collection";
 import FloatingButton from "@/components/common/FloatingButton";
@@ -16,6 +17,7 @@ import { useToast } from "@/contexts/useToast";
 import Pagination from "@/components/collection/Pagination";
 import Modal from "@/components/collection/Modal";
 import Alert from "@/components/common/Alert";
+import ShareModal from "@/components/collection/ShareModal";
 
 const CollectionPage: React.FC = () => {
   const { showToast } = useToast();
@@ -23,7 +25,9 @@ const CollectionPage: React.FC = () => {
   const sort = useRecoilValue(DropState);
   const [modal, setModal] = useRecoilState(modalState);
   const alert = useRecoilValue(alertState);
+  const shareModal = useRecoilValue(shareModalState);
   const [collectionData, setCollectionData] = useRecoilState(collectionState);
+  const [totalPage, setTotalPage] = useState<number>(1);
 
   useEffect(() => {
     const params = {
@@ -35,6 +39,7 @@ const CollectionPage: React.FC = () => {
       try {
         const data = await collectionService.getCollectionList(params);
         setCollectionData(data || {});
+        setTotalPage(data.totalPages);
       } catch (error) {
         if (error instanceof Error) {
           showToast(error.message, "error");
@@ -51,7 +56,8 @@ const CollectionPage: React.FC = () => {
   };
   return (
     <div className="font-sans">
-      {modal.isOpen && <Modal />}
+      {modal.isOpen && <Modal type={modal.type} />}
+      {shareModal.isOpen && <ShareModal />}
       {alert.isVisible && <Alert message={alert.massage} />}
       {collectionData?.data?.length > 0 && <FloatingButton type="collection" />}
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
@@ -92,7 +98,7 @@ const CollectionPage: React.FC = () => {
         )}
         <Pagination
           currentPage={currentPage}
-          totalPage={collectionData.totalPages}
+          totalPage={totalPage}
           setPage={setCurrentPage}
         />
       </div>
