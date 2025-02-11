@@ -16,10 +16,20 @@ import {
 } from "@/store/collection";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
-const ReferenceCard: React.FC<Reference> = ({
+const ReferenceCard: React.FC<
+  Pick<
+    Reference,
+    | "_id"
+    | "createAndShare"
+    | "title"
+    | "keywords"
+    | "previewURLs"
+    | "createdAt"
+    | "collectionTitle"
+  >
+> = ({
   _id,
   createAndShare,
-  collectionId,
   title,
   keywords = [],
   previewURLs = [],
@@ -78,6 +88,7 @@ const ReferenceCard: React.FC<Reference> = ({
       massage: text,
       isVisible: true,
       type: "reference",
+      title: title,
     });
     setIsOpen(false);
   };
@@ -91,7 +102,6 @@ const ReferenceCard: React.FC<Reference> = ({
     navigate(`/references/${_id}`);
   };
 
-  // 컬렉션 데이터가 로드되지 않은 경우의 처리
   if (!collectionData?.data?.length) {
     return (
       <div className="relative border border-gray-200 rounded-lg bg-white px-5">
