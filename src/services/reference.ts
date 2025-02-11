@@ -7,14 +7,16 @@ import type {
   CreateReferenceResponse,
   UpdateReferenceRequest,
   ReferenceResponse,
+  ReferenceDetailResponse,
+  ReferenceListResponse
 } from "@/types/reference";
 
 class ReferenceService {
   // 레퍼런스 목록 조회
-  async getReferenceList(params: GetReferenceParams): Promise<Reference[]> {
+  async getReferenceList(params: GetReferenceParams): Promise<ReferenceListResponse> {
     try {
-      const response = await api.get("/api/references", { params });
-      return response.data.data;
+      const response = await api.get<ReferenceListResponse>("/api/references", { params });
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -23,9 +25,28 @@ class ReferenceService {
   // 단일 레퍼런스 조회
   async getReference(id: string): Promise<Reference> {
     try {
-      const response = await api.get(`/api/references/${id}`);
-      return response.data.reference;
+      const response = await api.get<ReferenceDetailResponse>(`/api/references/${id}`);
+      const { referenceDetail } = response.data;
+      
+      // API 응답을 Reference 타입으로 변환
+      return {
+        _id: id,
+        collectionId: '', // 실제 collectionId는 나중에 설정
+        title: referenceDetail.referenceTitle,
+        keywords: referenceDetail.keywords || [],
+        memo: referenceDetail.memo || '',
+        files: referenceDetail.attachments.map(attachment => ({
+          _id: attachment.path,
+          type: attachment.type,
+          path: attachment.path,
+          size: attachment.size,
+          images: attachment.images,
+          previewURL: attachment.previewURL,
+          previewURLs: attachment.previewURLs,
+        }))
+      };
     } catch (error) {
+      console.error('getReference API Error:', error);
       throw handleApiError(error);
     }
   }
@@ -44,7 +65,7 @@ class ReferenceService {
       formData.append("title", title);
 
       if (keywords?.length) {
-        formData.append("keywords", keywords.join(","));
+        formData.append("keywords", keywords.join(" "));
       }
 
       if (memo) {
@@ -57,7 +78,7 @@ class ReferenceService {
       }
 
       const response = await api.post<CreateReferenceResponse>(
-        "/api/references/add", // 여기를 수정했습니다
+        "/api/references/add",
         formData,
         {
           headers: {
@@ -83,7 +104,7 @@ class ReferenceService {
       formData.append("title", title);
 
       if (keywords?.length) {
-        formData.append("keywords", keywords.join(","));
+        formData.append("keywords", keywords.join(" "));
       }
 
       if (memo) {
@@ -114,8 +135,7 @@ class ReferenceService {
   // 레퍼런스 삭제
   async deleteReference(id: string): Promise<void> {
     try {
-      const response = await api.delete(`/api/references/${id}`);
-      return response.data;
+      await api.delete(`/api/references/${id}`);
     } catch (error) {
       throw handleApiError(error);
     }
@@ -124,10 +144,9 @@ class ReferenceService {
   // 레퍼런스 여러개 삭제
   async deleteReferences(ids: string[]): Promise<void> {
     try {
-      const response = await api.delete("/api/references", {
+      await api.delete("/api/references", {
         data: { referenceIds: ids },
       });
-      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
