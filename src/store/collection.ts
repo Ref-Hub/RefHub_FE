@@ -1,44 +1,77 @@
-// src/store/collection.ts
 import { atom } from "recoil";
 import { CollectionResponse } from "@/types/collection";
 
-export const modalState = atom({
+interface ModalState {
+  type: string;
+  isOpen: boolean;
+  id: string;
+  title: string;
+}
+
+interface DropdownState {
+  sortType: string;
+  searchType: string;
+  searchWord: string;
+  collections: string[];
+}
+
+interface FloatingState {
+  isMove: boolean;
+  isDelete: boolean;
+  isShared: boolean[];
+  checkItems: string[];
+}
+
+interface AlertState {
+  type: string;
+  massage: string;
+  ids: string[];
+  isVisible: boolean;
+}
+
+export const modalState = atom<ModalState>({
   key: "modalState",
-  default: { type: "", isOpen: false, id: "", title: "" },
+  default: {
+    type: "",
+    isOpen: false,
+    id: "",
+    title: "",
+  },
 });
 
-export const DropState = atom({
+export const DropState = atom<DropdownState>({
   key: "DropdownState",
   default: {
     sortType: "latest",
     searchType: "all",
     searchWord: "",
-    //checkItems: [] as string[],
-    collections: [] as string[],
+    collections: [],
   },
 });
 
-export const floatingModeState = atom({
+export const floatingModeState = atom<FloatingState>({
   key: "floatingState",
   default: {
     isMove: false,
     isDelete: false,
-    isShared: [] as boolean[], // 공유 여부
-    checkItems: [] as string[], //삭제 혹은 이동할 레퍼런스들
+    isShared: [],
+    checkItems: [],
   },
 });
 
-export const collectionState = atom({
+export const collectionState = atom<{ data: CollectionResponse['data'] }>({
   key: "collectionState",
-  default: {} as CollectionResponse,
+  default: {
+    data: [],
+  },
 });
 
-export const alertState = atom({
+export const alertState = atom<AlertState>({
   key: "alertState",
   default: {
     type: "collection",
     massage: "",
-    ids: [] as string[], // 삭제할 아이디
+    ids: [],
     isVisible: false,
   },
 });
