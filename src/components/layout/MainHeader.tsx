@@ -1,13 +1,19 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import { userState } from "@/store/auth";
 import SearchBar from "../common/SearchBar";
-import { useState } from "react";
 
 export default function MainHeader() {
   const navigate = useNavigate();
-  const [type, setType] = useState("collection");
+  const location = useLocation();
   const [, setUser] = useRecoilState(userState);
+
+  // URL 경로에 따라 현재 타입 결정
+  const getCurrentType = () => {
+    if (location.pathname.includes('/collections')) return 'collection';
+    if (location.pathname.includes('/references')) return 'reference';
+    return 'collection'; // 기본값
+  };
 
   const handleLogout = () => {
     setUser(null);
@@ -16,7 +22,7 @@ export default function MainHeader() {
 
   const typeStyles = (id: string) =>
     `text-xl ${
-      type === id ? "text-primary font-bold" : "text-gray-600 font-medium"
+      getCurrentType() === id ? "text-primary font-bold" : "text-gray-600 font-medium"
     }`;
 
   return (
@@ -26,7 +32,6 @@ export default function MainHeader() {
           <Link
             to="/"
             className="flex items-center"
-            onClick={() => setType("collection")}
           >
             <img 
               src="/images/icon_with_text.svg" 
@@ -36,14 +41,12 @@ export default function MainHeader() {
           </Link>
           <nav className="flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
             <Link
-              onClick={() => setType("collection")}
               to="/collections"
               className={typeStyles("collection")}
             >
               나의 컬렉션
             </Link>
             <Link
-              onClick={() => setType("reference")}
               to="/references"
               className={typeStyles("reference")}
             >
@@ -60,7 +63,7 @@ export default function MainHeader() {
           </div>
         </div>
         <div>
-          <SearchBar type={type} />
+          <SearchBar type={getCurrentType()} />
         </div>
       </div>
     </header>
