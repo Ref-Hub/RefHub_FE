@@ -1,4 +1,3 @@
-// src/services/reference.ts
 import api from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import type {
@@ -58,7 +57,7 @@ class ReferenceService {
       }
 
       const response = await api.post<CreateReferenceResponse>(
-        "/api/references",
+        "/api/references/add", // 여기를 수정했습니다
         formData,
         {
           headers: {
