@@ -4,19 +4,19 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   currentPage: number;
-  totalPage: number;
+  totalPages: number;  // totalPage -> totalPages로 변경
   setPage: (page: number) => void;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
   currentPage,
-  totalPage,
+  totalPages,  // prop 이름 변경
   setPage,
 }) => {
   const pageRange = 10;
   const [start, setStart] = useState(1);
   const noPrev = start === 1;
-  const noNext = start + pageRange - 1 >= totalPage;
+  const noNext = start + pageRange - 1 >= totalPages;  // 변수명 변경
 
   useEffect(() => {
     if (currentPage >= start + pageRange) {
@@ -40,11 +40,11 @@ const Pagination: React.FC<PaginationProps> = ({
         {[...Array(pageRange)].map((_, i) => {
           const pageNumber = start + i;
           return (
-            pageNumber <= totalPage && (
+            pageNumber <= totalPages && (  // 변수명 변경
               <button
                 key={pageNumber}
                 onClick={() => setPage(pageNumber)}
-                className={` text-sm font-normal ${
+                className={`text-sm font-normal ${
                   currentPage === pageNumber
                     ? "text-white w-5 h-5 bg-primary rounded-full"
                     : "text-gray-500"

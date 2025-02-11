@@ -44,4 +44,4 @@ vite.config.js
 # Cache
 .cache
 .npm
-.eslintcache
+.eslintcachedev-dist/

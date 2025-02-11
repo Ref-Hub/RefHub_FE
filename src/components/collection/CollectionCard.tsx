@@ -2,9 +2,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CollectionCard as CollectionCardProps } from "../../types/collection";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { floatingModeState, modalState, alertState } from "@/store/collection";
+import {
+  floatingModeState,
+  modalState,
+  alertState,
+  DropState,
+  shareModalState,
+} from "@/store/collection";
 import { collectionService } from "@/services/collection";
 import { useToast } from "@/contexts/useToast";
+import { useNavigate } from "react-router-dom";
 import folder from "@/assets/images/folder.svg";
 import {
   Star,
@@ -23,13 +30,16 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   isFavorite,
   isShared,
 }) => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [modeValue, setModeValue] = useRecoilState(floatingModeState);
+  const setDrop = useSetRecoilState(DropState);
   const setModalOpen = useSetRecoilState(modalState);
   const setAlert = useSetRecoilState(alertState);
+  const setShareOpen = useSetRecoilState(shareModalState);
 
   useEffect(() => {
     setIsChecked(false);
@@ -89,7 +99,18 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
       massage: text,
       isVisible: true,
       type: "collection",
+      title: "",
     });
+  };
+
+  const handleDetail = () => {
+    setDrop({
+      sortType: "latest",
+      searchType: "all",
+      searchWord: "",
+      collections: [],
+    });
+    navigate(`/collections/${_id}`);
   };
 
   return (
@@ -142,7 +163,10 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
                 <Trash2 className="w-5 h-5 stroke-[#f65063]" />
                 <p className="text-black text-sm font-normal">삭제</p>
               </li>
-              <li className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200">
+              <li
+                onClick={() => setShareOpen({ isOpen: true })}
+                className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
+              >
                 <Share2 className="w-5 h-5 stroke-[#676967]" />
                 <p className="text-black text-sm font-normal">공유</p>
               </li>
@@ -163,7 +187,10 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
             <Star className="w-6 h-6" />
           )}
         </button>
-        <h2 className="text-lg font-bold text-gray-800 flex-1 truncate">
+        <h2
+          onClick={handleDetail}
+          className="text-lg font-bold text-gray-800 flex-1 truncate hover:cursor-pointer hover:underline"
+        >
           {title}
         </h2>
         {isShared && <Users className="w-5 h-5 stroke-gray-700 mr-5" />}

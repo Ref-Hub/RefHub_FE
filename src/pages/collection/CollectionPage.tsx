@@ -1,4 +1,3 @@
-// src/pages/collection/CollectionPage.tsx
 import React, { useEffect, useState } from "react";
 import { useRecoilValue, useRecoilState } from "recoil";
 import {
@@ -6,16 +5,19 @@ import {
   DropState,
   collectionState,
   alertState,
+  shareModalState,
 } from "@/store/collection";
 import { collectionService } from "@/services/collection";
 import FloatingButton from "@/components/common/FloatingButton";
 import Dropdown from "@/components/common/Dropdown";
-import CollectionCard from "../../components/collection/CollectionCard";
+import CollectionCard from "@/components/collection/CollectionCard";
 import { FolderPlus } from "lucide-react";
 import { useToast } from "@/contexts/useToast";
 import Pagination from "@/components/collection/Pagination";
 import Modal from "@/components/collection/Modal";
 import Alert from "@/components/common/Alert";
+import ShareModal from "@/components/collection/ShareModal";
+import { CollectionResponse } from "@/types/collection";
 
 const CollectionPage: React.FC = () => {
   const { showToast } = useToast();
@@ -23,19 +25,20 @@ const CollectionPage: React.FC = () => {
   const sort = useRecoilValue(DropState);
   const [modal, setModal] = useRecoilState(modalState);
   const alert = useRecoilValue(alertState);
-  const [collectionData, setCollectionData] = useRecoilState(collectionState);
+  const shareModal = useRecoilValue(shareModalState);
+  const [collectionData, setCollectionData] = useRecoilState<CollectionResponse>(collectionState);
 
   useEffect(() => {
-    const params = {
-      page: currentPage,
-      sortBy: sort.sortType,
-      search: sort.searchWord,
-    };
-    const a = async () => {
+    const fetchCollections = async () => {
+      const params = {
+        page: currentPage,
+        sortBy: sort.sortType,
+        search: sort.searchWord,
+      };
+
       try {
-        const data = await collectionService.getCollectionList(params);
-        console.log("aa", data);
-        setCollectionData(data || {});
+        const response = await collectionService.getCollectionList(params);
+        setCollectionData(response);
       } catch (error) {
         if (error instanceof Error) {
           showToast(error.message, "error");
@@ -44,35 +47,48 @@ const CollectionPage: React.FC = () => {
         }
       }
     };
-    a();
-  }, [sort, modal.isOpen, currentPage, alert]);
+
+    fetchCollections();
+  }, [sort, modal.isOpen, currentPage, alert, showToast, setCollectionData]);
 
   const handleCreate = () => {
     setModal((prev) => ({ ...prev, isOpen: true, type: "create" }));
   };
+
   return (
     <div className="font-sans">
-      {modal.isOpen && <Modal />}
+      {modal.isOpen && <Modal type={modal.type} />}
+      {shareModal.isOpen && <ShareModal />}
       {alert.isVisible && <Alert message={alert.massage} />}
       {collectionData?.data?.length > 0 && <FloatingButton type="collection" />}
+
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-10 mb-6">
           <Dropdown type="array" />
         </div>
+
         {collectionData?.data?.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            {collectionData?.data?.map((data, index) => (
-              <CollectionCard
-                key={index}
-                _id={data._id}
-                title={data.title}
-                isFavorite={data.isFavorite}
-                isShared={data.isShared}
-                refCount={data.refCount}
-                previewImages={data.previewImages}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+              {collectionData.data.map((collection) => (
+                <CollectionCard
+                  key={collection._id}
+                  _id={collection._id}
+                  title={collection.title}
+                  isFavorite={collection.isFavorite}
+                  isShared={collection.isShared}
+                  refCount={collection.refCount}
+                  previewImages={collection.previewImages}
+                />
+              ))}
+            </div>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={collectionData.totalPages}
+              setPage={setCurrentPage}
+            />
+          </>
         ) : (
           <div className="flex flex-col items-center">
             <p className="text-gray-700 font-semibold text-2xl text-center mt-44 mb-6 whitespace-pre-line">
@@ -91,11 +107,6 @@ const CollectionPage: React.FC = () => {
             )}
           </div>
         )}
-        <Pagination
-          currentPage={currentPage}
-          totalPage={collectionData.totalPages}
-          setPage={setCurrentPage}
-        />
       </div>
     </div>
   );

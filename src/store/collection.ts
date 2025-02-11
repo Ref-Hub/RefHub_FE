@@ -1,44 +1,100 @@
-// src/store/collection.ts
 import { atom } from "recoil";
 import { CollectionResponse } from "@/types/collection";
 
-export const modalState = atom({
+interface ModalState {
+  type: string;
+  isOpen: boolean;
+  id: string;
+  title: string;
+}
+
+interface ShareModalState {
+  isOpen: boolean;
+}
+
+interface DropdownState {
+  sortType: string;
+  searchType: string;
+  searchWord: string;
+  collections: string[];
+}
+
+export interface FloatingState {
+  isMove: boolean;
+  isDelete: boolean;
+  isShared: boolean[];
+  checkItems: string[];
+}
+
+interface AlertState {
+  type: string;
+  massage: string;
+  ids: string[];
+  isVisible: boolean;
+  title: string;
+}
+
+// 초기 상태 상수 정의
+const initialCollectionState: CollectionResponse = {
+  currentPage: 1,
+  totalPages: 1,
+  totalItemCount: 0,
+  _id: '',
+  title: '',
+  isShared: false,
+  isFavorite: false,
+  refCount: 0,
+  previewImages: [],
+  data: []
+};
+
+export const modalState = atom<ModalState>({
   key: "modalState",
-  default: { type: "", isOpen: false, id: "", title: "" },
+  default: {
+    type: "",
+    isOpen: false,
+    id: "",
+    title: "",
+  },
 });
 
-export const DropState = atom({
+export const shareModalState = atom<ShareModalState>({
+  key: "shareModalState",
+  default: { isOpen: false },
+});
+
+export const DropState = atom<DropdownState>({
   key: "DropdownState",
   default: {
     sortType: "latest",
     searchType: "all",
     searchWord: "",
-    //checkItems: [] as string[],
-    collections: [] as string[],
+    collections: [],
   },
 });
 
-export const floatingModeState = atom({
+export const floatingModeState = atom<FloatingState>({
   key: "floatingState",
   default: {
     isMove: false,
     isDelete: false,
-    isShared: [] as boolean[], // 공유 여부
-    checkItems: [] as string[], //삭제 혹은 이동할 레퍼런스들
+    isShared: [],
+    checkItems: [],
   },
 });
 
-export const collectionState = atom({
+export const collectionState = atom<CollectionResponse>({
   key: "collectionState",
-  default: {} as CollectionResponse,
+  default: initialCollectionState
 });
 
-export const alertState = atom({
+export const alertState = atom<AlertState>({
   key: "alertState",
   default: {
     type: "collection",
     massage: "",
-    ids: [] as string[], // 삭제할 아이디
+    ids: [],
     isVisible: false,
+    title: "", // 현재 코드의 title 필드 유지
   },
 });

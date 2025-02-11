@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { collectionService } from "@/services/collection";
 import { referenceService } from "@/services/reference";
 import { useToast } from "@/contexts/useToast";
-import { alertState, floatingModeState } from "@/store/collection";
+import { useNavigate } from "react-router-dom";
+import { alertState, floatingModeState, modalState } from "@/store/collection";
 import { useRecoilState, useSetRecoilState } from "recoil";
 
 interface AlertProps {
@@ -14,27 +15,40 @@ interface AlertProps {
 
 const Alert: React.FC<AlertProps> = ({ message }) => {
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [alert, setAlert] = useRecoilState(alertState);
   const setMode = useSetRecoilState(floatingModeState);
+  const setModal = useSetRecoilState(modalState);
 
   const handleDelete = async () => {
     try {
       if (alert.type === "collection") {
         await collectionService.deleteCollection(alert.ids);
+        showToast("삭제가 완료되었습니다.", "success");
+      } else if (alert.type === "collectionDetail") {
+        await collectionService.deleteCollection(alert.ids);
+        showToast("삭제가 완료되었습니다.", "success");
+        navigate(`/collections`);
+      } else if (alert.type === "move") {
+        console.log(`id: ${alert.ids}, title: ${alert.title}`);
+        await referenceService.moveReference(alert.ids, alert.title);
+        showToast("컬렉션 이동이 완료되었습니다.", "success");
+        setModal({ type: "", isOpen: false, id: "", title: "" });
       } else {
         if (alert.ids.length === 1) {
           await referenceService.deleteReference(alert.ids[0]);
+          showToast("삭제가 완료되었습니다.", "success");
         } else {
           await referenceService.deleteReferences(alert.ids);
+          showToast("삭제가 완료되었습니다.", "success");
         }
       }
-      showToast("삭제가 완료되었습니다.", "success");
-      setMode((prev) => ({
-        ...prev,
+      setMode({
+        isMove: false,
         isDelete: false,
         isShared: [],
         checkItems: [],
-      }));
+      });
       setAlert((prev) => ({ ...prev, isVisible: false, ids: [] }));
     } catch (error) {
       if (error instanceof Error) {

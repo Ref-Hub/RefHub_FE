@@ -1,51 +1,70 @@
-// src/services/reference.ts
 import api from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
-import type { GetReferenceParams } from "@/types/reference";
-import { Reference as ReferenceCardProps, CreateReferenceResponse } from "@/types/reference";
-
-interface ReferenceFile {
-  type: 'link' | 'image' | 'pdf' | 'file';
-  content: string;
-  name?: string;
-}
-
-interface CreateReferenceRequest {
-  collectionTitle: string;
-  title: string;
-  keywords?: string[];
-  memo?: string;
-  files: FormData;
-}
+import type {
+  GetReferenceParams,
+  Reference,
+  CreateReferenceFile,
+  CreateReferenceResponse,
+  UpdateReferenceRequest,
+  ReferenceResponse,
+  ReferenceDetailResponse,
+  ReferenceListResponse,
+} from "@/types/reference";
 
 class ReferenceService {
   // 레퍼런스 목록 조회
   async getReferenceList(
     params: GetReferenceParams
-  ): Promise<ReferenceCardProps[]> {
+  ): Promise<ReferenceListResponse> {
     try {
-      const response = await api.get("/api/references", { params });
-      return response.data.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  }
-
-  // 레퍼런스 삭제
-  async deleteReference(id: string): Promise<void> {
-    try {
-      const response = await api.delete(`/api/references/${id}`, {});
+      const response = await api.get<ReferenceListResponse>("/api/references", {
+        params,
+      });
       return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
   }
 
-  // 레퍼런스 여러개 삭제
-  async deleteReferences(ids: string[]): Promise<void> {
+  // 단일 레퍼런스 조회
+  async getReference(id: string): Promise<Reference> {
     try {
-      const response = await api.delete(`/api/references`, {
-        data: { referenceIds: ids },
+      const response = await api.get<ReferenceDetailResponse>(
+        `/api/references/${id}`
+      );
+      const { referenceDetail } = response.data;
+
+      // API 응답을 Reference 타입으로 변환
+      return {
+        _id: id,
+        collectionId: referenceDetail.collectionId,
+        collectionTitle: referenceDetail.collectionTitle,
+        createdAt: referenceDetail.createdAt,
+        title: referenceDetail.referenceTitle,
+        keywords: referenceDetail.keywords || [],
+        memo: referenceDetail.memo || "",
+        files: referenceDetail.attachments.map((attachment) => ({
+          _id: attachment.path,
+          type: attachment.type,
+          path: attachment.path,
+          size: attachment.size,
+          images: attachment.images,
+          previewURL: attachment.previewURL,
+          previewURLs: attachment.previewURLs,
+        })),
+      };
+    } catch (error) {
+      console.error("getReference API Error:", error);
+      throw handleApiError(error);
+    }
+  }
+
+  // 레퍼런스 이동
+  async moveReference(ids: string[], title: string): Promise<void> {
+    try {
+      const response = await api.patch(`/api/references`, {
+        referenceIds: ids,
+        newCollection: title,
       });
       return response.data;
     } catch (error) {
@@ -59,19 +78,19 @@ class ReferenceService {
     title,
     keywords,
     memo,
-    files
-  }: CreateReferenceRequest): Promise<CreateReferenceResponse> {
+    files,
+  }: UpdateReferenceRequest): Promise<CreateReferenceResponse> {
     try {
       const formData = new FormData();
-      formData.append('collectionTitle', collectionTitle);
-      formData.append('title', title);
-      
+      formData.append("collectionTitle", collectionTitle);
+      formData.append("title", title);
+
       if (keywords?.length) {
-        formData.append('keywords', keywords.join(','));
+        formData.append("keywords", keywords.join(" "));
       }
-      
+
       if (memo) {
-        formData.append('memo', memo);
+        formData.append("memo", memo);
       }
 
       // Append files from the provided FormData
@@ -79,11 +98,15 @@ class ReferenceService {
         formData.append(key, value);
       }
 
-      const response = await api.post<CreateReferenceResponse>('/api/references', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await api.post<CreateReferenceResponse>(
+        "/api/references/add",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       return response.data;
     } catch (error) {
@@ -91,15 +114,74 @@ class ReferenceService {
     }
   }
 
+  // 레퍼런스 수정
+  async updateReference(
+    id: string,
+    { collectionTitle, title, keywords, memo, files }: UpdateReferenceRequest
+  ): Promise<ReferenceResponse> {
+    try {
+      const formData = new FormData();
+      formData.append("collectionTitle", collectionTitle);
+      formData.append("title", title);
+
+      if (keywords?.length) {
+        formData.append("keywords", keywords.join(" "));
+      }
+
+      if (memo) {
+        formData.append("memo", memo);
+      }
+
+      // Append files from the provided FormData
+      for (const [key, value] of files.entries()) {
+        formData.append(key, value);
+      }
+
+      const response = await api.patch<ReferenceResponse>(
+        `/api/references/${id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  // 레퍼런스 삭제
+  async deleteReference(id: string): Promise<void> {
+    try {
+      await api.delete(`/api/references/${id}`);
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  // 레퍼런스 여러개 삭제
+  async deleteReferences(ids: string[]): Promise<void> {
+    try {
+      await api.delete("/api/references", {
+        data: { referenceIds: ids },
+      });
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
   // 파일 데이터 준비
-  prepareFilesFormData(files: ReferenceFile[]): FormData {
+  prepareFilesFormData(files: CreateReferenceFile[]): FormData {
     const formData = new FormData();
     let imageCount = 1;
 
-    files.forEach(file => {
-      if (file.type === 'link') {
-        formData.append('links', file.content);
-      } else if (file.type === 'image') {
+    files.forEach((file) => {
+      if (file.type === "link") {
+        formData.append("links", file.content);
+      } else if (file.type === "image") {
         try {
           const images = JSON.parse(file.content);
           if (Array.isArray(images)) {
@@ -110,14 +192,14 @@ class ReferenceService {
             imageCount++;
           }
         } catch (_) {
-          console.error('이미지 데이터 파싱 실패');
+          console.error("이미지 데이터 파싱 실패");
         }
-      } else if (file.type === 'pdf') {
+      } else if (file.type === "pdf") {
         const blobData = this.base64ToBlob(file.content);
-        formData.append('files', blobData, file.name);
+        formData.append("files", blobData, file.name);
       } else {
         const blobData = this.base64ToBlob(file.content);
-        formData.append('otherFiles', blobData, file.name);
+        formData.append("otherFiles", blobData, file.name);
       }
     });
 
@@ -125,8 +207,8 @@ class ReferenceService {
   }
 
   private base64ToBlob(base64: string): Blob {
-    const parts = base64.split(';base64,');
-    const contentType = parts[0].split(':')[1] || '';
+    const parts = base64.split(";base64,");
+    const contentType = parts[0].split(":")[1] || "";
     const raw = window.atob(parts[1]);
     const rawLength = raw.length;
     const uInt8Array = new Uint8Array(rawLength);
