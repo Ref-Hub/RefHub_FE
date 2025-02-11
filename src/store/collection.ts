@@ -19,7 +19,7 @@ interface DropdownState {
   collections: string[];
 }
 
-interface FloatingState {
+export interface FloatingState {
   isMove: boolean;
   isDelete: boolean;
   isShared: boolean[];
@@ -33,6 +33,20 @@ interface AlertState {
   isVisible: boolean;
   title: string;
 }
+
+// 초기 상태 상수 정의
+const initialCollectionState: CollectionResponse = {
+  currentPage: 1,
+  totalPages: 1,
+  totalItemCount: 0,
+  _id: '',
+  title: '',
+  isShared: false,
+  isFavorite: false,
+  refCount: 0,
+  previewImages: [],
+  data: []
+};
 
 export const modalState = atom<ModalState>({
   key: "modalState",
@@ -69,11 +83,9 @@ export const floatingModeState = atom<FloatingState>({
   },
 });
 
-export const collectionState = atom<{ data: CollectionResponse["data"] }>({
+export const collectionState = atom<CollectionResponse>({
   key: "collectionState",
-  default: {
-    data: [],
-  },
+  default: initialCollectionState
 });
 
 export const alertState = atom<AlertState>({
@@ -83,6 +95,6 @@ export const alertState = atom<AlertState>({
     massage: "",
     ids: [],
     isVisible: false,
-    title: "",
+    title: "", // 현재 코드의 title 필드 유지
   },
 });
