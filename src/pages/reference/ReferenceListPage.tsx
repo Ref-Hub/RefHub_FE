@@ -18,6 +18,7 @@ import { useToast } from "@/contexts/useToast";
 import Modal from "@/components/collection/Modal";
 import Alert from "@/components/common/Alert";
 import { Reference } from "@/types/reference";
+import { CollectionResponse } from "@/types/collection";
 
 // ReferenceCard와 리스트에서 공통으로 사용할 타입 정의
 export interface ReferenceListItem {
@@ -55,12 +56,48 @@ export default function ReferenceListPage() {
       try {
         const collectionsData = await collectionService.getCollectionList();
         if (collectionsData?.data) {
-          setCollections({ data: collectionsData.data });
+          const collectionResponse: CollectionResponse = {
+            currentPage: collectionsData.currentPage || 1,
+            totalPages: collectionsData.totalPages || 1,
+            totalItemCount: collectionsData.totalItemCount || 0,
+            _id: collectionsData._id || '',
+            title: collectionsData.title || '',
+            isShared: collectionsData.isShared || false,
+            isFavorite: collectionsData.isFavorite || false,
+            refCount: collectionsData.refCount || 0,
+            previewImages: collectionsData.previewImages || [],
+            data: collectionsData.data
+          };
+          setCollections(collectionResponse);
         } else {
-          setCollections({ data: [] });
+          // 빈 상태의 CollectionResponse 객체 설정
+          setCollections({
+            currentPage: 1,
+            totalPages: 1,
+            totalItemCount: 0,
+            _id: '',
+            title: '',
+            isShared: false,
+            isFavorite: false,
+            refCount: 0,
+            previewImages: [],
+            data: []
+          });
         }
       } catch (error) {
-        setCollections({ data: [] });
+        // 에러 시 빈 상태의 CollectionResponse 객체 설정
+        setCollections({
+          currentPage: 1,
+          totalPages: 1,
+          totalItemCount: 0,
+          _id: '',
+          title: '',
+          isShared: false,
+          isFavorite: false,
+          refCount: 0,
+          previewImages: [],
+          data: []
+        });
         if (error instanceof Error) {
           showToast(error.message, "error");
         } else {
@@ -88,14 +125,12 @@ export default function ReferenceListPage() {
 
         const response = await referenceService.getReferenceList(params);
 
-        // 데이터가 있는지 확인
         if (!response.data) {
           console.log("No data in response");
           setReferenceData([]);
           return;
         }
 
-        // API 응답에서 데이터 변환
         const transformedData: ReferenceListItem[] = response.data.map(
           (reference) => {
             const files = reference.files || [];
@@ -129,7 +164,7 @@ export default function ReferenceListPage() {
 
         setReferenceData(transformedData);
       } catch (error) {
-        console.error("Error loading references:", error); // 에러 상세 정보 확인
+        console.error("Error loading references:", error);
         if (error instanceof Error) {
           showToast(error.message, "error");
         } else {
