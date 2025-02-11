@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilValue, useRecoilState } from "recoil";
 import { useNavigate } from "react-router-dom";
 import { FilePlus, LayoutGrid, Text } from "lucide-react";
 import Dropdown from "@/components/common/Dropdown";
@@ -20,7 +20,7 @@ import Alert from "@/components/common/Alert";
 import { Reference } from "@/types/reference";
 
 // ReferenceCard와 리스트에서 공통으로 사용할 타입 정의
-interface ReferenceListItem {
+export interface ReferenceListItem {
   _id: string;
   createAndShare?: boolean;
   collectionId: string;
@@ -45,7 +45,7 @@ export default function ReferenceListPage() {
   const sort = useRecoilValue(DropState);
   const modal = useRecoilValue(modalState);
   const alert = useRecoilValue(alertState);
-  const setCollections = useSetRecoilState(collectionState);
+  const [collections, setCollections] = useRecoilState(collectionState);
   const [isLoading, setIsLoading] = useState(true);
   const [referenceData, setReferenceData] = useState<ReferenceListItem[]>([]);
 
@@ -98,7 +98,6 @@ export default function ReferenceListPage() {
         // API 응답에서 데이터 변환
         const transformedData: ReferenceListItem[] = response.data.map(
           (reference) => {
-
             const files = reference.files || [];
             const previewURLs = files
               .filter((file) => file && file.type === "image")
@@ -109,6 +108,9 @@ export default function ReferenceListPage() {
               _id: reference._id,
               createAndShare: reference.createAndShare,
               collectionId: reference.collectionId,
+              collectionTitle: collections.data.find(
+                (item) => item._id === reference.collectionId
+              )?.title,
               title: reference.title,
               keywords: reference.keywords,
               previewURLs,
@@ -158,7 +160,7 @@ export default function ReferenceListPage() {
 
   return (
     <div className="min-h-screen font-sans">
-      {modal.isOpen && <Modal />}
+      {modal.isOpen && <Modal type={modal.type} />}
       {alert.isVisible && <Alert message={alert.massage} />}
       {referenceData?.length > 0 && <FloatingButton type="reference" />}
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">

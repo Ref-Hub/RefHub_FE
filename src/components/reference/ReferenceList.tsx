@@ -23,12 +23,17 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
   const collectionData = useRecoilValue(collectionState);
   const setAlert = useSetRecoilState(alertState);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const menuRefs = useRef<{ [key: string]: HTMLTableDataCellElement | null }>({});
+  const menuRefs = useRef<{ [key: string]: HTMLTableDataCellElement | null }>(
+    {}
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (openMenuId && menuRefs.current[openMenuId] && 
-          !menuRefs.current[openMenuId]?.contains(event.target as Node)) {
+      if (
+        openMenuId &&
+        menuRefs.current[openMenuId] &&
+        !menuRefs.current[openMenuId]?.contains(event.target as Node)
+      ) {
         setOpenMenuId(null);
       }
     };
@@ -39,7 +44,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
   }, [openMenuId]);
 
   const handleRowClick = (id: string, event: React.MouseEvent) => {
-    if ((event.target as HTMLElement).closest('.more-button')) {
+    if ((event.target as HTMLElement).closest(".more-button")) {
       return;
     }
     navigate(`/references/${id}`);
@@ -49,7 +54,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
     const collectionTitle = collectionData.data.find(
       (i) => i._id === item.collectionId
     )?.title;
-    
+
     const text = item.createAndShare
       ? `${collectionTitle} 컬렉션의 다른 사용자와 공유 중인 ${item.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
       : `${item.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
@@ -59,6 +64,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
       massage: text,
       isVisible: true,
       type: "reference",
+      title: "",
     });
     setOpenMenuId(null);
   };
@@ -108,10 +114,17 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
                 ))}
               </div>
             </td>
-            <td className="py-4">{item.createdAt}</td>
-            <td 
+            <td className="py-4">{`${new Date(item.createdAt).getFullYear()}.${(
+              new Date(item.createdAt).getMonth() + 1
+            )
+              .toString()
+              .padStart(2, "0")}.${new Date(item.createdAt)
+              .getDate()
+              .toString()
+              .padStart(2, "0")}`}</td>
+            <td
               className="relative py-4"
-              ref={(el) => menuRefs.current[item._id] = el}
+              ref={(el) => (menuRefs.current[item._id] = el)}
             >
               <div className="more-button flex justify-center">
                 <button

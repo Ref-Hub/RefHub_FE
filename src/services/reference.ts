@@ -8,14 +8,18 @@ import type {
   UpdateReferenceRequest,
   ReferenceResponse,
   ReferenceDetailResponse,
-  ReferenceListResponse
+  ReferenceListResponse,
 } from "@/types/reference";
 
 class ReferenceService {
   // 레퍼런스 목록 조회
-  async getReferenceList(params: GetReferenceParams): Promise<ReferenceListResponse> {
+  async getReferenceList(
+    params: GetReferenceParams
+  ): Promise<ReferenceListResponse> {
     try {
-      const response = await api.get<ReferenceListResponse>("/api/references", { params });
+      const response = await api.get<ReferenceListResponse>("/api/references", {
+        params,
+      });
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -25,18 +29,21 @@ class ReferenceService {
   // 단일 레퍼런스 조회
   async getReference(id: string): Promise<Reference> {
     try {
-      const response = await api.get<ReferenceDetailResponse>(`/api/references/${id}`);
+      const response = await api.get<ReferenceDetailResponse>(
+        `/api/references/${id}`
+      );
       const { referenceDetail } = response.data;
-      
+
       // API 응답을 Reference 타입으로 변환
       return {
         _id: id,
         collectionId: referenceDetail.collectionId,
         collectionTitle: referenceDetail.collectionTitle,
+        createdAt: referenceDetail.createdAt,
         title: referenceDetail.referenceTitle,
         keywords: referenceDetail.keywords || [],
-        memo: referenceDetail.memo || '',
-        files: referenceDetail.attachments.map(attachment => ({
+        memo: referenceDetail.memo || "",
+        files: referenceDetail.attachments.map((attachment) => ({
           _id: attachment.path,
           type: attachment.type,
           path: attachment.path,
@@ -44,10 +51,23 @@ class ReferenceService {
           images: attachment.images,
           previewURL: attachment.previewURL,
           previewURLs: attachment.previewURLs,
-        }))
+        })),
       };
     } catch (error) {
-      console.error('getReference API Error:', error);
+      console.error("getReference API Error:", error);
+      throw handleApiError(error);
+    }
+  }
+
+  // 레퍼런스 이동
+  async moveReference(ids: string[], title: string): Promise<void> {
+    try {
+      const response = await api.patch(`/api/references`, {
+        referenceIds: ids,
+        newCollection: title,
+      });
+      return response.data;
+    } catch (error) {
       throw handleApiError(error);
     }
   }
