@@ -4,14 +4,14 @@
 export interface Reference {
   _id: string;
   collectionId: string;
-  collectionTitle?: string;  // 추가
+  collectionTitle?: string; // 추가
   title: string;
   keywords?: string[];
   memo?: string;
   files: ReferenceFile[];
   createAndShare?: boolean;
   previewURLs?: string[];
-  createdAt?: string;
+  createdAt: string;
 }
 
 // API 조회 파라미터
@@ -25,7 +25,7 @@ export interface GetReferenceParams {
 // 파일 관련 타입들
 export interface ReferenceFile {
   _id: string;
-  type: 'link' | 'image' | 'pdf' | 'file';
+  type: "link" | "image" | "pdf" | "file";
   path: string;
   size: number;
   images?: string[];
@@ -36,7 +36,7 @@ export interface ReferenceFile {
 // 레퍼런스 생성/수정 시 사용되는 파일 타입
 export interface CreateReferenceFile {
   id: string;
-  type: 'link' | 'image' | 'pdf' | 'file';
+  type: "link" | "image" | "pdf" | "file";
   content: string;
   name?: string;
 }
@@ -64,13 +64,14 @@ export interface CreateReferenceResponse {
 export interface ReferenceDetailResponse {
   message: string;
   referenceDetail: {
-    collectionId: string;     // 추가
+    collectionId: string; // 추가
     collectionTitle: string;
     referenceTitle: string;
+    createdAt: string;
     keywords: string[];
     memo: string;
     attachments: Array<{
-      type: 'link' | 'image' | 'pdf' | 'file';
+      type: "link" | "image" | "pdf" | "file";
       path: string;
       size: number;
       images?: string[];
