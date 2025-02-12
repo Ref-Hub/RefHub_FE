@@ -1,6 +1,7 @@
 // src/utils/errorHandler.ts
 import { AxiosError } from 'axios';
 import type { ApiErrorResponse } from '@/types/auth';
+import type { ReferenceApiError } from '@/types/reference';
 
 export class ApiError extends Error {
   status: number;
@@ -22,6 +23,10 @@ export const ERROR_MESSAGES = {
   NOT_FOUND: '요청하신 리소스를 찾을 수 없습니다.',
   VALIDATION_ERROR: '입력값을 확인해주세요.',
   DEFAULT: '알 수 없는 오류가 발생했습니다.',
+  FILE_SIZE_EXCEEDED: '파일 크기가 제한을 초과했습니다.',
+  INVALID_FILE_TYPE: '지원하지 않는 파일 형식입니다.',
+  FILE_UPLOAD_FAILED: '파일 업로드에 실패했습니다.',
+  MAX_FILES_EXCEEDED: '최대 파일 개수를 초과했습니다.',
 } as const;
 
 export const handleApiError = (error: unknown): never => {
@@ -29,13 +34,13 @@ export const handleApiError = (error: unknown): never => {
 
   if (error instanceof AxiosError) {
     const status = error.response?.status || 500;
-    const errorData = error.response?.data as ApiErrorResponse;
+    const errorData = error.response?.data as ApiErrorResponse | ReferenceApiError;
     let message: string;
 
     // API에서 반환하는 실제 에러 메시지를 우선적으로 사용
     if (typeof errorData === 'string') {
       message = errorData;
-    } else if (errorData?.error) {
+    } else if ('error' in errorData) {
       message = errorData.error;
     } else {
       // 상태 코드별 기본 에러 메시지
@@ -48,6 +53,12 @@ export const handleApiError = (error: unknown): never => {
           break;
         case 404:
           message = ERROR_MESSAGES.NOT_FOUND;
+          break;
+        case 413:
+          message = ERROR_MESSAGES.FILE_SIZE_EXCEEDED;
+          break;
+        case 415:
+          message = ERROR_MESSAGES.INVALID_FILE_TYPE;
           break;
         case 422:
           message = ERROR_MESSAGES.VALIDATION_ERROR;

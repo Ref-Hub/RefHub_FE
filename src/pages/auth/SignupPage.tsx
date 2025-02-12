@@ -13,6 +13,7 @@ type SignupStep = "INFO" | "VERIFY" | "PASSWORD";
 export default function SignupPage() {
   const [currentStep, setCurrentStep] = useState<SignupStep>("INFO");
   const [verificationSent, setVerificationSent] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
@@ -43,12 +44,31 @@ export default function SignupPage() {
   const passwordConfirm = watch("passwordConfirm");
 
   const isEmailValid = email && !errors.email;
-  const isVerificationComplete = verificationCode?.length === 6 && !errors.verificationCode;
-  const isPasswordValid = 
-    password && 
-    passwordConfirm && 
-    !errors.password && 
-    !errors.passwordConfirm;
+  const isVerificationComplete =
+    verificationCode?.length === 6 && !errors.verificationCode;
+  const isPasswordValid =
+    password && passwordConfirm && !errors.password && !errors.passwordConfirm;
+
+  // 비밀번호 유효성 검사 함수
+  const validatePassword = (value: string) => {
+    const hasLetter = /[A-Za-z]/.test(value);
+    const hasNumber = /[0-9]/.test(value);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+    const validLength = value.length >= 8 && value.length <= 12;
+    
+    if (!value) return "비밀번호를 입력해주세요";
+    
+    const validCombination =
+      (hasLetter && hasNumber) ||
+      (hasLetter && hasSpecial) ||
+      (hasNumber && hasSpecial);
+
+    if (!validLength || !validCombination) {
+      return "영문, 숫자, 특수문자 중 2종류 이상 조합 (8-12자)";
+    }
+
+    return true;
+  };
 
   const handleVerificationSend = async () => {
     const isValid = await trigger(["name", "email"]);
@@ -79,6 +99,12 @@ export default function SignupPage() {
 
     setIsLoading(true);
     try {
+      await authService.verifyCode({
+        email: getValues("email"),
+        verificationCode: getValues("verificationCode"),
+      });
+
+      setIsVerified(true);
       setCurrentStep("PASSWORD");
       showToast("인증이 완료되었습니다.", "success");
     } catch (error) {
@@ -93,7 +119,7 @@ export default function SignupPage() {
   };
 
   const onSubmit = async (data: SignupForm) => {
-    if (isLoading) return;
+    if (isLoading || !isVerified) return;
 
     setIsLoading(true);
     try {
@@ -112,9 +138,11 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex justify-center items-center px-4">
+    <div className="flex justify-center items-center px-4 mt-16">
       <div className="w-[520px]">
-        <h2 className="text-[32px] text-center font-bold text-primary mb-8">회원가입</h2>
+        <h2 className="text-[32px] text-center font-bold text-primary mb-8">
+          회원가입
+        </h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
@@ -123,24 +151,33 @@ export default function SignupPage() {
               label="이름"
               placeholder="이름을 입력하세요"
               className="w-full h-[56px]"
+              maxLength={10}
               {...register("name", {
                 required: "이름을 입력해주세요",
+                pattern: {
+                  value: /^[A-Za-z가-힣]+$/,
+                  message: "한글 또는 영문만 입력 가능합니다",
+                },
+                maxLength: {
+                  value: 10,
+                  message: "최대 10글자까지 입력 가능합니다",
+                },
               })}
               error={errors.name?.message}
               disabled={verificationSent}
             />
-            
+
             {/* 이메일 입력 필드 */}
             <div className="space-y-1">
               <div className="flex gap-4">
                 <Input
                   label="이메일"
                   placeholder="abc@refhub.com"
-                  className="w-[379px] h-[56px]"
+                  className="w-[368px] h-[56px]"
                   {...register("email", {
                     required: "이메일을 입력해주세요",
                     pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i,
                       message: "올바른 이메일 형식이 아닙니다",
                     },
                   })}
@@ -150,16 +187,20 @@ export default function SignupPage() {
                 <div className="flex items-end">
                   <Button
                     type="button"
-                    variant={countdown > 0 ? "secondary" : "primary"}
+                    variant={isVerified ? "primary" : countdown > 0 ? "secondary" : "primary"}
                     onClick={handleVerificationSend}
-                    disabled={!isEmailValid || countdown > 0 || isLoading}
+                    disabled={!isEmailValid || (isVerified || countdown > 0)}
                     className="w-[136px] h-[56px] text-base font-medium whitespace-nowrap"
                   >
-                    {isLoading ? "전송 중..." : 
-                      countdown > 0 
-                        ? `${Math.floor(countdown / 60)}:${String(countdown % 60).padStart(2, '0')}`
-                        : "인증번호 전송"
-                    }
+                    {isVerified
+                      ? "인증 완료"
+                      : isLoading
+                      ? "전송 중..."
+                      : countdown > 0
+                      ? `${Math.floor(countdown / 60)}:${String(
+                          countdown % 60
+                        ).padStart(2, "0")}`
+                      : "인증번호 전송"}
                   </Button>
                 </div>
               </div>
@@ -173,11 +214,12 @@ export default function SignupPage() {
                   placeholder="인증번호 6자리를 입력하세요"
                   className="w-full h-[56px]"
                   maxLength={6}
+                  numbersOnly
                   {...register("verificationCode", {
                     required: "인증번호를 입력해주세요",
-                    minLength: {
-                      value: 6,
-                      message: "인증번호는 6자리입니다",
+                    pattern: {
+                      value: /^[0-9]{6}$/,
+                      message: "인증번호는 6자리 숫자입니다",
                     },
                   })}
                   error={errors.verificationCode?.message}
@@ -204,13 +246,11 @@ export default function SignupPage() {
                   className="w-full h-[56px]"
                   {...register("password", {
                     required: "비밀번호를 입력해주세요",
-                    pattern: {
-                      value: /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,12}$/,
-                      message: "영문, 숫자, 특수문자 2종류 이상 조합 (8-12자)",
-                    },
+                    validate: validatePassword,
                   })}
                   error={errors.password?.message}
-                  helperText="영문, 숫자, 특수문자 2종류 이상 조합 (8-12자)"
+                  helperText="영문, 숫자, 특수문자 중 2종류 이상 조합 (8-12자)"
+                  isValid={Boolean(password && !errors.password)}
                 />
                 <Input
                   label="비밀번호 재입력"
@@ -220,12 +260,13 @@ export default function SignupPage() {
                   {...register("passwordConfirm", {
                     required: "비밀번호 확인을 입력해주세요",
                     validate: (value) =>
-                      value === watch("password") || "비밀번호가 일치하지 않습니다",
+                      value === password || "비밀번호가 일치하지 않습니다",
                   })}
                   error={errors.passwordConfirm?.message}
+                  isValid={Boolean(passwordConfirm && !errors.passwordConfirm)}
                 />
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   variant={isPasswordValid ? "primary" : "secondary"}
                   className="w-full h-[56px]"
                   disabled={!isPasswordValid || isLoading}

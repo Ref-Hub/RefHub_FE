@@ -53,7 +53,7 @@ export default function LoginPage() {
       {/* Left Section */}
       <div className="hidden lg:block lg:w-1/2">
         <img 
-          src="/src/assets/images/auth/login-intro-bg.svg" 
+          src="/images/login-intro-bg.svg" 
           alt="RefHub Introduction" 
           className="w-full h-full object-cover"
         />
