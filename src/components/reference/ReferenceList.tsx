@@ -30,19 +30,17 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
   const [isTotal, setIsTotal] = useState(false);
   const [isChecked, setIsChecked] = useState(Array(items.length).fill(false));
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const menuRefs = useRef<{ [key: string]: HTMLTableDataCellElement | null }>(
-    {}
-  );
+  const menuRefs = useRef<{ [key: string]: HTMLTableDataCellElement | null }>({});
 
   useEffect(() => {
     setIsChecked(Array(items.length).fill(false));
-  }, [modeValue.isDelete, modeValue.isMove]);
+  }, [modeValue.isDelete, modeValue.isMove, items.length]);
 
   useEffect(() => {
     collectionData.data.length === modeValue.checkItems.length
       ? setIsTotal(true)
       : setIsTotal(false);
-  }, [modeValue.checkItems]);
+  }, [modeValue.checkItems, collectionData.data.length]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -143,13 +141,13 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
               <div>
                 <input
                   type="checkbox"
-                  id={"total"}
+                  id="total"
                   checked={isTotal}
                   onChange={(e) => handleChange(e, 0, false)}
                   className="hidden"
                 />
                 <label
-                  htmlFor={"total"}
+                  htmlFor="total"
                   className={`w-5 h-5 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
                     isTotal ? "bg-primary" : "bg-white"
                   }`}
@@ -236,7 +234,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
                     e.stopPropagation();
                     setOpenMenuId(openMenuId === item._id ? null : item._id);
                   }}
-                  className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-150"
+                  className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
                 >
                   <EllipsisVertical className="w-5 h-5 text-gray-600" />
                 </button>
@@ -249,7 +247,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
                             e.stopPropagation();
                             handleEdit(item._id);
                           }}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                         >
                           <PencilLine className="w-4 h-4 stroke-primary" />
                           <span>수정</span>
@@ -261,7 +259,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
                             e.stopPropagation();
                             handleDelete(item);
                           }}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                         >
                           <Trash2 className="w-4 h-4 stroke-[#f65063]" />
                           <span>삭제</span>
