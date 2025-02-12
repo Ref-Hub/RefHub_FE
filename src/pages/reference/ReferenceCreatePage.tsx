@@ -106,7 +106,7 @@ export default function ReferenceCreatePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <h1 className="text-[#62BA9B] text-2xl font-semibold">
+            <h1 className="text-primary text-2xl font-semibold">
               레퍼런스 추가
             </h1>
             <span className="text-sm text-gray-500">* 필수 항목</span>
@@ -114,7 +114,7 @@ export default function ReferenceCreatePage() {
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-6 py-2 bg-[#62BA9B] text-white rounded-full hover:bg-[#4a9177] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSubmitting && <Loader className="w-4 h-4 animate-spin" />}
             등록

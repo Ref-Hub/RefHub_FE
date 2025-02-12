@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import { referenceService } from "@/services/reference";
-import { useSetRecoilState } from "recoil";
+import { useSetRecoilState, useRecoilValue } from "recoil";
+import Alert from "@/components/common/Alert";
 import { alertState } from "@/store/collection";
-import { 
-  Users, 
-  Loader, 
-  Link as LinkIcon, 
-  FileText, 
+import {
+  Users,
+  Loader,
+  Link as LinkIcon,
+  FileText,
   File,
   Download,
   Image as ImageIcon,
@@ -21,9 +22,13 @@ export default function ReferenceDetailPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const setAlert = useSetRecoilState(alertState);
+  const alert = useRecoilValue(alertState);
   const [isLoading, setIsLoading] = useState(true);
   const [reference, setReference] = useState<Reference | null>(null);
-  const [selectedImage, setSelectedImage] = useState<{url: string; name?: string} | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{
+    url: string;
+    name?: string;
+  } | null>(null);
 
   useEffect(() => {
     const fetchReference = async () => {
@@ -53,7 +58,11 @@ export default function ReferenceDetailPage() {
     if (!reference) return;
 
     const text = reference.createAndShare
-      ? `${reference.collectionTitle || "선택한"} 컬렉션의 다른 사용자와 공유 중인 ${reference.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
+      ? `${
+          reference.collectionTitle || "선택한"
+        } 컬렉션의 다른 사용자와 공유 중인 ${
+          reference.title
+        }를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
       : `${reference.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
 
     setAlert({
@@ -63,6 +72,8 @@ export default function ReferenceDetailPage() {
       type: "reference",
       title: reference.title,
     });
+
+    return;
   };
 
   const renderFilePreview = (file: ReferenceFile) => {
@@ -81,11 +92,13 @@ export default function ReferenceDetailPage() {
               className="flex items-center justify-between group px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors"
             >
               <span className="flex-1 truncate text-sm">{file.path}</span>
-              <span className="text-sm text-gray-500 group-hover:text-primary">링크 이동</span>
+              <span className="text-sm text-gray-500 group-hover:text-primary">
+                링크 이동
+              </span>
             </a>
           </div>
         );
-      
+
       case "image":
         return (
           <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
@@ -95,10 +108,12 @@ export default function ReferenceDetailPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
               {file.previewURLs?.map((url, index) => (
-                <div 
+                <div
                   key={index}
                   className="relative aspect-video cursor-pointer group"
-                  onClick={() => setSelectedImage({ url, name: `이미지 ${index + 1}` })}
+                  onClick={() =>
+                    setSelectedImage({ url, name: `이미지 ${index + 1}` })
+                  }
                 >
                   <img
                     src={url}
@@ -177,6 +192,9 @@ export default function ReferenceDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Alert component */}
+      {alert.isVisible && <Alert message={alert.massage} />}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -201,20 +219,19 @@ export default function ReferenceDetailPage() {
               </button>
               <button
                 onClick={handleEdit}
-                className="px-6 py-2 bg-[#62BA9B] text-white rounded-full hover:bg-[#4a9177] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 수정
               </button>
             </div>
             <p className="text-sm text-gray-500">
-              {reference.createdAt 
+              {reference.createdAt
                 ? new Date(reference.createdAt).toLocaleDateString("ko-KR", {
                     year: "numeric",
                     month: "2-digit",
                     day: "2-digit",
                   })
-                : "-"
-              }
+                : "-"}
             </p>
           </div>
         </div>
@@ -241,7 +258,9 @@ export default function ReferenceDetailPage() {
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">메모</h3>
             <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-gray-700 whitespace-pre-wrap">{reference.memo}</p>
+              <p className="text-gray-700 whitespace-pre-wrap">
+                {reference.memo}
+              </p>
             </div>
           </div>
         )}

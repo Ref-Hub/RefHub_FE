@@ -1,4 +1,3 @@
-// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
@@ -6,9 +5,10 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#1ABC9C",
+          DEFAULT: "#09D5AD",
           light: "#E8F8F5",
-          dark: "#16A085",
+          dark: "#07c09b",
+          hover: "#07c09b",
         },
         gray: {
           100: "#F1F3F1",

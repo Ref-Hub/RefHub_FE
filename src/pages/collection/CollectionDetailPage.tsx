@@ -1,6 +1,5 @@
-// src/pages/collection/CollectionDetailPage.tsx
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useToast } from "@/contexts/useToast";
 import { FilePlus, LayoutGrid, Text, Users } from "lucide-react";
 import FloatingButton from "@/components/common/FloatingButton";
@@ -32,106 +31,90 @@ export default function CollectionDetailPage() {
   const shareModal = useRecoilValue(shareModalState);
   const [alert, setAlert] = useRecoilState(alertState);
   const [collectionDatas, setCollectionDatas] = useRecoilState(collectionState);
-  const [collectionData, setCollectionData] = useState(
-    collectionDatas.data.find((item) => item._id === collectionId)
-  );
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useRecoilState(modalState);
   const [referenceData, setReferenceData] = useState<ReferenceListItem[]>([]);
 
-  useEffect(() => {
-    const collectionParams = {
-      page: 1,
-      sortBy: sort.sortType,
-      search: sort.searchWord,
-    };
-    const getCollection = async () => {
-      try {
-        const data = await collectionService.getCollectionList(
-          collectionParams
-        );
-        setCollectionDatas(data);
-        setCollectionData(data.data.find((item) => item._id === collectionId));
-      } catch (error) {
-        if (error instanceof Error) {
-          showToast(error.message, "error");
-        } else {
-          showToast("컬렉션 가져오기를 실패했습니다.", "error");
-        }
-      }
-    };
-    getCollection();
-  }, [modal.isOpen]);
+  // collectionData를 useMemo로 관리
+  const collectionData = useMemo(
+    () => collectionDatas.data.find((item) => item._id === collectionId),
+    [collectionDatas.data, collectionId]
+  );
 
+  // 데이터 페칭을 하나의 useEffect로 통합
   useEffect(() => {
-    const loadReferences = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
+        // 컬렉션 데이터 가져오기
+        const collectionParams = {
+          page: 1,
+          sortBy: sort.sortType,
+          search: sort.searchWord,
+        };
+        const collectionResponse = await collectionService.getCollectionList(collectionParams);
+        setCollectionDatas(collectionResponse);
+
+        // 레퍼런스 데이터 가져오기
         const params = {
           sortBy: sort.sortType,
           search: sort.searchWord,
-          collection: collectionData?.title || "",
+          collection: collectionResponse.data.find((item) => item._id === collectionId)?.title || "",
           filterBy: sort.searchType,
           view: view,
           mode: "home",
         };
 
-        const response = await referenceService.getReferenceList(params);
+        const referenceResponse = await referenceService.getReferenceList(params);
 
-        // 데이터가 있는지 확인
-        if (!response.data) {
-          console.log("No data in response");
+        if (!referenceResponse.data) {
           setReferenceData([]);
           return;
         }
 
-        // API 응답에서 데이터 변환
-        const transformedData: ReferenceListItem[] = response.data.map(
-          (reference) => {
-            const files = reference.files || [];
-            const previewURLs = files
-              .filter((file) => file && file.type === "image")
-              .flatMap((file) => file.previewURLs || [])
-              .slice(0, 4);
+        const transformedData: ReferenceListItem[] = referenceResponse.data.map((reference) => {
+          const files = reference.files || [];
+          const previewURLs = files
+            .filter((file) => file && file.type === "image")
+            .flatMap((file) => file.previewURLs || [])
+            .slice(0, 4);
 
-            return {
-              _id: reference._id,
-              createAndShare: reference.createAndShare,
-              collectionId: reference.collectionId,
-              collectionTitle: collectionDatas.data.find(
-                (item) => item._id === reference.collectionId
-              )?.title,
-              title: reference.title,
-              keywords: reference.keywords,
-              previewURLs,
-              createdAt: reference.createdAt,
-              files: files.map((file) => ({
-                _id: file._id || file.path,
-                type: file.type,
-                path: file.path,
-                size: file.size,
-                previewURL: file.previewURL,
-                previewURLs: file.previewURLs,
-              })),
-            };
-          }
-        );
+          return {
+            _id: reference._id,
+            createAndShare: reference.createAndShare,
+            collectionId: reference.collectionId,
+            collectionTitle: collectionResponse.data.find(
+              (item) => item._id === reference.collectionId
+            )?.title,
+            title: reference.title,
+            keywords: reference.keywords,
+            previewURLs,
+            createdAt: reference.createdAt,
+            files: files.map((file) => ({
+              _id: file._id || file.path,
+              type: file.type,
+              path: file.path,
+              size: file.size,
+              previewURL: file.previewURL,
+              previewURLs: file.previewURLs,
+            })),
+          };
+        });
 
         setReferenceData(transformedData);
       } catch (error) {
-        console.error("Error loading references:", error); // 에러 상세 정보 확인
         if (error instanceof Error) {
           showToast(error.message, "error");
         } else {
-          showToast("레퍼런스 데이터를 불러오는데 실패했습니다.", "error");
+          showToast("데이터를 불러오는데 실패했습니다.", "error");
         }
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadReferences();
-  }, [sort, view, alert, collectionData]);
+    fetchData();
+  }, [sort, view, modal.isOpen, alert, collectionId]);
 
   const handleDelete = () => {
     let text = "";
