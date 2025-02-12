@@ -94,14 +94,14 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
           <tr
             key={index}
             onClick={(e) => handleRowClick(item._id, e)}
-            className="text-center text-black text-base font-normal border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
+            className="text-center text-black text-base font-normal border-b border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors duration-200"
           >
             <td className="py-4">{index + 1}</td>
             <td className="py-4 px-2 truncate">
               {collectionData.data.find((i) => i._id === item.collectionId)
                 ?.title || null}
             </td>
-            <td className="py-4 px-4 text-left truncate">{item.title}</td>
+            <td className="py-4 px-4 text-center truncate">{item.title}</td>
             <td className="py-4">
               <div className="flex flex-wrap justify-center gap-1.5 px-2">
                 {item.keywords?.map((word, index) => (
