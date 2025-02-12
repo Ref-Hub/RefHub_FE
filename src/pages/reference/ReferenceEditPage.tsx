@@ -9,7 +9,10 @@ import { collectionService } from "@/services/collection";
 import { referenceService } from "@/services/reference";
 import { Loader } from "lucide-react";
 import type { CollectionCard } from "@/types/collection";
-import type { CreateReferenceFile, UpdateReferenceRequest } from "@/types/reference";
+import type {
+  CreateReferenceFile,
+  UpdateReferenceRequest,
+} from "@/types/reference";
 
 interface FormData {
   collection: string;
@@ -25,7 +28,8 @@ export default function ReferenceEditPage() {
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isLoadingCollections, setIsLoadingCollections] = useState<boolean>(false);
+  const [isLoadingCollections, setIsLoadingCollections] =
+    useState<boolean>(false);
   const [collections, setCollections] = useState<CollectionCard[]>([]);
 
   const [formData, setFormData] = useState<FormData>({
@@ -56,15 +60,17 @@ export default function ReferenceEditPage() {
         const reference = await referenceService.getReference(referenceId);
 
         // 파일 데이터 변환
-        const convertedFiles: CreateReferenceFile[] = reference.files.map((file) => ({
-          id: file._id,
-          type: file.type,
-          content:
-            file.type === "link"
-              ? file.path
-              : file.previewURL || file.previewURLs?.[0] || "",
-          name: file.path.split("/").pop() || "",
-        }));
+        const convertedFiles: CreateReferenceFile[] = reference.files.map(
+          (file) => ({
+            id: file._id,
+            type: file.type,
+            content:
+              file.type === "link"
+                ? file.path
+                : file.previewURL || file.previewURLs?.[0] || "",
+            name: file.path.split("/").pop() || "",
+          })
+        );
 
         // 폼 데이터 설정
         setFormData({
@@ -143,7 +149,9 @@ export default function ReferenceEditPage() {
       }
 
       // 파일 데이터 준비
-      const filesFormData = referenceService.prepareFilesFormData(formData.files);
+      const filesFormData = referenceService.prepareFilesFormData(
+        formData.files
+      );
 
       // API 호출
       const updateData: UpdateReferenceRequest = {
@@ -151,7 +159,7 @@ export default function ReferenceEditPage() {
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,
-        files: filesFormData
+        files: filesFormData,
       };
 
       await referenceService.updateReference(referenceId, updateData);
@@ -179,21 +187,27 @@ export default function ReferenceEditPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <h1 className="text-[#62BA9B] text-2xl font-semibold">레퍼런스 수정</h1>
+            <h1 className="text-primary text-2xl font-semibold">
+              레퍼런스 수정
+            </h1>
             <span className="text-sm text-gray-500">* 필수 항목</span>
           </div>
           <button
             type="submit"
             form="reference-edit-form"
             disabled={isSubmitting}
-            className="px-6 py-2 bg-[#62BA9B] text-white rounded-full hover:bg-[#4a9177] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSubmitting && <Loader className="w-4 h-4 animate-spin" />}
             저장
           </button>
         </div>
 
-        <form id="reference-edit-form" onSubmit={handleSubmit} className="space-y-6">
+        <form
+          id="reference-edit-form"
+          onSubmit={handleSubmit}
+          className="space-y-6"
+        >
           <div className="flex gap-4 items-start">
             {/* Collection Selection */}
             <div className="w-[244px]">
