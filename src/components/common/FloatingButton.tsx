@@ -125,7 +125,9 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
               }
               label="컬렉션 공유"
               time={1.2}
-              onClick={() => setShareOpen({ isOpen: true })}
+              onClick={() =>
+                setShareOpen((prev) => ({ ...prev, isOpen: true }))
+              }
             />
           )}
           <ActionButton
