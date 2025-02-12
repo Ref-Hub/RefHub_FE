@@ -169,7 +169,7 @@ export default function CollectionDetailPage() {
   return (
     <div className="font-sans">
       {modal.isOpen && <Modal type={modal.type} />}
-      {shareModal.isOpen && <ShareModal />}
+      {shareModal.isOpen && collectionId && <ShareModal collectionId={collectionId} />}
       {alert.isVisible && <Alert message={alert.massage} />}
       {referenceData?.length > 0 && <FloatingButton type="collectionDetail" />}
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
