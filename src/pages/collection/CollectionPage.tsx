@@ -26,7 +26,8 @@ const CollectionPage: React.FC = () => {
   const [modal, setModal] = useRecoilState(modalState);
   const alert = useRecoilValue(alertState);
   const shareModal = useRecoilValue(shareModalState);
-  const [collectionData, setCollectionData] = useRecoilState<CollectionResponse>(collectionState);
+  const [collectionData, setCollectionData] =
+    useRecoilState<CollectionResponse>(collectionState);
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -54,13 +55,12 @@ const CollectionPage: React.FC = () => {
   const handleCreate = () => {
     setModal((prev) => ({ ...prev, isOpen: true, type: "create" }));
   };
-  const collectionId = collectionData?.data.length > 0 ? collectionData.data[0]._id : collectionData._id; // collectionId값 전달
-  console.log("Collection ID:", collectionId); 
+
   return (
     <div className="font-sans">
       {modal.isOpen && <Modal type={modal.type} />}
-      {shareModal.isOpen && collectionId && (
-        <ShareModal collectionId={collectionId} /> 
+      {shareModal.isOpen && (
+        <ShareModal collectionId={shareModal.collectionId} />
       )}
       {alert.isVisible && <Alert message={alert.massage} />}
       {collectionData?.data?.length > 0 && <FloatingButton type="collection" />}

@@ -74,7 +74,7 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
       <div className="flex flex-col items-center w-[520px] py-6 px-8 relative bg-[#f9faf9] rounded-2xl">
         <X
           className="absolute w-9 h-9 top-6 right-6 stroke-gray-700 cursor-pointer"
-          onClick={() => setIsOpen({ isOpen: false })}
+          onClick={() => setIsOpen({ isOpen: false, collectionId: "" })}
         />
         <p className="text-black text-2xl font-semibold">컬렉션 공유</p>
 

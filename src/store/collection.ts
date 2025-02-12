@@ -10,6 +10,7 @@ interface ModalState {
 
 interface ShareModalState {
   isOpen: boolean;
+  collectionId: string;
 }
 
 interface DropdownState {
@@ -39,13 +40,13 @@ const initialCollectionState: CollectionResponse = {
   currentPage: 1,
   totalPages: 1,
   totalItemCount: 0,
-  _id: '',
-  title: '',
+  _id: "",
+  title: "",
   isShared: false,
   isFavorite: false,
   refCount: 0,
   previewImages: [],
-  data: []
+  data: [],
 };
 
 export const modalState = atom<ModalState>({
@@ -60,7 +61,7 @@ export const modalState = atom<ModalState>({
 
 export const shareModalState = atom<ShareModalState>({
   key: "shareModalState",
-  default: { isOpen: false },
+  default: { isOpen: false, collectionId: "" },
 });
 
 export const DropState = atom<DropdownState>({
@@ -85,7 +86,7 @@ export const floatingModeState = atom<FloatingState>({
 
 export const collectionState = atom<CollectionResponse>({
   key: "collectionState",
-  default: initialCollectionState
+  default: initialCollectionState,
 });
 
 export const alertState = atom<AlertState>({
