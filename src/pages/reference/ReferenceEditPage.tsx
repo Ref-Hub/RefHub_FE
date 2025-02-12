@@ -165,7 +165,7 @@ export default function ReferenceEditPage() {
       await referenceService.updateReference(referenceId, updateData);
 
       showToast("레퍼런스가 수정되었습니다.", "success");
-      navigate("/references");
+      navigate(`/references/${referenceId}`);
     } catch (error) {
       console.error("Error updating reference:", error);
       showToast("레퍼런스 수정에 실패했습니다.", "error");
