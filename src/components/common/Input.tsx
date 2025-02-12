@@ -1,5 +1,5 @@
 // src/components/common/Input.tsx
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, KeyboardEvent } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -10,6 +10,8 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
   rightElement?: React.ReactNode;
   leftElement?: React.ReactNode;
   isLoading?: boolean;
+  isValid?: boolean;
+  numbersOnly?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(({
@@ -20,9 +22,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   rightElement,
   leftElement,
   isLoading,
+  isValid,
+  numbersOnly,
   type,
   disabled,
   className = '',
+  onKeyPress,
   ...props
 }, ref) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +38,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     lg: 'px-4 py-3 text-lg'
   };
 
+  const getBorderColor = () => {
+    if (error) return 'border-red-500 focus:border-red-500 focus:ring-red-500';
+    if (isValid) return 'border-green-500 focus:border-green-500 focus:ring-green-500';
+    return 'border-gray-300 focus:border-primary focus:ring-primary';
+  };
+
   const baseInputStyles = `
     w-full
     rounded-lg
@@ -40,18 +51,24 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     border
     focus:outline-none
     focus:ring-2
-    focus:ring-primary
     focus:ring-opacity-50
     disabled:bg-gray-50
     disabled:cursor-not-allowed
     transition-colors
     duration-200
-    ${error ? 'border-red-500 focus:border-red-500' : 'border-gray-300'}
+    ${getBorderColor()}
     ${leftElement ? 'pl-10' : ''}
     ${rightElement || type === 'password' ? 'pr-10' : ''}
     ${sizeStyles[size]}
     ${className}
   `;
+
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (numbersOnly && !/[0-9]/.test(e.key)) {
+      e.preventDefault();
+    }
+    onKeyPress?.(e);
+  };
 
   const renderPasswordToggle = type === 'password' && (
     <button
@@ -87,6 +104,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
           type={inputType}
           disabled={disabled || isLoading}
           className={baseInputStyles}
+          onKeyPress={handleKeyPress}
           {...props}
         />
         {renderPasswordToggle || (rightElement && (
