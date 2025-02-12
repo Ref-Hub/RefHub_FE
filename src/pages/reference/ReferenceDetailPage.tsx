@@ -4,6 +4,7 @@ import { useToast } from "@/contexts/useToast";
 import { referenceService } from "@/services/reference";
 import { useSetRecoilState, useRecoilValue } from "recoil";
 import Alert from "@/components/common/Alert";
+import LinkPreview from "@/components/reference/LinkPreview";
 import { alertState } from "@/store/collection";
 import {
   Users,
@@ -78,6 +79,7 @@ export default function ReferenceDetailPage() {
 
   const renderFilePreview = (file: ReferenceFile) => {
     switch (file.type) {
+      // renderFilePreview 함수 내 link case 부분만 수정
       case "link":
         return (
           <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
@@ -85,17 +87,20 @@ export default function ReferenceDetailPage() {
               <LinkIcon className="w-4 h-4" />
               <span>링크</span>
             </div>
-            <a
-              href={file.path}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between group px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors"
-            >
-              <span className="flex-1 truncate text-sm">{file.path}</span>
-              <span className="text-sm text-gray-500 group-hover:text-primary">
-                링크 이동
-              </span>
-            </a>
+            <div className="flex flex-col">
+              <a
+                href={file.path}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between group px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors"
+              >
+                <span className="flex-1 truncate text-sm">{file.path}</span>
+                <span className="text-sm text-gray-500 group-hover:text-primary">
+                  링크 이동
+                </span>
+              </a>
+              <LinkPreview url={file.path} />
+            </div>
           </div>
         );
 
