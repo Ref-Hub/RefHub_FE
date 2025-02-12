@@ -8,6 +8,7 @@ import { useReferenceCreate } from "@/hooks/useReferenceCreate";
 import { collectionService } from "@/services/collection";
 import { Loader } from "lucide-react";
 import type { CollectionCard } from "@/types/collection";
+import type { CreateReferenceFile } from "@/types/reference";
 
 interface FileItem {
   id: string;
@@ -21,7 +22,7 @@ interface FormData {
   title: string;
   keywords: string[];
   memo: string;
-  files: FileItem[];
+  files: CreateReferenceFile[]; // FileItem 대신 CreateReferenceFile 사용
 }
 
 export default function ReferenceCreatePage() {
@@ -71,7 +72,7 @@ export default function ReferenceCreatePage() {
     e.preventDefault();
 
     try {
-      // Validation
+      // 기존 검증
       if (!formData.collection) {
         showToast("컬렉션을 선택해 주세요.", "error");
         return;
@@ -80,10 +81,47 @@ export default function ReferenceCreatePage() {
         showToast("제목을 입력해 주세요.", "error");
         return;
       }
+
+      // 디버깅 로그 추가
+      console.log("제출된 파일 데이터:", formData.files);
+
+      // 링크 유효성 검사 추가
+      const invalidLinks = formData.files.filter(
+        (file) =>
+          file.type === "link" &&
+          file.content &&
+          !file.content.startsWith("http://") &&
+          !file.content.startsWith("https://")
+      );
+
+      if (invalidLinks.length > 0) {
+        showToast("링크는 http:// 또는 https://로 시작해야 합니다.", "error");
+        return;
+      }
+
+      // 파일 컨텐츠 검증 로그 추가
+      formData.files.forEach((file, index) => {
+        console.log(`파일 ${index} 검증:`, {
+          type: file.type,
+          hasContent: !!file.content,
+          contentLength: file.content.length,
+        });
+      });
+
+      // 나머지 검증
       if (formData.files.some((file) => !file.content)) {
         showToast("모든 자료를 입력해 주세요.", "error");
         return;
       }
+
+      // API 호출 전 데이터 로깅
+      console.log("API 요청 데이터:", {
+        collectionTitle: formData.collection,
+        title: formData.title,
+        keywords: formData.keywords,
+        memo: formData.memo,
+        filesCount: formData.files.length,
+      });
 
       // API 호출
       await createReference({
@@ -97,6 +135,7 @@ export default function ReferenceCreatePage() {
       showToast("레퍼런스가 등록되었습니다.", "success");
       navigate("/references");
     } catch (error) {
+      console.error("레퍼런스 등록 실패:", error);
       showToast("레퍼런스 등록에 실패했습니다.", "error");
     }
   };
