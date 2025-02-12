@@ -38,6 +38,8 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
         if (alert.ids.length === 1) {
           await referenceService.deleteReference(alert.ids[0]);
           showToast("삭제가 완료되었습니다.", "success");
+          // Add navigation for single reference deletion
+          navigate("/references");
         } else {
           await referenceService.deleteReferences(alert.ids);
           showToast("삭제가 완료되었습니다.", "success");

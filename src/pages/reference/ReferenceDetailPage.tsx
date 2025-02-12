@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import { referenceService } from "@/services/reference";
-import { useSetRecoilState } from "recoil";
+import { useSetRecoilState, useRecoilValue } from "recoil";
+import Alert from "@/components/common/Alert";
 import { alertState } from "@/store/collection";
 import {
   Users,
@@ -21,6 +22,7 @@ export default function ReferenceDetailPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const setAlert = useSetRecoilState(alertState);
+  const alert = useRecoilValue(alertState);
   const [isLoading, setIsLoading] = useState(true);
   const [reference, setReference] = useState<Reference | null>(null);
   const [selectedImage, setSelectedImage] = useState<{
@@ -70,6 +72,8 @@ export default function ReferenceDetailPage() {
       type: "reference",
       title: reference.title,
     });
+
+    return;
   };
 
   const renderFilePreview = (file: ReferenceFile) => {
@@ -188,6 +192,9 @@ export default function ReferenceDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Alert component */}
+      {alert.isVisible && <Alert message={alert.massage} />}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
