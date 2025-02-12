@@ -20,3 +20,13 @@ export interface GetCollectionParams {
   sortBy: string;
   search: string;
 }
+
+export interface SharedUser {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  role: string;
+}

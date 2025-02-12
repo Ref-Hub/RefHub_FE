@@ -2,16 +2,8 @@ import { useEffect, useState } from "react";
 import { X, CircleX } from "lucide-react";
 import { useRecoilState } from "recoil";
 import { shareModalState } from "@/store/collection";
-
-interface SharedUser {
-  _id: string;
-  userId: {
-    _id: string;
-    name: string;
-    email: string;
-  };
-  role: string;
-}
+import { collectionService } from "@/services/collection";
+import { SharedUser } from "@/types/collection";
 
 const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
   const [, setIsOpen] = useRecoilState(shareModalState);
@@ -19,9 +11,6 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
   const [email, setEmail] = useState("");
   const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // API URL 설정
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://refhub.site/api";
 
   // 공유 사용자 목록 조회 (GET)
   const fetchSharedUsers = async () => {
@@ -33,21 +22,9 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/collections/${collectionId}/sharing/shared-users`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error("사용자 목록 조회 실패");
-
-      const data = await response.json();
-      console.log("사용자 목록 조회 성공:", data);
-      setSharedUsers(data);
-      setIsShare(data.length > 0);
+      const response = await collectionService.getSharedUsers(collectionId);
+      setSharedUsers(response);
+      setIsShare(response.length > 0);
     } catch (error) {
       console.error("사용자 목록 조회 실패:", error);
       alert("사용자 목록 조회 실패");
@@ -65,20 +42,7 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
     }
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/collections/${collectionId}/sharing/shared-users`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) throw new Error("사용자 추가 또는 수정 실패");
-
-      const data = await response.json();
-      alert(data.message);
+      await collectionService.updateSharedUsers(collectionId, email);
       setEmail("");
       fetchSharedUsers();
     } catch (error) {
@@ -92,19 +56,7 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
     if (!collectionId) return;
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/collections/${collectionId}/sharing/shared-users/${userId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error("사용자 삭제 실패");
-
-      const data = await response.json();
-      alert(data.message);
+      await collectionService.deleteSharedUsers(collectionId, userId);
       fetchSharedUsers();
     } catch (error) {
       console.error("사용자 삭제 실패:", error);
@@ -120,8 +72,10 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
   return (
     <div className="flex fixed top-0 left-0 w-full h-full bg-black/60 z-20 items-center justify-center">
       <div className="flex flex-col items-center w-[520px] py-6 px-8 relative bg-[#f9faf9] rounded-2xl">
-        <X className="absolute w-9 h-9 top-6 right-6 stroke-gray-700 cursor-pointer"
-           onClick={() => setIsOpen({ isOpen: false })} />
+        <X
+          className="absolute w-9 h-9 top-6 right-6 stroke-gray-700 cursor-pointer"
+          onClick={() => setIsOpen({ isOpen: false })}
+        />
         <p className="text-black text-2xl font-semibold">컬렉션 공유</p>
 
         <p className="text-base font-normal mt-8 text-center">
@@ -139,10 +93,18 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
               isShare ? "translate-x-56" : "translate-x-0.5"
             }`}
           />
-          <p className={`absolute left-[85px] transition-colors ${isShare ? "text-primary" : "text-white"}`}>
+          <p
+            className={`absolute left-[85px] transition-colors ${
+              isShare ? "text-primary" : "text-white"
+            }`}
+          >
             나만보기
           </p>
-          <p className={`absolute right-[85px] transition-colors ${isShare ? "text-white" : "text-primary"}`}>
+          <p
+            className={`absolute right-[85px] transition-colors ${
+              isShare ? "text-white" : "text-primary"
+            }`}
+          >
             공유하기
           </p>
         </div>
@@ -154,11 +116,16 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
             {loading ? (
               <p className="text-gray-500 text-sm mt-4">로딩 중...</p>
             ) : sharedUsers.length === 0 ? (
-              <p className="text-gray-500 text-sm mt-4">공유된 사용자가 없습니다.</p>
+              <p className="text-gray-500 text-sm mt-4">
+                공유된 사용자가 없습니다.
+              </p>
             ) : (
               <ul className="mt-4 w-full">
                 {sharedUsers.map((user) => (
-                  <li key={user._id} className="flex justify-between items-center bg-gray-100 p-2 rounded-lg mb-2">
+                  <li
+                    key={user._id}
+                    className="flex justify-between items-center bg-gray-100 p-2 rounded-lg mb-2"
+                  >
                     <p>{user.userId.name || user.userId.email}</p>
                     <button
                       className="text-red-500 text-sm font-semibold"
@@ -174,8 +141,10 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
             {/* 사용자 추가 입력 */}
             <div className="relative flex gap-2 mt-4 w-full justify-center">
               {email.length > 0 && (
-                <CircleX className="absolute top-5 right-24 w-6 h-6 fill-gray-700 stroke-white cursor-pointer"
-                         onClick={() => setEmail("")} />
+                <CircleX
+                  className="absolute top-5 right-24 w-6 h-6 fill-gray-700 stroke-white cursor-pointer"
+                  onClick={() => setEmail("")}
+                />
               )}
               <input
                 type="text"
@@ -184,14 +153,14 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full py-2 px-4 bg-white text-base font-normal rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
               />
-            <button
-             onClick={handleAddOrUpdateUser}
-             disabled={email.length === 0}
-             className="inline-block px-4 py-2 bg-primary rounded-lg text-white font-bold transition-colors duration-200 
+              <button
+                onClick={handleAddOrUpdateUser}
+                disabled={email.length === 0}
+                className="inline-block px-4 py-2 bg-primary rounded-lg text-white font-bold transition-colors duration-200 
                hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-gray-500"
-           >
-             초대
-           </button>
+              >
+                초대
+              </button>
             </div>
           </div>
         )}
