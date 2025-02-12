@@ -54,11 +54,14 @@ const CollectionPage: React.FC = () => {
   const handleCreate = () => {
     setModal((prev) => ({ ...prev, isOpen: true, type: "create" }));
   };
-
+  const collectionId = collectionData?.data.length > 0 ? collectionData.data[0]._id : collectionData._id; // collectionId값 전달
+  console.log("Collection ID:", collectionId); 
   return (
     <div className="font-sans">
       {modal.isOpen && <Modal type={modal.type} />}
-      {shareModal.isOpen && <ShareModal />}
+      {shareModal.isOpen && collectionId && (
+        <ShareModal collectionId={collectionId} /> 
+      )}
       {alert.isVisible && <Alert message={alert.massage} />}
       {collectionData?.data?.length > 0 && <FloatingButton type="collection" />}
 
