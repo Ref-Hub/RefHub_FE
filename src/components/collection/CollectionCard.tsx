@@ -164,7 +164,9 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
                 <p className="text-black text-sm font-normal">삭제</p>
               </li>
               <li
-                onClick={() => setShareOpen({ isOpen: true })}
+                onClick={() =>
+                  setShareOpen({ isOpen: true, collectionId: _id })
+                }
                 className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
               >
                 <Share2 className="w-5 h-5 stroke-[#676967]" />
