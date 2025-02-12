@@ -182,7 +182,7 @@ const ReferenceCard: React.FC<
         {title}
       </p>
 
-      <div className="flex flex-wrap gap-1.5 mb-3.5">
+      <div className="flex flex-wrap gap-1.5 mb-3.5 min-h-6">
         {keywords?.map((word, index) => (
           <span
             key={`${word}-${index}`}
