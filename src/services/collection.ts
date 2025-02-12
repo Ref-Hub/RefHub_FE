@@ -106,6 +106,26 @@ class CollectionService {
       throw handleApiError(error);
     }
   }
+
+  // 미리보기 이미지 조회
+  async getImage(collectionId: string): Promise<string> {
+    try {
+      const response = await api.get(`${collectionId}`, {
+        responseType: "arraybuffer",
+      });
+
+      const binary = new Uint8Array(response.data).reduce(
+        (data, byte) => data + String.fromCharCode(byte),
+        ""
+      );
+      const base64String = btoa(binary);
+      const mimeType = "image/jpeg";
+
+      return `data:${mimeType};base64,${base64String}`;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
 }
 
 export const collectionService = new CollectionService();

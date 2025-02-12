@@ -40,6 +40,38 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   const setModalOpen = useSetRecoilState(modalState);
   const setAlert = useSetRecoilState(alertState);
   const setShareOpen = useSetRecoilState(shareModalState);
+  const [imgs, setImgs] = useState<string[]>([]);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (previewImages.length > 0) {
+      previewImages.map((link) => {
+        if (typeof link === "string" && link.startsWith("undefined")) {
+          const newLink = link.replace("undefined", "");
+          handleImg(newLink);
+        } else if (typeof link === "string") {
+          setImgs((prev) => [...prev, link]);
+        }
+      });
+    }
+  }, []);
+
+  const handleImg = async (link: string) => {
+    try {
+      const data = await collectionService.getImage(link);
+      setImgs((prev) => [...prev, data]);
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("실패했습니다.", "error");
+      }
+    }
+  };
 
   useEffect(() => {
     setIsChecked(false);
@@ -207,7 +239,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
       <div className="mb-2 py-5">
         {previewImages.length > 0 ? (
           <div className="grid grid-cols-2 gap-2">
-            {previewImages.slice(0, 4).map((image, index) => (
+            {imgs.slice(0, 4).map((image, index) => (
               <img
                 key={index}
                 src={image}
