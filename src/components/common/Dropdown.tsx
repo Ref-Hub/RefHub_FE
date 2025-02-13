@@ -126,7 +126,7 @@ const Dropdown: React.FC<DropdownProps> = ({ type }) => {
       )}
 
       {isOpen && type === "collection" && (
-        <ul className="flex flex-col absolute w-full bg-white p-4 gap-4 border border-gray-200 rounded-lg shadow-[0px_0px_10px_0px_rgba(181,184,181,0.20)] z-10">
+        <ul className="flex flex-col absolute max-w-60 max-h-96 overflow-y-auto bg-white p-4 gap-4 border border-gray-200 rounded-lg shadow-[0px_0px_10px_0px_rgba(181,184,181,0.20)] z-10">
           <li
             className="flex items-center gap-2 cursor-pointer hover:text-primary hover:font-semibold"
             onClick={() => handleSelect(total)}
