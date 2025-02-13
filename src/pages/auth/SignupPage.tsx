@@ -79,7 +79,7 @@ export default function SignupPage() {
       const { name, email } = getValues();
       await authService.sendVerificationCode(name, email);
       setVerificationSent(true);
-      setCountdown(180); // 3분
+      setCountdown(600); // 10분
       clearErrors("verificationCode");
       showToast("인증번호가 발송되었습니다.", "success");
     } catch (error) {
