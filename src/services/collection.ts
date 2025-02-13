@@ -1,6 +1,6 @@
 import api from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
-import type { GetCollectionParams, SharedUser } from "@/types/collection";
+import type { GetCollectionParams, SharedUsers } from "@/types/collection";
 import { CollectionResponse } from "@/types/collection";
 
 class CollectionService {
@@ -63,7 +63,7 @@ class CollectionService {
   }
 
   // 공유 사용자 조회
-  async getSharedUsers(collectionId: string): Promise<SharedUser[]> {
+  async getSharedUsers(collectionId: string): Promise<SharedUsers> {
     try {
       const response = await api.get(
         `/api/collections/${collectionId}/sharing/shared-users`,
@@ -79,7 +79,7 @@ class CollectionService {
   async updateSharedUsers(
     collectionId: string,
     email: string,
-    role: "viewer" | "editor" = "viewer"
+    role?: string
   ): Promise<void> {
     try {
       const response = await api.patch(
@@ -102,6 +102,19 @@ class CollectionService {
         `/api/collections/${collectionId}/sharing/shared-users/${userId}`,
         {}
       );
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  // 컬렉션 나만 보기
+  async setPrivate(collectionId: string): Promise<void> {
+    try {
+      const response = await api.patch(
+        `/api/collections/${collectionId}/sharing/set-private`,
+        {}
+      );
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }

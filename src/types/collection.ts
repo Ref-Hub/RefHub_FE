@@ -22,6 +22,7 @@ export interface GetCollectionParams {
 }
 
 export interface SharedUser {
+  collectionId: string;
   _id: string;
   userId: {
     _id: string;
@@ -29,4 +30,15 @@ export interface SharedUser {
     email: string;
   };
   role: string;
+}
+
+export interface OwnerUser {
+  email: string;
+  name: string;
+  _id: string;
+}
+
+export interface SharedUsers {
+  owner: OwnerUser;
+  sharing: SharedUser[];
 }

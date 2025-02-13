@@ -27,7 +27,7 @@ export interface ReferenceListItem {
   collectionId: string;
   title: string;
   keywords?: string[];
-  previewURLs?: { type: string; url: string }[];
+  previewData?: string[];
   createdAt?: string;
   files: Array<{
     _id: string;
@@ -144,7 +144,7 @@ export default function ReferenceListPage() {
               )?.title,
               title: reference.title,
               keywords: reference.keywords,
-              previewURLs: reference.previewURLs,
+              previewData: reference.previewData,
               createdAt: reference.createdAt,
               files: files.map((file) => ({
                 _id: file._id || file.path,

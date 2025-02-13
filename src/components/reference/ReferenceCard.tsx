@@ -18,13 +18,6 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { collectionService } from "@/services/collection";
 import { useToast } from "@/contexts/useToast";
 
-interface MetaData {
-  title?: string;
-  description?: string;
-  image: string;
-  favicon?: string;
-}
-
 const ReferenceCard: React.FC<
   Pick<
     Reference,
@@ -32,7 +25,7 @@ const ReferenceCard: React.FC<
     | "createAndShare"
     | "title"
     | "keywords"
-    | "previewURLs"
+    | "previewData"
     | "createdAt"
     | "collectionTitle"
   >
@@ -41,7 +34,7 @@ const ReferenceCard: React.FC<
   createAndShare,
   title,
   keywords = [],
-  previewURLs = [],
+  previewData = [],
   createdAt,
   collectionTitle,
 }) => {
@@ -65,13 +58,15 @@ const ReferenceCard: React.FC<
       isFirstRender.current = false;
       return;
     }
-    if (previewURLs.length > 0) {
-      previewURLs.map((link) => {
-        if (link.type === "image" && link.url.startsWith("undefined")) {
-          const newLink = link.url.replace("undefined", "");
+    if (previewData.length > 0) {
+      previewData.map((link) => {
+        if (typeof link === "string" && link.startsWith("undefined")) {
+          const newLink = link.replace("undefined", "");
           handleImg(newLink);
-        } else if (link.type === "link") {
-          fetchMetadata(link.url);
+        } else if (typeof link === "string") {
+          setImgs((prev) => [...prev, link]);
+        } else {
+          setImgs([]);
         }
       });
     }
@@ -87,36 +82,6 @@ const ReferenceCard: React.FC<
       } else {
         showToast("이미지 로딩 실패했습니다.", "error");
       }
-    }
-  };
-
-  const fetchMetadata = async (url: string) => {
-    try {
-      // CORS 이슈를 우회하기 위해 allorigins.win 프록시 서비스 사용
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(
-        url
-      )}`;
-      const response = await fetch(proxyUrl);
-      const data = await response.json();
-
-      if (data.contents) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data.contents, "text/html");
-
-        const meta: MetaData = {
-          image:
-            doc
-              .querySelector('meta[property="og:image"]')
-              ?.getAttribute("content") || "",
-        };
-
-        setImgs((prev) => [...prev, meta.image]);
-      }
-    } catch (err) {
-      console.error("Error fetching metadata:", err);
-      //setError(true);
-    } finally {
-      //setLoading(false);
     }
   };
 
@@ -266,7 +231,7 @@ const ReferenceCard: React.FC<
       </div>
 
       <div className="mb-2 min-h-[152px]">
-        {(previewURLs ?? []).length > 0 ? (
+        {(imgs ?? []).length > 0 ? (
           <div className="grid grid-cols-2 gap-2">
             {imgs.slice(0, 4).map((image, index) => (
               <img
