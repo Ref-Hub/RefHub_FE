@@ -13,6 +13,7 @@ type ResetStep = "EMAIL" | "VERIFY" | "NEW_PASSWORD";
 export default function PasswordResetPage() {
   const [currentStep, setCurrentStep] = useState<ResetStep>("EMAIL");
   const [isVerificationSent, setIsVerificationSent] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
@@ -51,6 +52,29 @@ export default function PasswordResetPage() {
     !errors.newPassword &&
     !errors.newPasswordConfirm;
 
+  // 비밀번호 유효성 검사 함수
+  const validatePassword = (value: string) => {
+    if (!value) return "새 비밀번호를 입력해주세요";
+
+    const hasLetter = /[A-Za-z]/.test(value);
+    const hasNumber = /[0-9]/.test(value);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+    const validLength = value.length >= 8 && value.length <= 12;
+
+    if (
+      !validLength ||
+      !(
+        (hasLetter && hasNumber) ||
+        (hasLetter && hasSpecial) ||
+        (hasNumber && hasSpecial)
+      )
+    ) {
+      return "영문, 숫자, 특수문자 중 2종류 이상 조합 (8-12자)";
+    }
+
+    return true;
+  };
+
   const handleVerificationSend = async () => {
     const isValid = await trigger("email");
     if (!isValid || isLoading) return;
@@ -60,7 +84,7 @@ export default function PasswordResetPage() {
       const { email } = getValues();
       await authService.sendPasswordResetCode(email);
       setIsVerificationSent(true);
-      setCountdown(180); // 3분
+      setCountdown(600); // 10분
       clearErrors("verificationCode");
       showToast("인증번호가 발송되었습니다.", "success");
     } catch (error) {
@@ -80,11 +104,18 @@ export default function PasswordResetPage() {
 
     setIsLoading(true);
     try {
+      await authService.verifyResetCode({
+        email: getValues("email"),
+        verificationCode: getValues("verificationCode"),
+      });
+
+      setIsVerified(true);
       setCurrentStep("NEW_PASSWORD");
       showToast("인증이 완료되었습니다.", "success");
     } catch (error) {
       if (error instanceof Error) {
-        showToast(error.message, "error");
+        // 비밀번호 재설정 관련 메시지로 수정
+        showToast("비밀번호 재설정 인증에 실패했습니다.", "error");
       } else {
         showToast("인증에 실패했습니다.", "error");
       }
@@ -93,10 +124,8 @@ export default function PasswordResetPage() {
     }
   };
 
-  // 이전 코드는 동일하게 유지하고, onSubmit 함수부터 이어서 작성합니다...
-
   const onSubmit = async (data: PasswordResetForm) => {
-    if (isLoading) return;
+    if (isLoading || !isVerified) return;
     setIsLoading(true);
     try {
       await authService.resetPassword(data);
@@ -145,12 +174,20 @@ export default function PasswordResetPage() {
                 </div>
                 <Button
                   type="button"
-                  variant={countdown > 0 ? "secondary" : "primary"}
+                  variant={
+                    isVerified
+                      ? "primary"
+                      : countdown > 0
+                      ? "secondary"
+                      : "primary"
+                  }
                   onClick={handleVerificationSend}
-                  disabled={!isEmailValid || countdown > 0 || isLoading}
+                  disabled={!isEmailValid || isVerified || countdown > 0}
                   className="w-[136px] h-[56px] text-base font-medium whitespace-nowrap"
                 >
-                  {isLoading
+                  {isVerified
+                    ? "인증 완료"
+                    : isLoading
                     ? "전송 중..."
                     : countdown > 0
                     ? `${Math.floor(countdown / 60)}:${String(
@@ -159,11 +196,6 @@ export default function PasswordResetPage() {
                     : "인증번호 전송"}
                 </Button>
               </div>
-              {isVerificationSent && (
-                <p className="mt-2 text-sm text-primary">
-                  인증번호가 발송되었습니다.
-                </p>
-              )}
             </div>
 
             {/* 인증번호 입력 필드 */}
@@ -177,11 +209,12 @@ export default function PasswordResetPage() {
                     placeholder="인증번호 6자리를 입력하세요"
                     className="w-full h-[56px]"
                     maxLength={6}
+                    numbersOnly
                     {...register("verificationCode", {
                       required: "인증번호를 입력해주세요",
-                      minLength: {
-                        value: 6,
-                        message: "인증번호는 6자리입니다",
+                      pattern: {
+                        value: /^[0-9]{6}$/,
+                        message: "인증번호는 6자리 숫자입니다",
                       },
                     })}
                     error={errors.verificationCode?.message}
@@ -212,18 +245,12 @@ export default function PasswordResetPage() {
                     className="w-full h-[56px]"
                     {...register("newPassword", {
                       required: "새 비밀번호를 입력해주세요",
-                      pattern: {
-                        value:
-                          /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,12}$/,
-                        message:
-                          "영문, 숫자, 특수문자 2종류 이상 조합 (8-12자)",
-                      },
+                      validate: validatePassword,
                     })}
                     error={errors.newPassword?.message}
+                    helperText="영문, 숫자, 특수문자 중 2종류 이상 조합 (8-12자)"
+                    isValid={Boolean(newPassword && !errors.newPassword)}
                   />
-                  <p className="mt-2 text-sm text-gray-500">
-                    영문, 숫자, 특수문자 2종류 이상 조합 (8-12자)
-                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -240,11 +267,14 @@ export default function PasswordResetPage() {
                         "비밀번호가 일치하지 않습니다",
                     })}
                     error={errors.newPasswordConfirm?.message}
+                    isValid={Boolean(
+                      newPasswordConfirm && !errors.newPasswordConfirm
+                    )}
                   />
                 </div>
                 <Button
                   type="submit"
-                  variant="primary"
+                  variant={isPasswordValid ? "primary" : "secondary"}
                   disabled={!isPasswordValid || isLoading}
                   className="w-full h-[56px]"
                 >
