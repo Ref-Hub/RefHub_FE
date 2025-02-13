@@ -52,54 +52,58 @@ export default function CollectionDetailPage() {
           sortBy: sort.sortType,
           search: sort.searchWord,
         };
-        const collectionResponse = await collectionService.getCollectionList(collectionParams);
+        const collectionResponse = await collectionService.getCollectionList(
+          collectionParams
+        );
         setCollectionDatas(collectionResponse);
 
         // 레퍼런스 데이터 가져오기
         const params = {
           sortBy: sort.sortType,
           search: sort.searchWord,
-          collection: collectionResponse.data.find((item) => item._id === collectionId)?.title || "",
+          collection:
+            collectionResponse.data.find((item) => item._id === collectionId)
+              ?.title || "",
           filterBy: sort.searchType,
           view: view,
           mode: "home",
         };
 
-        const referenceResponse = await referenceService.getReferenceList(params);
+        const referenceResponse = await referenceService.getReferenceList(
+          params
+        );
 
         if (!referenceResponse.data) {
           setReferenceData([]);
           return;
         }
 
-        const transformedData: ReferenceListItem[] = referenceResponse.data.map((reference) => {
-          const files = reference.files || [];
-          const previewURLs = files
-            .filter((file) => file && file.type === "image")
-            .flatMap((file) => file.previewURLs || [])
-            .slice(0, 4);
+        const transformedData: ReferenceListItem[] = referenceResponse.data.map(
+          (reference) => {
+            const files = reference.files || [];
 
-          return {
-            _id: reference._id,
-            createAndShare: reference.createAndShare,
-            collectionId: reference.collectionId,
-            collectionTitle: collectionResponse.data.find(
-              (item) => item._id === reference.collectionId
-            )?.title,
-            title: reference.title,
-            keywords: reference.keywords,
-            previewURLs,
-            createdAt: reference.createdAt,
-            files: files.map((file) => ({
-              _id: file._id || file.path,
-              type: file.type,
-              path: file.path,
-              size: file.size,
-              previewURL: file.previewURL,
-              previewURLs: file.previewURLs,
-            })),
-          };
-        });
+            return {
+              _id: reference._id,
+              createAndShare: reference.createAndShare,
+              collectionId: reference.collectionId,
+              collectionTitle: collectionResponse.data.find(
+                (item) => item._id === reference.collectionId
+              )?.title,
+              title: reference.title,
+              keywords: reference.keywords,
+              previewURLs: reference.previewURLs,
+              createdAt: reference.createdAt,
+              files: files.map((file) => ({
+                _id: file._id || file.path,
+                type: file.type,
+                path: file.path,
+                size: file.size,
+                previewURL: file.previewURL,
+                previewURLs: file.previewURLs,
+              })),
+            };
+          }
+        );
 
         setReferenceData(transformedData);
       } catch (error) {
