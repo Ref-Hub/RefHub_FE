@@ -55,9 +55,9 @@ export default function SignupPage() {
     const hasNumber = /[0-9]/.test(value);
     const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value);
     const validLength = value.length >= 8 && value.length <= 12;
-    
+
     if (!value) return "비밀번호를 입력해주세요";
-    
+
     const validCombination =
       (hasLetter && hasNumber) ||
       (hasLetter && hasSpecial) ||
@@ -168,41 +168,50 @@ export default function SignupPage() {
             />
 
             {/* 이메일 입력 필드 */}
-            <div className="space-y-1">
-              <div className="flex gap-4">
-                <Input
-                  label="이메일"
-                  placeholder="abc@refhub.com"
-                  className="w-[368px] h-[56px]"
-                  {...register("email", {
-                    required: "이메일을 입력해주세요",
-                    pattern: {
-                      value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i,
-                      message: "올바른 이메일 형식이 아닙니다",
-                    },
-                  })}
-                  error={errors.email?.message}
-                  disabled={verificationSent}
-                />
-                <div className="flex items-end">
-                  <Button
-                    type="button"
-                    variant={isVerified ? "primary" : countdown > 0 ? "secondary" : "primary"}
-                    onClick={handleVerificationSend}
-                    disabled={!isEmailValid || (isVerified || countdown > 0)}
-                    className="w-[136px] h-[56px] text-base font-medium whitespace-nowrap"
-                  >
-                    {isVerified
-                      ? "인증 완료"
-                      : isLoading
-                      ? "전송 중..."
-                      : countdown > 0
-                      ? `${Math.floor(countdown / 60)}:${String(
-                          countdown % 60
-                        ).padStart(2, "0")}`
-                      : "인증번호 전송"}
-                  </Button>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                이메일
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    placeholder="abc@refhub.com"
+                    className="w-[379px] h-[56px]"
+                    {...register("email", {
+                      required: "이메일을 입력해주세요",
+                      pattern: {
+                        value:
+                          /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i,
+                        message: "올바른 이메일 형식이 아닙니다",
+                      },
+                    })}
+                    error={errors.email?.message}
+                    disabled={verificationSent}
+                  />
                 </div>
+                <Button
+                  type="button"
+                  variant={
+                    isVerified
+                      ? "primary"
+                      : countdown > 0
+                      ? "secondary"
+                      : "primary"
+                  }
+                  onClick={handleVerificationSend}
+                  disabled={!isEmailValid || isVerified || countdown > 0}
+                  className="w-[136px] h-[56px] text-base font-medium whitespace-nowrap"
+                >
+                  {isVerified
+                    ? "인증 완료"
+                    : isLoading
+                    ? "전송 중..."
+                    : countdown > 0
+                    ? `${Math.floor(countdown / 60)}:${String(
+                        countdown % 60
+                      ).padStart(2, "0")}`
+                    : "인증번호 전송"}
+                </Button>
               </div>
             </div>
 
