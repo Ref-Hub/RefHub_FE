@@ -27,7 +27,7 @@ export interface ReferenceListItem {
   collectionId: string;
   title: string;
   keywords?: string[];
-  previewURLs?: string[];
+  previewURLs?: { type: string; url: string }[];
   createdAt?: string;
   files: Array<{
     _id: string;
@@ -60,13 +60,13 @@ export default function ReferenceListPage() {
             currentPage: collectionsData.currentPage || 1,
             totalPages: collectionsData.totalPages || 1,
             totalItemCount: collectionsData.totalItemCount || 0,
-            _id: collectionsData._id || '',
-            title: collectionsData.title || '',
+            _id: collectionsData._id || "",
+            title: collectionsData.title || "",
             isShared: collectionsData.isShared || false,
             isFavorite: collectionsData.isFavorite || false,
             refCount: collectionsData.refCount || 0,
             previewImages: collectionsData.previewImages || [],
-            data: collectionsData.data
+            data: collectionsData.data,
           };
           setCollections(collectionResponse);
         } else {
@@ -75,13 +75,13 @@ export default function ReferenceListPage() {
             currentPage: 1,
             totalPages: 1,
             totalItemCount: 0,
-            _id: '',
-            title: '',
+            _id: "",
+            title: "",
             isShared: false,
             isFavorite: false,
             refCount: 0,
             previewImages: [],
-            data: []
+            data: [],
           });
         }
       } catch (error) {
@@ -90,13 +90,13 @@ export default function ReferenceListPage() {
           currentPage: 1,
           totalPages: 1,
           totalItemCount: 0,
-          _id: '',
-          title: '',
+          _id: "",
+          title: "",
           isShared: false,
           isFavorite: false,
           refCount: 0,
           previewImages: [],
-          data: []
+          data: [],
         });
         if (error instanceof Error) {
           showToast(error.message, "error");
@@ -134,10 +134,6 @@ export default function ReferenceListPage() {
         const transformedData: ReferenceListItem[] = response.data.map(
           (reference) => {
             const files = reference.files || [];
-            const previewURLs = files
-              .filter((file) => file && file.type === "image")
-              .flatMap((file) => file.previewURLs || [])
-              .slice(0, 4);
 
             return {
               _id: reference._id,
@@ -148,7 +144,7 @@ export default function ReferenceListPage() {
               )?.title,
               title: reference.title,
               keywords: reference.keywords,
-              previewURLs,
+              previewURLs: reference.previewURLs,
               createdAt: reference.createdAt,
               files: files.map((file) => ({
                 _id: file._id || file.path,
