@@ -1,4 +1,3 @@
-// vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -9,14 +8,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['/src/assets/images/icon.svg'],
+      includeAssets: ['images/icon.svg'],
       manifest: {
         short_name: "RefHub",
         name: "RefHub - 레퍼런스 허브",
         description: "모든 레퍼런스를 한 곳에서 관리하세요. 기획자, 디자이너를 위한 통합 레퍼런스 관리 플랫폼입니다.",
         icons: [
           {
-            src: "/src/assets/images/icon.svg",
+            src: "/images/icon.svg",
             type: "image/svg+xml",
             sizes: "any",
             purpose: "any maskable"
@@ -48,6 +47,21 @@ export default defineConfig({
     alias: [
       { find: '@', replacement: path.resolve(__dirname, 'src') }
     ]
+  },
+  build: {
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split('.');
+          const ext = info[info.length - 1];
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+            return `assets/images/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
+        },
+      },
+    },
   },
   server: {
     proxy: {
