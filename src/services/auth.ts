@@ -5,12 +5,12 @@ import type {
   PasswordResetForm,
   AuthResponse,
   VerifyCodeForm,
- } from "@/types/auth";
- import api from "@/utils/api";
- import { handleApiError } from "@/utils/errorHandler";
- import { authUtils } from "@/store/auth";
- 
- class AuthService {
+} from "@/types/auth";
+import api from "@/utils/api";
+import { handleApiError } from "@/utils/errorHandler";
+import { authUtils } from "@/store/auth";
+
+class AuthService {
   // 인증번호 전송 (회원가입)
   async sendVerificationCode(name: string, email: string): Promise<void> {
     try {
@@ -20,8 +20,8 @@ import type {
       throw handleApiError(error);
     }
   }
- 
-  // 인증번호 검증
+
+  // 인증번호 검증 (회원가입)
   async verifyCode(data: VerifyCodeForm): Promise<void> {
     try {
       const response = await api.post("/api/users/verify-code", {
@@ -33,7 +33,7 @@ import type {
       throw handleApiError(error);
     }
   }
- 
+
   // 회원가입
   async signup(data: SignupForm): Promise<void> {
     try {
@@ -47,7 +47,7 @@ import type {
       throw handleApiError(error);
     }
   }
- 
+
   // 로그인
   async login(data: LoginForm, autoLogin: boolean): Promise<AuthResponse> {
     try {
@@ -56,29 +56,29 @@ import type {
         password: data.password,
         autoLogin,
       });
- 
+
       const { accessToken, refreshToken } = response.data;
- 
+
       if (accessToken) {
         authUtils.setToken(accessToken);
- 
+
         if (refreshToken) {
           authUtils.setRefreshToken(refreshToken);
         }
- 
+
         if (autoLogin) {
           authUtils.setRememberMe(true);
         }
       } else {
         throw new Error("로그인 응답에 토큰이 없습니다.");
       }
- 
+
       return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
   }
- 
+
   // 로그아웃
   async logout(): Promise<void> {
     try {
@@ -89,7 +89,7 @@ import type {
       throw handleApiError(error);
     }
   }
- 
+
   // 비밀번호 재설정 인증번호 전송
   async sendPasswordResetCode(email: string): Promise<void> {
     try {
@@ -99,7 +99,21 @@ import type {
       throw handleApiError(error);
     }
   }
- 
+
+  // verifyResetCode 메서드 수정
+  async verifyResetCode(data: VerifyCodeForm): Promise<void> {
+    try {
+      // /api/users/password/verify-code 대신 /api/users/verify-code 사용
+      const response = await api.post("/api/users/verify-code", {
+        email: data.email,
+        verificationCode: data.verificationCode,
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
   // 비밀번호 재설정
   async resetPassword(data: PasswordResetForm): Promise<void> {
     try {
@@ -114,7 +128,7 @@ import type {
       throw handleApiError(error);
     }
   }
- 
+
   // 토큰 갱신
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
     try {
@@ -124,20 +138,20 @@ import type {
           refreshToken,
         }
       );
- 
+
       const { accessToken } = response.data;
       if (accessToken) {
         authUtils.setToken(accessToken);
       } else {
         throw new Error("토큰 갱신 응답에 새로운 액세스 토큰이 없습니다.");
       }
- 
+
       return response.data;
     } catch (error) {
       authUtils.clearAll();
       throw handleApiError(error);
     }
   }
- }
- 
- export const authService = new AuthService();
+}
+
+export const authService = new AuthService();

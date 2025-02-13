@@ -25,6 +25,25 @@ export interface LoginForm {
   verificationCode: string;
  }
  
+ // API 요청 타입들
+ export interface VerifySignupRequest {
+  email: string;
+  verificationCode: string;
+ }
+ 
+ export interface SignupRequest {
+  verifiedEmail: string;
+  password: string;
+  confirmPassword: string;
+ }
+ 
+ export interface ResetPasswordRequest {
+  email: string;
+  verificationCode: string;
+  newPassword: string;
+  confirmPassword: string;
+ }
+ 
  export interface User {
   id: string;
   name: string;
