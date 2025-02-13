@@ -10,7 +10,7 @@ export interface Reference {
   memo?: string;
   files: ReferenceFile[];
   createAndShare?: boolean;
-  previewURLs?: { type: string; url: string }[];
+  previewData?: string[];
   createdAt: string;
 }
 

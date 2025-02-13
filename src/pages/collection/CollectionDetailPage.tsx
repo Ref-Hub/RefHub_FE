@@ -91,7 +91,7 @@ export default function CollectionDetailPage() {
               )?.title,
               title: reference.title,
               keywords: reference.keywords,
-              previewURLs: reference.previewURLs,
+              previewData: reference.previewData,
               createdAt: reference.createdAt,
               files: files.map((file) => ({
                 _id: file._id || file.path,
