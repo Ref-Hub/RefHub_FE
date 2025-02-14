@@ -1,6 +1,5 @@
 // src/pages/reference/ReferenceCreatePage.tsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import KeywordInput from "@/components/reference/KeywordInput";
 import FileUpload from "@/components/reference/FileUpload";
@@ -25,7 +24,6 @@ interface FormData {
 }
 
 export default function ReferenceCreatePage() {
-  const navigate = useNavigate();
   const { showToast } = useToast();
   const { createReference, isLoading: isSubmitting } = useReferenceCreate();
   const [isLoadingCollections, setIsLoadingCollections] = useState(false);
@@ -93,9 +91,6 @@ export default function ReferenceCreatePage() {
         memo: formData.memo,
         files: formData.files,
       });
-
-      showToast("레퍼런스가 등록되었습니다.", "success");
-      navigate("/references");
     } catch (error) {
       showToast("레퍼런스 등록에 실패했습니다.", "error");
     }

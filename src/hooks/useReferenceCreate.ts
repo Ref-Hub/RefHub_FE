@@ -44,7 +44,7 @@ export function useReferenceCreate() {
       const filesFormData = referenceService.prepareFilesFormData(formData.files);
 
       // Create reference
-      await referenceService.createReference({
+      const response = await referenceService.createReference({
         collectionTitle: formData.collectionTitle,
         title: formData.title,
         keywords: formData.keywords,
@@ -53,7 +53,10 @@ export function useReferenceCreate() {
       });
 
       showToast('레퍼런스가 등록되었습니다.', 'success');
-      navigate('/references');
+      
+      // 새로 생성된 레퍼런스의 상세 페이지로 이동
+      navigate(`/references/${response.reference._id}`);
+
     } catch (error: any) {
       if (error.response?.status === 404) {
         showToast('해당 컬렉션을 찾을 수 없습니다.', 'error');
