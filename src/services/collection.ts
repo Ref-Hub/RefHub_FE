@@ -2,6 +2,7 @@ import api from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import type { GetCollectionParams, SharedUsers } from "@/types/collection";
 import { CollectionResponse } from "@/types/collection";
+import { authUtils } from "@/store/auth";
 
 class CollectionService {
   // 목록 조회
@@ -120,24 +121,52 @@ class CollectionService {
     }
   }
 
-  // 미리보기 이미지 조회
-  async getImage(collectionId: string): Promise<string> {
+  private baseUrl = "https://api.refhub.site";
+
+  private async fetchWithAuth(url: string): Promise<string> {
     try {
-      const response = await api.get(`${collectionId}`, {
-        responseType: "arraybuffer",
+      const token = authUtils.getToken();
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-
-      const binary = new Uint8Array(response.data).reduce(
-        (data, byte) => data + String.fromCharCode(byte),
-        ""
-      );
-      const base64String = btoa(binary);
-      const mimeType = "image/jpeg";
-
-      return `data:${mimeType};base64,${base64String}`;
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
     } catch (error) {
-      throw handleApiError(error);
+      console.error("Error fetching image:", error);
+      return url;
     }
+  }
+
+  // 미리보기 이미지 조회
+  async getImage(url: string): Promise<string> {
+    if (!url) return "";
+
+    if (!url.includes("://")) {
+      const fullUrl = `${this.baseUrl}${url}`;
+      if (url.includes("/api/references/file/")) {
+        return await this.fetchWithAuth(fullUrl);
+      }
+      return fullUrl;
+    }
+
+    if (url.includes("api.refhub.site")) {
+      if (url.includes("/api/references/file/")) {
+        return await this.fetchWithAuth(url);
+      }
+      return url;
+    }
+
+    if (url.includes("refhub.my")) {
+      const newUrl = url.replace("refhub.my", "api.refhub.site");
+      if (newUrl.includes("/api/references/file/")) {
+        return await this.fetchWithAuth(newUrl);
+      }
+      return newUrl;
+    }
+
+    return url;
   }
 }
 

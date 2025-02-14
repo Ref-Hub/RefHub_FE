@@ -60,13 +60,8 @@ const ReferenceCard: React.FC<
     }
     if (previewData.length > 0) {
       previewData.map((link) => {
-        if (typeof link === "string" && link.startsWith("undefined")) {
-          const newLink = link.replace("undefined", "");
-          handleImg(newLink);
-        } else if (typeof link === "string") {
-          setImgs((prev) => [...prev, link]);
-        } else {
-          setImgs([]);
+        if (typeof link === "string") {
+          handleImg(link);
         }
       });
     }
