@@ -4,7 +4,7 @@ import {
   Link,
   Image as ImageIcon,
   FileText,
-  File,
+  File as FileIcon, // 이미 이렇게 수정되어 있음
   X,
   Plus,
   GripVertical,
@@ -213,6 +213,38 @@ export default function FileUpload({
     setDraggedIndex(null);
   };
 
+  const renderFilePreview = (file: FileItem) => {
+    if (file.type === "pdf") {
+      return (
+        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+          <FileText className="w-8 h-8 text-red-500" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {file.name || "PDF 문서"}
+            </p>
+            <p className="text-xs text-gray-500">PDF 파일</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (file.type === "file") {
+      return (
+        <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+          <FileIcon className="w-8 h-8 text-blue-500" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {file.name || "첨부 파일"}
+            </p>
+            <p className="text-xs text-gray-500">파일</p>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const renderUploadField = (file: FileItem, index: number) => {
     if (file.type === "link") {
       return (
@@ -282,7 +314,24 @@ export default function FileUpload({
       }
     }
 
-    return (
+    return file.content ? (
+      <div className="flex items-start gap-4">
+        {renderFilePreview(file)}
+        <label
+          className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors cursor-pointer text-sm text-gray-600"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => handleDrop(e, index)}
+        >
+          <input
+            type="file"
+            accept={file.type === "pdf" ? ".pdf" : undefined}
+            className="hidden"
+            onChange={(e) => handleFileChange(e, index)}
+          />
+          파일 변경
+        </label>
+      </div>
+    ) : (
       <label
         className="flex-1 flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors cursor-pointer"
         onDragOver={(e) => e.preventDefault()}
@@ -374,7 +423,7 @@ export default function FileUpload({
             { type: "link" as const, icon: Link, label: "링크" },
             { type: "image" as const, icon: ImageIcon, label: "이미지" },
             { type: "pdf" as const, icon: FileText, label: "PDF" },
-            { type: "file" as const, icon: File, label: "파일" },
+            { type: "file" as const, icon: FileIcon, label: "파일" },
           ].map(({ type, icon: Icon, label }) => (
             <button
               key={type}
