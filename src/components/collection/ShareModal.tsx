@@ -41,6 +41,7 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
       setCreator(response.owner);
       setSharedUsers(response.sharing);
       setIsShare(response.sharing.length > 0);
+      setIsOwner(IsOpen.userEmail === response.owner.email);
     } catch (error) {
       console.error("사용자 목록 조회 실패:", error);
     } finally {
@@ -87,7 +88,6 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
       collectiondatas.data.find((item) => item._id === collectionId)?.title ||
         ""
     );
-    setIsOwner(IsOpen.userEmail === creator.email);
   }, [collectionId]);
 
   useEffect(() => {
