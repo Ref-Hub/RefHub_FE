@@ -221,7 +221,13 @@ const ReferenceCard: React.FC<
       </div>
 
       <div className="mb-2 min-h-[152px]">
-        {(imgs ?? []).length > 0 ? (
+        {imgs.length === 1 && (
+          <img
+            src={imgs[0]}
+            className="w-full h-[152px] object-contain rounded-lg"
+          />
+        )}
+        {(imgs ?? []).length > 1 ? (
           <div className="grid grid-cols-2 gap-2">
             {imgs.slice(0, 4).map((image, index) => (
               <img

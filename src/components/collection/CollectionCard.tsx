@@ -233,7 +233,13 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
 
       {/* 이미지 */}
       <div className="mb-2 py-5">
-        {previewImages.length > 0 ? (
+        {imgs.length === 1 && (
+          <img
+            src={imgs[0]}
+            className="w-full h-[152px] object-contain rounded-lg"
+          />
+        )}
+        {previewImages.length > 1 ? (
           <div className="grid grid-cols-2 gap-2">
             {imgs.slice(0, 4).map((image, index) => (
               <img
