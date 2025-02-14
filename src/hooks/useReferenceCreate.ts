@@ -1,8 +1,8 @@
 // src/hooks/useReferenceCreate.ts
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/contexts/useToast';
-import { referenceService } from '@/services/reference';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/contexts/useToast";
+import { referenceService } from "@/services/reference";
 
 interface ReferenceFormData {
   collectionTitle: string;
@@ -11,7 +11,7 @@ interface ReferenceFormData {
   memo: string;
   files: Array<{
     id: string;
-    type: 'link' | 'image' | 'pdf' | 'file';
+    type: "link" | "image" | "pdf" | "file";
     content: string;
     name?: string;
   }>;
@@ -28,20 +28,22 @@ export function useReferenceCreate() {
 
       // Validate required fields
       if (!formData.collectionTitle) {
-        showToast('컬렉션을 선택해 주세요.', 'error');
+        showToast("컬렉션을 선택해 주세요.", "error");
         return;
       }
       if (!formData.title) {
-        showToast('제목을 입력해 주세요.', 'error');
+        showToast("제목을 입력해 주세요.", "error");
         return;
       }
-      if (formData.files.some(file => !file.content)) {
-        showToast('모든 자료를 입력해 주세요.', 'error');
+      if (formData.files.some((file) => !file.content)) {
+        showToast("모든 자료를 입력해 주세요.", "error");
         return;
       }
 
       // Prepare files
-      const filesFormData = referenceService.prepareFilesFormData(formData.files);
+      const filesFormData = referenceService.prepareFilesFormData(
+        formData.files
+      );
 
       // Create reference
       const response = await referenceService.createReference({
@@ -51,18 +53,20 @@ export function useReferenceCreate() {
         memo: formData.memo,
         files: filesFormData,
       });
-
-      showToast('레퍼런스가 등록되었습니다.', 'success');
-      
-      // 새로 생성된 레퍼런스의 상세 페이지로 이동
+      showToast("레퍼런스가 등록되었습니다.", "success");
       navigate(`/references/${response.reference._id}`);
-
     } catch (error: any) {
       if (error.response?.status === 404) {
-        showToast('해당 컬렉션을 찾을 수 없습니다.', 'error');
+        showToast("해당 컬렉션을 찾을 수 없습니다.", "error");
+      } else if (error.response?.status === 413) {
+        showToast(
+          "파일 크기가 너무 큽니다. 파일당 20MB 이하로 업로드해주세요.",
+          "error"
+        );
       } else {
-        showToast('레퍼런스 등록에 실패했습니다.', 'error');
+        showToast("레퍼런스 등록에 실패했습니다.", "error");
       }
+      return; // 명시적으로 early return하여 실패 시 추가 동작 방지
     } finally {
       setIsLoading(false);
     }
