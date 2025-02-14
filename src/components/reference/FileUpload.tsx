@@ -4,11 +4,10 @@ import {
   Link,
   Image as ImageIcon,
   FileText,
-  File,
+  File as FileIcon, // 이미 이렇게 수정되어 있음
   X,
   Plus,
   GripVertical,
-  FileIcon,
 } from "lucide-react";
 import { useToast } from "@/contexts/useToast";
 import ImagePreviewModal from "./ImagePreviewModal";
