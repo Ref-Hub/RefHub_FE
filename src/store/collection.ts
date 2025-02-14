@@ -11,6 +11,7 @@ interface ModalState {
 interface ShareModalState {
   isOpen: boolean;
   collectionId: string;
+  userEmail: string;
 }
 
 interface DropdownState {
@@ -61,7 +62,7 @@ export const modalState = atom<ModalState>({
 
 export const shareModalState = atom<ShareModalState>({
   key: "shareModalState",
-  default: { isOpen: false, collectionId: "" },
+  default: { isOpen: false, collectionId: "", userEmail: "" },
 });
 
 export const DropState = atom<DropdownState>({

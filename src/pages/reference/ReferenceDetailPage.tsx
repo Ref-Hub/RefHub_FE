@@ -29,6 +29,7 @@ export default function ReferenceDetailPage() {
   const [selectedImage, setSelectedImage] = useState<{
     url: string;
     name?: string;
+    downloadUrl?: string; // 추가: downloadUrl 타입 정의
   } | null>(null);
 
   useEffect(() => {
@@ -117,12 +118,16 @@ export default function ReferenceDetailPage() {
                   key={index}
                   className="relative aspect-video cursor-pointer group"
                   onClick={() =>
-                    setSelectedImage({ url, name: `이미지 ${index + 1}` })
+                    setSelectedImage({
+                      url,
+                      name: file.filenames?.[index] || `이미지 ${index + 1}`,
+                      downloadUrl: url, // 추가: downloadUrl 전달
+                    })
                   }
                 >
                   <img
                     src={url}
-                    alt={`Preview ${index + 1}`}
+                    alt={file.filenames?.[index] || `Preview ${index + 1}`}
                     className="w-full h-full object-cover rounded-lg"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
@@ -287,6 +292,7 @@ export default function ReferenceDetailPage() {
         onClose={() => setSelectedImage(null)}
         imageUrl={selectedImage?.url || ""}
         imageName={selectedImage?.name}
+        downloadUrl={selectedImage?.downloadUrl} // 추가: downloadUrl 전달
       />
     </div>
   );

@@ -6,7 +6,12 @@ import { collectionService } from "@/services/collection";
 import { referenceService } from "@/services/reference";
 import { useToast } from "@/contexts/useToast";
 import { useNavigate } from "react-router-dom";
-import { alertState, floatingModeState, modalState } from "@/store/collection";
+import {
+  alertState,
+  floatingModeState,
+  modalState,
+  shareModalState,
+} from "@/store/collection";
 import { useRecoilState, useSetRecoilState } from "recoil";
 
 interface AlertProps {
@@ -19,6 +24,7 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
   const [alert, setAlert] = useRecoilState(alertState);
   const setMode = useSetRecoilState(floatingModeState);
   const setModal = useSetRecoilState(modalState);
+  const setShareModal = useSetRecoilState(shareModalState);
 
   const handleDelete = async () => {
     try {
@@ -34,6 +40,18 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
         await referenceService.moveReference(alert.ids, alert.title);
         showToast("컬렉션 이동이 완료되었습니다.", "success");
         setModal({ type: "", isOpen: false, id: "", title: "" });
+      } else if (alert.type === "sharePrivate") {
+        await collectionService.setPrivate(alert.ids[0]);
+        setShareModal((prev) => ({ ...prev, isOpen: false, collectionId: "" }));
+        showToast("나만 보기 설정이 되었습니다.", "success");
+      } else if (alert.type === "shareRemove") {
+        await collectionService.deleteSharedUsers(alert.ids[0], alert.ids[1]);
+        showToast("삭제되었습니다.", "success");
+      } else if (alert.type === "shareOut") {
+        await collectionService.deleteSharedUsers(alert.ids[0], alert.ids[1]);
+        setShareModal((prev) => ({ ...prev, isOpen: false, collectionId: "" }));
+        navigate(`/collections`);
+        showToast("컬렉션에서 나갔습니다.", "success");
       } else {
         if (alert.ids.length === 1) {
           await referenceService.deleteReference(alert.ids[0]);
