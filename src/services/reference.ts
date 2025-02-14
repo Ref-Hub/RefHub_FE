@@ -2,308 +2,272 @@ import api from "@/utils/api";
 import { authUtils } from "@/store/auth";
 import { handleApiError } from "@/utils/errorHandler";
 import type {
-  GetReferenceParams,
-  Reference,
-  CreateReferenceFile,
-  CreateReferenceResponse,
-  UpdateReferenceRequest,
-  ReferenceResponse,
-  ReferenceDetailResponse,
-  ReferenceListResponse,
-  UploadImageData,
+ GetReferenceParams,
+ Reference,
+ CreateReferenceFile,
+ CreateReferenceResponse,
+ UpdateReferenceRequest,
+ ReferenceResponse,
+ ReferenceDetailResponse,
+ ReferenceListResponse,
 } from "@/types/reference";
 
 class ReferenceService {
-  private baseUrl = "https://api.refhub.site";
+ private baseUrl = "https://api.refhub.site";
 
-  private async fetchWithAuth(url: string): Promise<string> {
-    try {
-      const token = authUtils.getToken();
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const blob = await response.blob();
-      return URL.createObjectURL(blob);
-    } catch (error) {
-      console.error("Error fetching image:", error);
-      return url;
-    }
-  }
+ private async fetchWithAuth(url: string): Promise<string> {
+   try {
+     const token = authUtils.getToken();
+     const response = await fetch(url, {
+       headers: {
+         Authorization: `Bearer ${token}`
+       }
+     });
+     const blob = await response.blob();
+     return URL.createObjectURL(blob);
+   } catch (error) {
+     console.error('Error fetching image:', error);
+     return url;
+   }
+ }
 
-  private async transformUrl(url?: string): Promise<string> {
-    if (!url) return "";
+ private async transformUrl(url?: string): Promise<string> {
+   if (!url) return '';
+   
+   if (!url.includes('://')) {
+     const fullUrl = `${this.baseUrl}${url}`;
+     if (url.includes('/api/references/file/')) {
+       return await this.fetchWithAuth(fullUrl);
+     }
+     return fullUrl;
+   }
+   
+   if (url.includes('api.refhub.site')) {
+     if (url.includes('/api/references/file/')) {
+       return await this.fetchWithAuth(url);
+     }
+     return url;
+   }
+   
+   if (url.includes('refhub.my')) {
+     const newUrl = url.replace('refhub.my', 'api.refhub.site');
+     if (newUrl.includes('/api/references/file/')) {
+       return await this.fetchWithAuth(newUrl);
+     }
+     return newUrl;
+   }
+   
+   return url;
+ }
 
-    if (!url.includes("://")) {
-      const fullUrl = `${this.baseUrl}${url}`;
-      if (url.includes("/api/references/file/")) {
-        return await this.fetchWithAuth(fullUrl);
-      }
-      return fullUrl;
-    }
+ // 레퍼런스 목록 조회
+ async getReferenceList(
+   params: GetReferenceParams
+ ): Promise<ReferenceListResponse> {
+   try {
+     const response = await api.get<ReferenceListResponse>("/api/references", {
+       params,
+     });
+     return response.data;
+   } catch (error) {
+     throw handleApiError(error);
+   }
+ }
 
-    if (url.includes("api.refhub.site")) {
-      if (url.includes("/api/references/file/")) {
-        return await this.fetchWithAuth(url);
-      }
-      return url;
-    }
+ // 단일 레퍼런스 조회
+ async getReference(id: string): Promise<Reference> {
+   try {
+     const response = await api.get<ReferenceDetailResponse>(
+       `/api/references/${id}`
+     );
+     const { referenceDetail } = response.data;
 
-    if (url.includes("refhub.my")) {
-      const newUrl = url.replace("refhub.my", "api.refhub.site");
-      if (newUrl.includes("/api/references/file/")) {
-        return await this.fetchWithAuth(newUrl);
-      }
-      return newUrl;
-    }
+     return {
+       _id: id,
+       collectionId: referenceDetail.collectionId,
+       collectionTitle: referenceDetail.collectionTitle,
+       createdAt: referenceDetail.createdAt,
+       title: referenceDetail.referenceTitle,
+       keywords: referenceDetail.keywords || [],
+       memo: referenceDetail.memo || "",
+       files: await Promise.all(referenceDetail.attachments.map(async (attachment) => ({
+         _id: attachment.path,
+         type: attachment.type,
+         path: attachment.path,
+         size: attachment.size,
+         images: attachment.images,
+         previewURL: attachment.previewURL ? await this.transformUrl(attachment.previewURL) : undefined,
+         previewURLs: attachment.previewURLs 
+           ? await Promise.all(attachment.previewURLs.map(url => this.transformUrl(url)))
+           : undefined,
+       }))),
+     };
+   } catch (error) {
+     console.error("getReference API Error:", error);
+     throw handleApiError(error);
+   }
+ }
 
-    return url;
-  }
+ // 레퍼런스 이동
+ async moveReference(ids: string[], title: string): Promise<void> {
+   try {
+     const response = await api.patch(`/api/references`, {
+       referenceIds: ids,
+       newCollection: title,
+     });
+     return response.data;
+   } catch (error) {
+     throw handleApiError(error);
+   }
+ }
 
-  // 레퍼런스 목록 조회
-  async getReferenceList(
-    params: GetReferenceParams
-  ): Promise<ReferenceListResponse> {
-    try {
-      const response = await api.get<ReferenceListResponse>("/api/references", {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  }
+ // 레퍼런스 생성
+ async createReference({
+   collectionTitle,
+   title,
+   keywords,
+   memo,
+   files,
+ }: UpdateReferenceRequest): Promise<CreateReferenceResponse> {
+   try {
+     const formData = new FormData();
+     formData.append("collectionTitle", collectionTitle);
+     formData.append("title", title);
 
-  // 단일 레퍼런스 조회
-  async getReference(id: string): Promise<Reference> {
-    try {
-      const response = await api.get<ReferenceDetailResponse>(
-        `/api/references/${id}`
-      );
-      const { referenceDetail } = response.data;
+     if (keywords?.length) {
+       formData.append("keywords", keywords.join(" "));
+     }
 
-      return {
-        _id: id,
-        collectionId: referenceDetail.collectionId,
-        collectionTitle: referenceDetail.collectionTitle,
-        createdAt: referenceDetail.createdAt,
-        title: referenceDetail.referenceTitle,
-        keywords: referenceDetail.keywords || [],
-        memo: referenceDetail.memo || "",
-        files: await Promise.all(
-          referenceDetail.attachments.map(async (attachment) => ({
-            _id: attachment.path,
-            type: attachment.type,
-            path: attachment.path,
-            size: attachment.size,
-            images: attachment.images,
-            previewURL: attachment.previewURL
-              ? await this.transformUrl(attachment.previewURL)
-              : undefined,
-            previewURLs: attachment.previewURLs
-              ? await Promise.all(
-                  attachment.previewURLs.map((url) => this.transformUrl(url))
-                )
-              : undefined,
-          }))
-        ),
-      };
-    } catch (error) {
-      console.error("getReference API Error:", error);
-      throw handleApiError(error);
-    }
-  }
+     if (memo) {
+       formData.append("memo", memo);
+     }
 
-  // 레퍼런스 이동
-  async moveReference(ids: string[], title: string): Promise<void> {
-    try {
-      const response = await api.patch(`/api/references`, {
-        referenceIds: ids,
-        newCollection: title,
-      });
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  }
+     // Append files from the provided FormData
+     for (const [key, value] of files.entries()) {
+       formData.append(key, value);
+     }
 
-  // 레퍼런스 생성
-  async createReference({
-    collectionTitle,
-    title,
-    keywords,
-    memo,
-    files,
-  }: UpdateReferenceRequest): Promise<CreateReferenceResponse> {
-    try {
-      const formData = new FormData();
-      formData.append("collectionTitle", collectionTitle);
-      formData.append("title", title);
+     const response = await api.post<CreateReferenceResponse>(
+       "/api/references/add",
+       formData,
+       {
+         headers: {
+           "Content-Type": "multipart/form-data",
+         },
+       }
+     );
 
-      if (keywords?.length) {
-        formData.append("keywords", keywords.join(" "));
-      }
+     return response.data;
+   } catch (error) {
+     throw handleApiError(error);
+   }
+ }
 
-      if (memo) {
-        formData.append("memo", memo);
-      }
+ // 레퍼런스 수정
+ async updateReference(
+   id: string,
+   { collectionTitle, title, keywords, memo, files }: UpdateReferenceRequest
+ ): Promise<ReferenceResponse> {
+   try {
+     const formData = new FormData();
+     formData.append("collectionTitle", collectionTitle);
+     formData.append("title", title);
 
-      // Append files from the provided FormData
-      for (const [key, value] of files.entries()) {
-        formData.append(key, value);
-      }
+     if (keywords?.length) {
+       formData.append("keywords", keywords.join(" "));
+     }
 
-      const response = await api.post<CreateReferenceResponse>(
-        "/api/references/add",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+     if (memo) {
+       formData.append("memo", memo);
+     }
 
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  }
+     // Append files from the provided FormData
+     for (const [key, value] of files.entries()) {
+       formData.append(key, value);
+     }
 
-  // 레퍼런스 수정
-  async updateReference(
-    id: string,
-    { collectionTitle, title, keywords, memo, files }: UpdateReferenceRequest
-  ): Promise<ReferenceResponse> {
-    try {
-      const formData = new FormData();
-      formData.append("collectionTitle", collectionTitle);
-      formData.append("title", title);
+     const response = await api.patch<ReferenceResponse>(
+       `/api/references/${id}`,
+       formData,
+       {
+         headers: {
+           "Content-Type": "multipart/form-data",
+         },
+       }
+     );
 
-      if (keywords?.length) {
-        formData.append("keywords", keywords.join(" "));
-      }
+     return response.data;
+   } catch (error) {
+     throw handleApiError(error);
+   }
+ }
 
-      if (memo) {
-        formData.append("memo", memo);
-      }
+ // 레퍼런스 삭제
+ async deleteReference(id: string): Promise<void> {
+   try {
+     await api.delete(`/api/references/${id}`);
+   } catch (error) {
+     throw handleApiError(error);
+   }
+ }
 
-      // Append files from the provided FormData
-      for (const [key, value] of files.entries()) {
-        formData.append(key, value);
-      }
+ // 레퍼런스 여러개 삭제
+ async deleteReferences(ids: string[]): Promise<void> {
+   try {
+     await api.delete("/api/references", {
+       data: { referenceIds: ids },
+     });
+   } catch (error) {
+     throw handleApiError(error);
+   }
+ }
 
-      const response = await api.patch<ReferenceResponse>(
-        `/api/references/${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+ // 파일 데이터 준비
+ prepareFilesFormData(files: CreateReferenceFile[]): FormData {
+   const formData = new FormData();
+   let imageCount = 1;
 
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  }
+   files.forEach((file) => {
+     if (file.type === "link") {
+       formData.append("links", file.content);
+     } else if (file.type === "image") {
+       try {
+         const images = JSON.parse(file.content);
+         if (Array.isArray(images)) {
+           images.forEach((image: { url: string }) => {
+             const blobData = this.base64ToBlob(image.url);
+             formData.append(`images${imageCount}`, blobData);
+           });
+           imageCount++;
+         }
+       } catch (error) {
+         console.error("이미지 데이터 파싱 실패:", error);
+       }
+     } else if (file.type === "pdf") {
+       const blobData = this.base64ToBlob(file.content);
+       formData.append("files", blobData, file.name);
+     } else {
+       const blobData = this.base64ToBlob(file.content);
+       formData.append("otherFiles", blobData, file.name);
+     }
+   });
 
-  // 레퍼런스 삭제
-  async deleteReference(id: string): Promise<void> {
-    try {
-      await api.delete(`/api/references/${id}`);
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  }
+   return formData;
+ }
 
-  // 레퍼런스 여러개 삭제
-  async deleteReferences(ids: string[]): Promise<void> {
-    try {
-      await api.delete("/api/references", {
-        data: { referenceIds: ids },
-      });
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  }
+ private base64ToBlob(base64: string): Blob {
+   const parts = base64.split(";base64,");
+   const contentType = parts[0].split(":")[1] || "";
+   const raw = window.atob(parts[1]);
+   const rawLength = raw.length;
+   const uInt8Array = new Uint8Array(rawLength);
 
-  // 파일 데이터 준비
-  // ReferenceService의 prepareFilesFormData 메서드 수정
-  prepareFilesFormData(files: CreateReferenceFile[]): FormData {
-    const formData = new FormData();
-    let imageCount = 1;
+   for (let i = 0; i < rawLength; ++i) {
+     uInt8Array[i] = raw.charCodeAt(i);
+   }
 
-    files.forEach((file) => {
-      if (file.type === "link") {
-        formData.append("links", file.content as string);
-      } else if (file.type === "image") {
-        try {
-          const images = JSON.parse(
-            file.content as string
-          ) as UploadImageData[];
-          if (Array.isArray(images)) {
-            const imageBlobs = images.map((image) => {
-              if (
-                typeof image.url === "string" &&
-                image.url.startsWith("data:")
-              ) {
-                return {
-                  blob: this.base64ToBlob(image.url),
-                  name: image.name,
-                };
-              }
-              return {
-                blob: image.url as Blob,
-                name: image.name,
-              };
-            });
-
-            imageBlobs.forEach((imageData, idx) => {
-              const fieldName = `images${imageCount}`;
-              formData.append(
-                fieldName,
-                imageData.blob,
-                imageData.name || `image${idx + 1}.jpg`
-              );
-            });
-            imageCount++;
-          }
-        } catch (error) {
-          console.error("이미지 데이터 파싱 실패:", error);
-        }
-      } else if (file.type === "pdf" || file.type === "file") {
-        if (
-          typeof file.content === "string" &&
-          file.content.startsWith("data:")
-        ) {
-          const blobData = this.base64ToBlob(file.content);
-          const fieldName = file.type === "pdf" ? "files" : "otherFiles";
-          formData.append(fieldName, blobData, file.name);
-        } else {
-          const fieldName = file.type === "pdf" ? "files" : "otherFiles";
-          formData.append(fieldName, file.content as Blob, file.name);
-        }
-      }
-    });
-
-    return formData;
-  }
-
-  private base64ToBlob(base64: string): Blob {
-    const parts = base64.split(";base64,");
-    const contentType = parts[0].split(":")[1] || "";
-    const raw = window.atob(parts[1]);
-    const rawLength = raw.length;
-    const uInt8Array = new Uint8Array(rawLength);
-
-    for (let i = 0; i < rawLength; ++i) {
-      uInt8Array[i] = raw.charCodeAt(i);
-    }
-
-    return new Blob([uInt8Array], { type: contentType });
-  }
+   return new Blob([uInt8Array], { type: contentType });
+ }
 }
 
 export const referenceService = new ReferenceService();

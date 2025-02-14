@@ -4,7 +4,7 @@ import {
   Link,
   Image as ImageIcon,
   FileText,
-  File as FileIcon,
+  File as FileIcon, // 이미 이렇게 수정되어 있음
   X,
   Plus,
   GripVertical,
@@ -12,18 +12,18 @@ import {
 import { useToast } from "@/contexts/useToast";
 import ImagePreviewModal from "./ImagePreviewModal";
 
-export interface FileItem {
+interface FileItem {
   id: string;
   type: "link" | "image" | "pdf" | "file";
-  content: string; // Blob는 별도 처리
+  content: string;
   name?: string;
-  file?: File;
 }
 
 interface FileContent {
-  url: string; // 이미지 미리보기용이므로 string만 유지
+  url: string;
   name?: string;
 }
+
 interface FileUploadProps {
   files: FileItem[];
   onChange: (files: FileItem[]) => void;
@@ -97,64 +97,51 @@ export default function FileUpload({
       for (const file of Array.from(uploadedFiles)) {
         if (!validateFile(file, fileType as "image" | "pdf" | "file")) continue;
 
+        const content = await readFileAsDataURL(file);
+        contents.push({ url: content, name: file.name });
+      }
+
+      if (contents.length > 0) {
         if (fileType === "image") {
-          // 이미지는 base64 문자열로 변환하여 미리보기 지원
-          const content = await readFileAsDataURL(file);
-          contents.push({ url: content, name: file.name });
-        } else {
-          // 이미지가 아닌 파일은 File 객체와 이름만 저장
+          const existingImages = files[index].content
+            ? (JSON.parse(files[index].content) as FileContent[])
+            : [];
+
+          const totalCount = existingImages.length + contents.length;
+          if (totalCount > 5) {
+            showToast("이미지는 최대 5개까지 첨부 가능합니다.", "error");
+            contents.splice(5 - existingImages.length);
+          }
+
           const updatedFiles = [...files];
           updatedFiles[index] = {
             ...files[index],
-            content: file.name, // 파일명을 content에 저장
-            name: file.name,
-            file: file, // File 객체는 별도 속성으로 저장
+            content: JSON.stringify([...existingImages, ...contents]),
           };
           onChange(updatedFiles);
-          return;
+        } else {
+          // For non-image files, just use the first file
+          const updatedFiles = [...files];
+          updatedFiles[index] = {
+            ...files[index],
+            content: contents[0].url,
+            name: contents[0].name,
+          };
+          onChange(updatedFiles);
         }
       }
-
-      if (contents.length > 0 && fileType === "image") {
-        const existingImages = files[index].content
-          ? (JSON.parse(files[index].content) as FileContent[])
-          : [];
-
-        const totalCount = existingImages.length + contents.length;
-        if (totalCount > 5) {
-          showToast("이미지는 최대 5개까지 첨부 가능합니다.", "error");
-          contents.splice(5 - existingImages.length);
-        }
-
-        const updatedFiles = [...files];
-        updatedFiles[index] = {
-          ...files[index],
-          content: JSON.stringify([...existingImages, ...contents]),
-        };
-        onChange(updatedFiles);
-      }
-    } catch (e) {
+    } catch (error) {
       showToast("파일 업로드에 실패했습니다.", "error");
     }
   };
 
   const readFileAsDataURL = (file: File): Promise<string> => {
-    // 반환 타입을 string으로 변경
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject; // error 매개변수 제거
+      reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-  };
-
-  const handleUrlPreview = (url: string) => {
-    try {
-      return url;
-    } catch (error) {
-      console.error("URL 처리 중 오류 발생:", error);
-      return "";
-    }
   };
 
   const handleFileChange = async (
@@ -209,8 +196,8 @@ export default function FileUpload({
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleDragOver = (_e: React.DragEvent, index: number) => {
-    _e.preventDefault();
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
 
     const updatedFiles = [...files];
@@ -259,13 +246,12 @@ export default function FileUpload({
   };
 
   const renderUploadField = (file: FileItem, index: number) => {
-    // renderUploadField 메서드 내에서 link 타입 처리 부분
     if (file.type === "link") {
       return (
         <div className="w-full h-[50px] relative">
           <input
             type="text"
-            value={typeof file.content === "string" ? file.content : ""} // 문자열만 허용
+            value={file.content}
             onChange={(e) => {
               const updatedFiles = [...files];
               updatedFiles[index] = { ...file, content: e.target.value };
@@ -287,7 +273,7 @@ export default function FileUpload({
               {images.map((image, imageIndex) => (
                 <div key={imageIndex} className="relative w-20 h-20 group">
                   <img
-                    src={handleUrlPreview(image.url)} // 여기에 적용
+                    src={image.url}
                     alt={image.name || "Preview"}
                     className="w-full h-full object-cover rounded-lg cursor-pointer"
                     onClick={() => setPreviewImage(image)}
@@ -456,7 +442,7 @@ export default function FileUpload({
       <ImagePreviewModal
         isOpen={!!previewImage}
         onClose={() => setPreviewImage(null)}
-        imageUrl={previewImage ? handleUrlPreview(previewImage.url) : ""} // 여기에도 적용
+        imageUrl={previewImage?.url || ""}
         imageName={previewImage?.name}
       />
     </div>

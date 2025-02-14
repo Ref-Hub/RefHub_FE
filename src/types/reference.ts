@@ -35,16 +35,13 @@ export interface ReferenceFile {
 }
 
 // 레퍼런스 생성/수정 시 사용되는 파일 타입
-export interface UploadImageData {
-  url: string | Blob;
-  name?: string;
-}
 export interface CreateReferenceFile {
   id: string;
   type: "link" | "image" | "pdf" | "file";
-  content: string | Blob;
+  content: string;
   name?: string;
 }
+
 // 레퍼런스 생성/수정 요청 페이로드
 export interface UpdateReferenceRequest {
   collectionTitle: string;
