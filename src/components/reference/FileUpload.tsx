@@ -62,13 +62,45 @@ export default function FileUpload({
       return false;
     }
 
-    if (type === "image" && !file.type.startsWith("image/")) {
-      showToast("이미지 파일만 첨부 가능합니다.", "error");
+    const allowedImageTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    const allowedFileExtensions = [
+      ".doc",
+      ".docx",
+      ".xls",
+      ".xlsx",
+      ".txt",
+      ".zip",
+      ".rar",
+    ];
+
+    if (type === "image" && !allowedImageTypes.includes(file.type)) {
+      showToast(
+        "JPG, PNG, GIF, WEBP 형식의 이미지만 첨부 가능합니다.",
+        "error"
+      );
       return false;
     }
 
     if (type === "pdf" && file.type !== "application/pdf") {
-      showToast("PDF 파일만 첨부 가능합니다.", "error");
+      showToast("PDF 형식의 파일만 첨부 가능합니다.", "error");
+      return false;
+    }
+
+    if (type === "file") {
+      const fileExtension = `.${file.name.split(".").pop()?.toLowerCase()}`;
+      if (allowedFileExtensions.includes(fileExtension)) {
+        return true;
+      }
+      if (file.type.startsWith("image/") || file.type === "application/pdf") {
+        showToast("이미지 및 PDF는 해당 유형으로 첨부해주세요.", "error");
+        return false;
+      }
+      showToast("지원하지 않는 파일 형식입니다.", "error");
       return false;
     }
 
@@ -168,6 +200,20 @@ export default function FileUpload({
       name: undefined,
     };
     onChange(updatedFiles);
+  };
+
+  const getAcceptTypes = (type: FileItem["type"]) => {
+    switch (type) {
+      case "image":
+        return "image/jpeg,image/png,image/gif,image/webp";
+      case "pdf":
+        return "application/pdf";
+      case "file":
+        // 이미지와 PDF를 제외한 모든 파일
+        return ".doc,.docx,.xls,.xlsx,.txt,.zip,.rar";
+      default:
+        return "";
+    }
   };
 
   const handleRemoveFile = (index: number, imageIndex?: number) => {
@@ -295,8 +341,8 @@ export default function FileUpload({
                 >
                   <input
                     type="file"
-                    accept="image/*"
-                    multiple
+                    accept={getAcceptTypes(file.type)}
+                    multiple={file.type === "image"}
                     className="hidden"
                     onChange={(e) => handleFileChange(e, index)}
                   />
