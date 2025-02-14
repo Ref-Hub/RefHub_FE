@@ -60,15 +60,36 @@ export default function ReferenceEditPage() {
         const reference = await referenceService.getReference(referenceId);
 
         // 파일 데이터 변환
-        const convertedFiles: CreateReferenceFile[] = reference.files.map(
-          (file) => ({
-            id: file._id,
-            type: file.type,
-            content:
-              file.type === "link"
-                ? file.path
-                : file.previewURL || file.previewURLs?.[0] || "",
-            name: file.path.split("/").pop() || "",
+        // ReferenceEditPage.tsx의 fetchData 함수 내부 파일 변환 로직 수정
+        const convertedFiles: CreateReferenceFile[] = await Promise.all(
+          reference.files.map(async (file) => {
+            const baseFile = {
+              id: file._id,
+              type: file.type,
+              name: file.path.split("/").pop() || "",
+            };
+
+            if (file.type === "link") {
+              return {
+                ...baseFile,
+                content: file.path,
+              };
+            } else if (file.type === "image" && file.previewURLs) {
+              // 이미지 배열을 적절한 형식으로 변환
+              const imageContent = file.previewURLs.map((url, index) => ({
+                url,
+                name: file.filenames?.[index] || `image_${index + 1}.jpg`,
+              }));
+              return {
+                ...baseFile,
+                content: JSON.stringify(imageContent),
+              };
+            } else {
+              return {
+                ...baseFile,
+                content: file.previewURL || "",
+              };
+            }
           })
         );
 
