@@ -51,13 +51,8 @@ const ReferenceCard: React.FC<
   const setAlert = useSetRecoilState(alertState);
   const [isChecked, setIsChecked] = useState(false);
   const [imgs, setImgs] = useState<string[]>([]);
-  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
     if (previewData.length > 0) {
       previewData.map((link) => {
         if (typeof link === "string") {
