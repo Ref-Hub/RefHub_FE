@@ -45,11 +45,8 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   useEffect(() => {
     if (previewImages.length > 0) {
       previewImages.map((link) => {
-        if (typeof link === "string" && link.startsWith("undefined")) {
-          const newLink = link.replace("undefined", "");
-          handleImg(newLink);
-        } else if (typeof link === "string") {
-          setImgs((prev) => [...prev, link]);
+        if (typeof link === "string") {
+          handleImg(link);
         }
       });
     }
