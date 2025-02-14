@@ -239,7 +239,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
             className="w-full h-[152px] object-contain rounded-lg"
           />
         )}
-        {previewImages.length > 1 ? (
+        {imgs.length > 1 && (
           <div className="grid grid-cols-2 gap-2">
             {imgs.slice(0, 4).map((image, index) => (
               <img
@@ -249,7 +249,8 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
               />
             ))}
           </div>
-        ) : (
+        )}
+        {imgs.length === 0 && (
           <div className="bg-gray-100 w-full py-4 flex justify-center rounded-lg flex-col items-center gap-5">
             <img src={folder} className="w-[54%]" />
             <p className="text-gray-700 text-sm font-normal">

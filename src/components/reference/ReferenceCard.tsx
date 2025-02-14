@@ -227,7 +227,7 @@ const ReferenceCard: React.FC<
             className="w-full h-[152px] object-contain rounded-lg"
           />
         )}
-        {(imgs ?? []).length > 1 ? (
+        {(imgs ?? []).length > 1 && (
           <div className="grid grid-cols-2 gap-2">
             {imgs.slice(0, 4).map((image, index) => (
               <img
@@ -238,7 +238,8 @@ const ReferenceCard: React.FC<
               />
             ))}
           </div>
-        ) : (
+        )}
+        {imgs.length === 0 && (
           <div className="bg-gray-100 w-full h-[152px] py-4 flex justify-center rounded-lg flex-col items-center gap-5">
             <Image className="w-[80px] h-[80px] stroke-primary" />
           </div>
