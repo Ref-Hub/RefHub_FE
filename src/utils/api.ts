@@ -1,4 +1,3 @@
-// src/utils/api.ts
 import axios from "axios";
 import { authUtils } from "@/store/auth";
 import { handleApiError } from "./errorHandler";
@@ -8,19 +7,25 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000, // 10초
+  timeout: 30000,
+  withCredentials: true, // CORS 요청에 credential 포함
 });
 
 // 요청 인터셉터
 api.interceptors.request.use(
   (config) => {
     const token = authUtils.getToken();
+
+    console.log('Request URL:', config.url);
+    console.log('Token exists:', !!token);
+    console.log('Current Headers:', config.headers);
+
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
+    
     // FormData를 포함한 요청의 경우 Content-Type 헤더 삭제
-    // axios가 자동으로 multipart/form-data와 적절한 boundary를 설정
     if (config.data instanceof FormData) {
       delete config.headers["Content-Type"];
     }
@@ -33,9 +38,40 @@ api.interceptors.request.use(
 // 응답 인터셉터
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // 파일 업로드 관련 에러 처리
+  async (error) => {
     if (axios.isAxiosError(error)) {
+      // 401 에러 시 토큰 리프레시 시도
+      if (error.response?.status === 401) {
+        try {
+          const refreshToken = authUtils.getRefreshToken();
+          if (refreshToken) {
+            // 토큰 리프레시 시도
+            const response = await axios.post(
+              `${api.defaults.baseURL}/api/users/token`,
+              { refreshToken },
+              { withCredentials: true }
+            );
+            
+            if (response.data.accessToken) {
+              authUtils.setToken(response.data.accessToken);
+              // 실패한 요청 재시도
+              if (error.config) {
+                error.config.headers.Authorization = `Bearer ${response.data.accessToken}`;
+                return axios(error.config);
+              }
+            }
+          }
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          authUtils.clearAll();
+          // 로그인 페이지로 리다이렉트 전에 약간의 지연을 줌
+          setTimeout(() => {
+            window.location.href = "/auth/login";
+          }, 100);
+          return Promise.reject(refreshError);
+        }
+      }
+
       if (error.response?.status === 413) {
         return handleApiError({
           ...error,
@@ -53,10 +89,6 @@ api.interceptors.response.use(
             data: { error: "지원하지 않는 파일 형식입니다." },
           },
         });
-      }
-      // 인증 관련 에러 처리
-      if (error.response?.status === 401) {
-        authUtils.clearAll();
       }
     }
     return handleApiError(error);
