@@ -1,24 +1,31 @@
 import { useEffect, useState } from "react";
 import { X, CircleX } from "lucide-react";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { shareModalState, collectionState } from "@/store/collection";
+import {
+  shareModalState,
+  collectionState,
+  alertState,
+} from "@/store/collection";
 import { collectionService } from "@/services/collection";
 import { OwnerUser, SharedUser } from "@/types/collection";
 import CreatorIcon from "@/assets/creator.svg";
 import UserIcon from "@/assets/userIcon.svg";
 import TrashIcon from "@/assets/TrashIcon.svg";
-import { userState } from "@/store/auth";
 
 const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
-  const [, setIsOpen] = useRecoilState(shareModalState);
+  const [IsOpen, setIsOpen] = useRecoilState(shareModalState);
   const collectiondatas = useRecoilValue(collectionState);
-  const [, setCollectionTitle] = useState("");
+  const [alert, setAlert] = useRecoilState(alertState);
+  const [collectionTitle, setCollectionTitle] = useState("");
   const [isShare, setIsShare] = useState(false);
   const [email, setEmail] = useState("");
   const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
-  const [creator, setCreator] = useState<OwnerUser | null>(null);
+  const [creator, setCreator] = useState<OwnerUser>({
+    name: "",
+    email: "",
+    _id: "",
+  });
   const [loading, setLoading] = useState(false);
-  const loginUser = useRecoilValue(userState);
   const [isOwner, setIsOwner] = useState(false);
 
   // 공유 사용자 목록 조회 (GET)
@@ -36,7 +43,6 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
       setIsShare(response.sharing.length > 0);
     } catch (error) {
       console.error("사용자 목록 조회 실패:", error);
-      alert("사용자 목록 조회 실패");
     } finally {
       setLoading(false);
     }
@@ -46,33 +52,32 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
   const handleAddOrUpdateUser = async (email: string, role?: string) => {
     if (!email.trim()) return;
     if (!collectionId) {
-      alert("컬렉션 ID가 없습니다. 다시 시도해주세요.");
       return;
     }
 
     try {
+      setLoading(true);
       await collectionService.updateSharedUsers(collectionId, email, role);
       setEmail("");
-      fetchSharedUsers();
     } catch (error) {
       console.error("사용자 추가 또는 수정 실패:", error);
-      alert("사용자 추가 또는 수정 실패");
     } finally {
       fetchSharedUsers();
     }
   };
 
   // 공유 사용자 삭제 (DELETE)
-  const handleRemoveUser = async (userId: string) => {
+  const handleRemoveUser = (userId: string, email: string, name: string) => {
     if (!collectionId) return;
-    try {
-      await collectionService.deleteSharedUsers(collectionId, userId);
-    } catch (error) {
-      console.error("사용자 삭제 실패:", error);
-      alert("사용자 삭제 실패");
-    } finally {
-      fetchSharedUsers();
-    }
+    setAlert({
+      ids: [collectionId, userId],
+      massage: `${
+        name || email
+      } 님과 \n${collectionTitle} 컬렉션 공유를 취소하시겠습니까?`,
+      isVisible: true,
+      type: "shareRemove",
+      title: "",
+    });
   };
 
   // 모달이 열릴 때 사용자 목록 조회
@@ -82,22 +87,41 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
       collectiondatas.data.find((item) => item._id === collectionId)?.title ||
         ""
     );
-    setIsOwner(loginUser?.email === creator?.email);
+    setIsOwner(IsOpen.userEmail === creator.email);
   }, [collectionId]);
 
-  const handleShare = async () => {
+  useEffect(() => {
+    fetchSharedUsers();
+  }, [alert.isVisible]);
+
+  const handleShare = () => {
     if (isShare) {
       setIsShare(false);
-      try {
-        await collectionService.setPrivate(collectionId);
-      } catch (error) {
-        console.error("사용자 삭제 실패:", error);
-        alert("사용자 삭제 실패");
-      }
-      fetchSharedUsers();
+      setAlert({
+        ids: [collectionId],
+        massage: `${collectionTitle} 컬렉션의 공유를 취소하시겠습니까? \n다른 사용자와 컬렉션을 공유하지 않게 됩니다.`,
+        isVisible: true,
+        type: "sharePrivate",
+        title: "",
+      });
     } else {
       setIsShare(true);
     }
+  };
+
+  const handleOut = () => {
+    if (!collectionId) return;
+    const id = sharedUsers.find(
+      (item) => item.userId.email === IsOpen.userEmail
+    )?.userId._id;
+
+    setAlert({
+      ids: [collectionId, id || ""],
+      massage: `${collectionTitle} 컬렉션에서 나가시겠습니까?`,
+      isVisible: true,
+      type: "shareOut",
+      title: "",
+    });
   };
 
   return (
@@ -106,7 +130,9 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
         {/* 닫기 버튼 */}
         <X
           className="absolute w-9 h-9 top-6 right-6 stroke-gray-700 cursor-pointer"
-          onClick={() => setIsOpen({ isOpen: false, collectionId: "" })}
+          onClick={() =>
+            setIsOpen((prev) => ({ ...prev, isOpen: false, collectionId: "" }))
+          }
         />
         <p className="text-black text-2xl font-semibold">
           {isOwner ? "컬렉션 공유" : "공유된 컬렉션"}
@@ -211,7 +237,13 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
                             </option>
                           </select>
                           <button
-                            onClick={() => handleRemoveUser(user.userId._id)}
+                            onClick={() =>
+                              handleRemoveUser(
+                                user.userId._id,
+                                user.userId.email,
+                                user.userId.name
+                              )
+                            }
                             className="ml-1"
                           >
                             <img
@@ -266,7 +298,7 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
               </div>
             ) : (
               <button
-                onClick={() => handleRemoveUser(email)}
+                onClick={() => handleOut()}
                 className="bg-primary w-full px-4 py-2 mt-4 rounded-lg text-white font-bold transition duration-300 ease-in-out hover:bg-primary-dark active:bg-primary-darker"
               >
                 나가기

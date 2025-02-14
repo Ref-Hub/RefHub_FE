@@ -41,13 +41,8 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   const setAlert = useSetRecoilState(alertState);
   const setShareOpen = useSetRecoilState(shareModalState);
   const [imgs, setImgs] = useState<string[]>([]);
-  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
     if (previewImages.length > 0) {
       previewImages.map((link) => {
         if (typeof link === "string" && link.startsWith("undefined")) {
@@ -197,10 +192,11 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
               </li>
               <li
                 onClick={() =>
-                  setShareOpen({
+                  setShareOpen((prev) => ({
+                    ...prev,
                     isOpen: true,
                     collectionId: _id,
-                  })
+                  }))
                 }
                 className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
               >
