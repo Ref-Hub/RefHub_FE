@@ -31,6 +31,7 @@ export interface ReferenceFile {
   images?: string[];
   previewURL?: string;
   previewURLs?: string[];
+  filenames?: string[]; // 추가
 }
 
 // 레퍼런스 생성/수정 시 사용되는 파일 타입
