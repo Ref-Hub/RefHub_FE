@@ -4,22 +4,19 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import KeywordInput from "@/components/reference/KeywordInput";
-import FileUpload from "@/components/reference/FileUpload";
+import FileUpload, { FileItem } from "@/components/reference/FileUpload"; // FileItem 타입 import
 import { collectionService } from "@/services/collection";
 import { referenceService } from "@/services/reference";
+import type { UpdateReferenceRequest } from "@/types/reference";
 import { Loader } from "lucide-react";
 import type { CollectionCard } from "@/types/collection";
-import type {
-  CreateReferenceFile,
-  UpdateReferenceRequest,
-} from "@/types/reference";
 
 interface FormData {
   collection: string;
   title: string;
   keywords: string[];
   memo: string;
-  files: CreateReferenceFile[];
+  files: FileItem[];
 }
 
 export default function ReferenceEditPage() {
@@ -47,6 +44,7 @@ export default function ReferenceEditPage() {
   });
 
   // 레퍼런스 데이터 로딩
+
   useEffect(() => {
     const fetchData = async () => {
       if (!referenceId) {
@@ -60,22 +58,22 @@ export default function ReferenceEditPage() {
         const reference = await referenceService.getReference(referenceId);
 
         // 파일 데이터 변환
-        const convertedFiles: CreateReferenceFile[] = reference.files.map(
-          (file) => ({
-            id: file._id,
-            type: file.type,
-            content:
-              file.type === "link"
-                ? file.path
-                : file.previewURL || file.previewURLs?.[0] || "",
-            name: file.path.split("/").pop() || "",
-          })
-        );
+        const convertedFiles: FileItem[] = reference.files.map((file) => ({
+          id: file._id,
+          type: file.type,
+          content:
+            file.type === "link"
+              ? file.path
+              : file.previewURL || file.previewURLs?.[0] || "",
+          name:
+            file.type === "link"
+              ? undefined
+              : file.path.split("/").pop() || undefined,
+        }));
 
-        // 폼 데이터 설정
         setFormData({
           collection: reference.collectionTitle || "",
-          title: reference.title,
+          title: reference.title, // referenceTitle을 title로 수정
           keywords: reference.keywords || [],
           memo: reference.memo || "",
           files:
@@ -122,6 +120,10 @@ export default function ReferenceEditPage() {
 
     fetchCollections();
   }, [showToast]);
+
+  const handleFilesChange = (files: FileItem[]) => {
+    setFormData((prev) => ({ ...prev, files }));
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -318,7 +320,7 @@ export default function ReferenceEditPage() {
             <div className="border border-gray-300 rounded-lg p-4">
               <FileUpload
                 files={formData.files}
-                onChange={(files) => setFormData({ ...formData, files })}
+                onChange={handleFilesChange}
                 maxFiles={5}
                 disabled={isSubmitting}
               />
