@@ -106,7 +106,7 @@ const Modal: React.FC<ModalProps> = ({ type }) => {
               )}
             </div>
             {dropOpen.open && (
-              <ul className="flex flex-col absolute w-full bg-white p-4 gap-4 border border-gray-200 rounded-lg shadow-[0px_0px_10px_0px_rgba(181,184,181,0.20)] z-10">
+              <ul className="flex flex-col absolute w-full max-h-60 overflow-y-auto bg-white p-4 gap-4 border border-gray-200 rounded-lg shadow-[0px_0px_10px_0px_rgba(181,184,181,0.20)] z-10">
                 {collectiondata.data.map((option, index) => (
                   <li
                     key={index}
