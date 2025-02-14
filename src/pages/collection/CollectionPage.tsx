@@ -23,6 +23,7 @@ import { CollectionResponse } from "@/types/collection";
 const CollectionPage: React.FC = () => {
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
   const sort = useRecoilValue(DropState);
   const [modal, setModal] = useRecoilState(modalState);
   const alert = useRecoilValue(alertState);
@@ -32,6 +33,7 @@ const CollectionPage: React.FC = () => {
 
   useEffect(() => {
     const fetchCollections = async () => {
+      setIsLoading(true);
       const params = {
         page: currentPage,
         sortBy: sort.sortType,
@@ -63,15 +65,33 @@ const CollectionPage: React.FC = () => {
           previewImages: [],
           data: [],
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchCollections();
-  }, [sort, modal.isOpen, currentPage, alert, showToast, setCollectionData]);
+  }, [
+    sort,
+    modal.isOpen,
+    currentPage,
+    alert,
+    showToast,
+    setCollectionData,
+    shareModal.isOpen,
+  ]);
 
   const handleCreate = () => {
     setModal((prev) => ({ ...prev, isOpen: true, type: "create" }));
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="font-sans">
