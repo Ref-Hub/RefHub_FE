@@ -16,11 +16,10 @@ api.interceptors.request.use(
   (config) => {
     const token = authUtils.getToken();
 
-    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     // FormData를 포함한 요청의 경우 Content-Type 헤더 삭제
     if (config.data instanceof FormData) {
       delete config.headers["Content-Type"];
@@ -36,21 +35,18 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (axios.isAxiosError(error)) {
-      // 401 에러 시 토큰 리프레시 시도
       if (error.response?.status === 401) {
         try {
           const refreshToken = authUtils.getRefreshToken();
           if (refreshToken) {
-            // 토큰 리프레시 시도
             const response = await axios.post(
               `${api.defaults.baseURL}/api/users/token`,
               { refreshToken },
               { withCredentials: true }
             );
-            
+
             if (response.data.accessToken) {
               authUtils.setToken(response.data.accessToken);
-              // 실패한 요청 재시도
               if (error.config) {
                 error.config.headers.Authorization = `Bearer ${response.data.accessToken}`;
                 return axios(error.config);
@@ -58,9 +54,17 @@ api.interceptors.response.use(
             }
           }
         } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
+          console.error("Token refresh failed:", refreshError);
+          // 수정된 부분: 토스트 메시지 표시 후 리디렉션
+          const event = new CustomEvent("auth-error", {
+            detail: {
+              message: "유효하지 않은 토큰입니다. 다시 로그인해주세요.",
+            },
+          });
+          window.dispatchEvent(event);
+
           authUtils.clearAll();
-          // 로그인 페이지로 리다이렉트 전에 약간의 지연을 줌
+          // 짧은 지연 후 리디렉션 실행
           setTimeout(() => {
             window.location.href = "/auth/login";
           }, 100);
