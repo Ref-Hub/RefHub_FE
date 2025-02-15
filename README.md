@@ -108,7 +108,7 @@ VITE_API_BASE_URL=https://api.refhub.site
 
 ## 📚 문서
 
-API 문서는 [RefHub API 문서]([https://api.refhub.site/docs](https://psychedelic-crustacean-955.notion.site/Refhub-API-31eafe6739604bb4823ce9ab2c8d4c38))를 참고해 주세요.
+API 문서는 ([RefHub API 문서](https://psychedelic-crustacean-955.notion.site/Refhub-API-31eafe6739604bb4823ce9ab2c8d4c38))를 참고해 주세요.
 
 ## 🤝 프로젝트 참여하기
 
