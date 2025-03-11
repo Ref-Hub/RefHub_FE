@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const setShareModal = useSetRecoilState(shareModalState);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const {
     register,
@@ -37,7 +38,10 @@ export default function LoginPage() {
     async (data: LoginForm) => {
       if (isLoading) return;
 
+      // 폼 제출 시 이전 오류 메시지 초기화
+      setLoginError(null);
       setIsLoading(true);
+
       try {
         await authService.login(data, rememberMe);
         setShareModal((prev) => ({ ...prev, userEmail: data.email }));
@@ -45,15 +49,21 @@ export default function LoginPage() {
         showToast("로그인이 완료되었습니다.", "success");
       } catch (error) {
         if (error instanceof Error) {
+          // 에러 메시지 토스트 표시
           showToast(error.message, "error");
+          // 동일한 에러 메시지를 폼 아래에도 표시하기 위해 상태 업데이트
+          setLoginError(error.message);
         } else {
-          showToast("로그인에 실패했습니다.", "error");
+          const defaultMsg =
+            "계정 정보가 올바르지 않습니다. 다시 시도해주세요.";
+          showToast(defaultMsg, "error");
+          setLoginError(defaultMsg);
         }
       } finally {
         setIsLoading(false);
       }
     },
-    [navigate, rememberMe, showToast, isLoading]
+    [navigate, rememberMe, showToast, isLoading, setShareModal]
   );
 
   return (
@@ -133,20 +143,28 @@ export default function LoginPage() {
               </Link>
             </div>
 
+            {/* 로그인 버튼 아래에 오류 메시지 표시 */}
             <button
               type="submit"
               disabled={!isButtonActive || isLoading}
               className={`
-                w-full h-14 rounded-lg font-medium transition-colors duration-200
-                ${
-                  isButtonActive && !isLoading
-                    ? "bg-primary hover:bg-primary-dark text-white"
-                    : "bg-[#8A8D8A] text-white cursor-not-allowed"
-                }
-              `}
+    w-full h-14 rounded-lg font-medium transition-colors duration-200
+    ${
+      isButtonActive && !isLoading
+        ? "bg-primary hover:bg-primary-dark text-white"
+        : "bg-[#8A8D8A] text-white cursor-not-allowed"
+    }
+  `}
             >
               {isLoading ? "로그인 중..." : "로그인"}
             </button>
+
+            {/* 오류 메시지 표시 영역 */}
+            {loginError && (
+              <div className="mt-2 text-red-500 text-sm text-center">
+                {loginError}
+              </div>
+            )}
           </form>
 
           <div className="text-center mt-6">
