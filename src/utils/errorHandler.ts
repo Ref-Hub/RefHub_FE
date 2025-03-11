@@ -48,6 +48,9 @@ export const handleApiError = (error: unknown): never => {
       } else {
         // 상태 코드별 기본 에러 메시지
         switch (status) {
+          case 400:
+            message = "계정 정보가 올바르지 않습니다. 다시 시도해주세요.";
+            break;
           case 401:
             message = ERROR_MESSAGES.UNAUTHORIZED;
             break;
