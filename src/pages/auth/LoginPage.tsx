@@ -21,11 +21,29 @@ export default function LoginPage() {
     register,
     handleSubmit,
     watch,
+    setValue, // setValue 추가
     formState: { errors },
   } = useForm<LoginForm>();
 
   const emailValue = watch("email");
   const passwordValue = watch("password");
+
+  const handleEmailInput = (e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget.value;
+    // 허용된 문자만 유지 (영문자, 숫자, @, ., _, -, +)
+    const filtered = input.replace(/[^\w@.+-]/g, '');
+
+    // 입력값이 변경되었을 경우에만 업데이트
+    if (input !== filtered) {
+      // DOM 요소의 value 직접 업데이트
+      e.currentTarget.value = filtered;
+
+      // React Hook Form의 상태 업데이트
+      setValue("email", filtered, {
+        shouldValidate: true, // 변경 후 즉시 유효성 검사 수행
+      });
+    }
+  };
 
   const isEmailValid = (email: string) => {
     return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email);
@@ -33,14 +51,14 @@ export default function LoginPage() {
 
   const isButtonActive =
     emailValue && isEmailValid(emailValue) && passwordValue?.length > 0;
-  
+
   const onSubmit = useCallback(
     async (data: LoginForm) => {
       if (isLoading) return;
-  
+
       setLoginError(null);
       setIsLoading(true);
-      
+
       try {
         await authService.login(data, rememberMe);
         setShareModal((prev) => ({ ...prev, userEmail: data.email }));
@@ -49,12 +67,12 @@ export default function LoginPage() {
       } catch (error) {
         if (error instanceof Error) {
           const errorMessage = error.message;
-          
+
           // 모든 계정 관련 오류는 버튼 하단 텍스트로만 표시
           if (
-            errorMessage.includes("계정 정보") || 
-            errorMessage.includes("등록되지 않은 계정") || 
-            errorMessage.includes("비밀번호") || 
+            errorMessage.includes("계정 정보") ||
+            errorMessage.includes("등록되지 않은 계정") ||
+            errorMessage.includes("비밀번호") ||
             errorMessage.includes("회원가입") ||
             errorMessage.includes("이메일")
           ) {
@@ -74,7 +92,6 @@ export default function LoginPage() {
     },
     [navigate, rememberMe, showToast, isLoading, setShareModal]
   );
-  
 
   return (
     <div className="min-h-screen flex">
@@ -112,6 +129,7 @@ export default function LoginPage() {
                   })}
                   error={errors.email?.message}
                   className="h-14"
+                  onInput={handleEmailInput} // 이 부분을 추가
                 />
               </div>
 
