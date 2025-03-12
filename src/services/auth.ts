@@ -8,7 +8,7 @@ import type {
 } from "@/types/auth";
 import api from "@/utils/api";
 import axios, { AxiosError } from "axios";
-import { handleApiError } from "@/utils/errorHandler";
+import { ERROR_MESSAGES, handleApiError } from "@/utils/errorHandler";
 import { authUtils } from "@/store/auth";
 
 class AuthService {
@@ -76,34 +76,21 @@ class AuthService {
 
       return response.data;
     } catch (err) {
-      // 명시적 타입 체크를 통해 error 객체 다루기
       const error = err as Error | AxiosError;
 
-      // 특정 오류 타입에 대한 세밀한 처리 추가
       if (axios.isAxiosError(error) && error.response) {
         // HTTP 상태 코드에 따른 처리
-        if (error.response.status === 400) {
-          // 서버에서 오는 메시지가 있으면 사용
-          if (error.response.data && typeof error.response.data === "string") {
-            throw new Error(error.response.data);
-          } else if (
-            error.response.data &&
-            typeof error.response.data === "object" &&
-            "error" in error.response.data
-          ) {
-            throw new Error(error.response.data.error as string);
-          } else {
-            // 기본 400 오류 메시지
-            throw new Error(
-              "계정 정보가 올바르지 않습니다. 다시 시도해주세요."
-            );
-          }
-        } else if (error.response.status === 404) {
-          throw new Error("등록되지 않은 계정입니다. 회원가입을 진행해주세요.");
+        if (error.response.status === 404) {
+          // 등록되지 않은 계정(404)은 항상 동일한 메시지로 처리
+          throw new Error(ERROR_MESSAGES.ACCOUNT.NOT_FOUND);
+        } else if (error.response.status === 400) {
+          // 400 오류(비밀번호 불일치, 형식 오류 등)는 일관된 메시지로 처리
+          throw new Error(ERROR_MESSAGES.ACCOUNT.INVALID_CREDENTIALS);
+        } else if (error.response.status === 401) {
+          throw new Error(ERROR_MESSAGES.ACCOUNT.INVALID_CREDENTIALS);
         }
       }
 
-      // 그 외 오류는 일반 오류 처리 함수로 위임
       throw handleApiError(error);
     }
   }
