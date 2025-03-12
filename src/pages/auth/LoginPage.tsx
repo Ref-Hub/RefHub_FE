@@ -33,15 +33,14 @@ export default function LoginPage() {
 
   const isButtonActive =
     emailValue && isEmailValid(emailValue) && passwordValue?.length > 0;
-
+  
   const onSubmit = useCallback(
     async (data: LoginForm) => {
       if (isLoading) return;
-
-      // 폼 제출 시 이전 오류 메시지 초기화
+  
       setLoginError(null);
       setIsLoading(true);
-
+      
       try {
         await authService.login(data, rememberMe);
         setShareModal((prev) => ({ ...prev, userEmail: data.email }));
@@ -49,15 +48,25 @@ export default function LoginPage() {
         showToast("로그인이 완료되었습니다.", "success");
       } catch (error) {
         if (error instanceof Error) {
-          // 에러 메시지 토스트 표시
-          showToast(error.message, "error");
-          // 동일한 에러 메시지를 폼 아래에도 표시하기 위해 상태 업데이트
-          setLoginError(error.message);
+          const errorMessage = error.message;
+          
+          // 모든 계정 관련 오류는 버튼 하단 텍스트로만 표시
+          if (
+            errorMessage.includes("계정 정보") || 
+            errorMessage.includes("등록되지 않은 계정") || 
+            errorMessage.includes("비밀번호") || 
+            errorMessage.includes("회원가입") ||
+            errorMessage.includes("이메일")
+          ) {
+            // 버튼 하단 텍스트로 표시
+            setLoginError(errorMessage);
+          } else {
+            // 기술적 오류는 토스트로 표시
+            showToast(errorMessage, "error");
+          }
         } else {
-          const defaultMsg =
-            "계정 정보가 올바르지 않습니다. 다시 시도해주세요.";
-          showToast(defaultMsg, "error");
-          setLoginError(defaultMsg);
+          // 알 수 없는 오류는 토스트로 표시
+          showToast("알 수 없는 오류가 발생했습니다.", "error");
         }
       } finally {
         setIsLoading(false);
@@ -65,6 +74,7 @@ export default function LoginPage() {
     },
     [navigate, rememberMe, showToast, isLoading, setShareModal]
   );
+  
 
   return (
     <div className="min-h-screen flex">
@@ -161,8 +171,24 @@ export default function LoginPage() {
 
             {/* 오류 메시지 표시 영역 */}
             {loginError && (
-              <div className="mt-2 text-red-500 text-sm text-center">
-                {loginError}
+              <div className="mt-3 px-3 py-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+                <p className="flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 mr-1.5 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                  {loginError}
+                </p>
               </div>
             )}
           </form>
