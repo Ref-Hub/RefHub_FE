@@ -7,7 +7,8 @@ import type {
   VerifyCodeForm,
 } from "@/types/auth";
 import api from "@/utils/api";
-import { handleApiError } from "@/utils/errorHandler";
+import axios, { AxiosError } from "axios";
+import { ERROR_MESSAGES, handleApiError } from "@/utils/errorHandler";
 import { authUtils } from "@/store/auth";
 
 class AuthService {
@@ -74,7 +75,22 @@ class AuthService {
       }
 
       return response.data;
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error | AxiosError;
+
+      if (axios.isAxiosError(error) && error.response) {
+        // HTTP 상태 코드에 따른 처리
+        if (error.response.status === 404) {
+          // 등록되지 않은 계정(404)은 항상 동일한 메시지로 처리
+          throw new Error(ERROR_MESSAGES.ACCOUNT.NOT_FOUND);
+        } else if (error.response.status === 400) {
+          // 400 오류(비밀번호 불일치, 형식 오류 등)는 일관된 메시지로 처리
+          throw new Error(ERROR_MESSAGES.ACCOUNT.INVALID_CREDENTIALS);
+        } else if (error.response.status === 401) {
+          throw new Error(ERROR_MESSAGES.ACCOUNT.INVALID_CREDENTIALS);
+        }
+      }
+
       throw handleApiError(error);
     }
   }
