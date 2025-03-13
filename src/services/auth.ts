@@ -18,6 +18,10 @@ class AuthService {
       const response = await api.post("/api/users/email", { name, email });
       return response.data;
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        // 이미 존재하는 계정일 경우 에러 메시지 던지기
+        throw new Error("이미 가입된 계정입니다.");
+      }
       throw handleApiError(error);
     }
   }
