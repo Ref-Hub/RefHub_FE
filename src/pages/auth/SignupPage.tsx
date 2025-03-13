@@ -84,7 +84,11 @@ export default function SignupPage() {
       showToast("인증번호가 발송되었습니다.", "success");
     } catch (error) {
       if (error instanceof Error) {
-        showToast(error.message, "error");
+        if (error.message === "이미 가입된 계정입니다.") {
+          showToast(error.message, "error");
+        } else {
+          showToast("인증번호 전송에 실패했습니다.", "error");
+        }
       } else {
         showToast("인증번호 전송에 실패했습니다.", "error");
       }
