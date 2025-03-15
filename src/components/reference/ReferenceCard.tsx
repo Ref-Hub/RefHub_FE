@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Reference } from "../../types/reference";
 import {
@@ -51,6 +51,36 @@ const ReferenceCard: React.FC<
   const setAlert = useSetRecoilState(alertState);
   const [isChecked, setIsChecked] = useState(false);
   const [imgs, setImgs] = useState<string[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tagRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const moreRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(keywords.length);
+
+  const calculateVisibleTags = useCallback(() => {
+    if (!containerRef.current) return;
+
+    const containerWidth = containerRef.current.offsetWidth;
+    let totalWidth = 0;
+    let lastVisibleIndex = keywords.length;
+
+    for (let i = 0; i < keywords.length; i++) {
+      const tagWidth = tagRefs.current[i]?.offsetWidth || 60;
+      totalWidth += tagWidth + 4;
+
+      const moreWidth = moreRef.current?.offsetWidth || 30;
+      if (totalWidth + moreWidth > containerWidth) {
+        lastVisibleIndex = i;
+        break;
+      }
+    }
+    setVisibleCount(lastVisibleIndex);
+  }, [keywords]);
+
+  useEffect(() => {
+    calculateVisibleTags();
+    window.addEventListener("resize", calculateVisibleTags);
+    return () => window.removeEventListener("resize", calculateVisibleTags);
+  }, [calculateVisibleTags]);
 
   useEffect(() => {
     if (previewData.length > 0) {
@@ -209,15 +239,24 @@ const ReferenceCard: React.FC<
         {title}
       </p>
 
-      <div className="flex flex-wrap gap-1.5 mb-3.5 min-h-6">
-        {keywords?.map((word, index) => (
+      <div ref={containerRef} className="flex flex-wrap gap-1.5 mb-3.5 min-h-6">
+        {keywords.slice(0, visibleCount).map((word, index) => (
           <span
             key={`${word}-${index}`}
+            ref={(el) => (tagRefs.current[index] = el)}
             className="px-2 py-1 bg-[#0a306c] rounded text-gray-100 text-xs font-medium"
           >
             {word}
           </span>
         ))}
+        {visibleCount < keywords.length && (
+          <span
+            ref={moreRef}
+            className="px-2 py-1 bg-[#0a306c] rounded text-gray-100 text-xs font-medium"
+          >
+            +{keywords.length - visibleCount}
+          </span>
+        )}
       </div>
 
       <div className="mb-2 min-h-[152px]">
