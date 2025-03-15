@@ -43,6 +43,12 @@ const Dropdown: React.FC<DropdownProps> = ({ type }) => {
   const [selectedOption, setSelectedOption] = useState(options[type][0].ko);
 
   useEffect(() => {
+    if (type === "array") {
+      setSelectedOption(
+        options["array"].find((el) => el.en === sort.sortType)?.ko || "최신순"
+      );
+    }
+
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
