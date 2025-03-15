@@ -7,7 +7,7 @@ import {
 } from "@/store/collection";
 import { useRecoilValue, useSetRecoilState, useRecoilState } from "recoil";
 import { EllipsisVertical, PencilLine, Trash2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface DataTableProps {
   items: ReferenceCardProps[];
@@ -30,7 +30,53 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
   const [isTotal, setIsTotal] = useState(false);
   const [isChecked, setIsChecked] = useState(Array(items.length).fill(false));
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const menuRefs = useRef<{ [key: string]: HTMLTableDataCellElement | null }>({});
+  const menuRefs = useRef<{ [key: string]: HTMLTableDataCellElement | null }>(
+    {}
+  );
+  const keywordContainerRefs = useRef<Record<string, HTMLDivElement | null>>(
+    {}
+  );
+  const keywordRefs = useRef<Record<string, HTMLSpanElement[]>>({});
+  const [visibleKeywords, setVisibleKeywords] = useState<
+    Record<string, number>
+  >({});
+
+  const calculateVisibleTags = useCallback(() => {
+    const newVisibleKeywords: Record<string, number> = {};
+
+    items.forEach((item) => {
+      const container = keywordContainerRefs.current[item._id];
+      if (!container) return;
+
+      const containerWidth = container.offsetWidth; // 컨테이너 너비
+      let totalWidth = 0;
+      const keywords = item.keywords ?? [];
+      let lastVisibleIndex = keywords.length;
+
+      for (let i = 0; i < keywords.length; i++) {
+        const keywordEl = keywordRefs.current[item._id]?.[i];
+        if (!keywordEl) continue;
+
+        const keywordWidth = keywordEl.offsetWidth; // 🔥 실제 키워드 너비 가져오기
+        totalWidth += keywordWidth + 4; // 여백 포함
+
+        if (totalWidth > containerWidth - 30) {
+          // "더보기" 버튼 고려
+          lastVisibleIndex = i;
+          break;
+        }
+      }
+      newVisibleKeywords[item._id] = lastVisibleIndex;
+    });
+
+    setVisibleKeywords(newVisibleKeywords);
+  }, [items]);
+
+  useEffect(() => {
+    calculateVisibleTags();
+    window.addEventListener("resize", calculateVisibleTags);
+    return () => window.removeEventListener("resize", calculateVisibleTags);
+  }, [calculateVisibleTags]);
 
   useEffect(() => {
     setIsChecked(Array(items.length).fill(false));
@@ -169,109 +215,126 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
         </tr>
       </thead>
       <tbody>
-        {items.map((item, index) => (
-          <tr
-            key={index}
-            onClick={(e) => handleRowClick(item._id, e)}
-            className="text-center text-black text-base font-normal border-b border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors duration-200"
-          >
-            {(modeValue.isMove || modeValue.isDelete) && (
-              <td className="pl-3">
-                <div>
-                  <input
-                    type="checkbox"
-                    id={item._id}
-                    checked={isChecked[index]}
-                    onChange={(e) =>
-                      handleChange(e, index, item.createAndShare || false)
-                    }
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor={item._id}
-                    className={`w-5 h-5 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
-                      isChecked[index] ? "bg-primary" : "bg-white"
-                    }`}
-                  >
-                    {isChecked[index] && "✔"}
-                  </label>
+        {items.map((item, index) => {
+          const keywords = item.keywords ?? [];
+          const visibleCount = visibleKeywords[item._id] ?? keywords.length;
+          return (
+            <tr
+              key={index}
+              onClick={(e) => handleRowClick(item._id, e)}
+              className="text-center text-black text-base font-normal border-b border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors duration-200"
+            >
+              {(modeValue.isMove || modeValue.isDelete) && (
+                <td className="pl-3">
+                  <div>
+                    <input
+                      type="checkbox"
+                      id={item._id}
+                      checked={isChecked[index]}
+                      onChange={(e) =>
+                        handleChange(e, index, item.createAndShare || false)
+                      }
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor={item._id}
+                      className={`w-5 h-5 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
+                        isChecked[index] ? "bg-primary" : "bg-white"
+                      }`}
+                    >
+                      {isChecked[index] && "✔"}
+                    </label>
+                  </div>
+                </td>
+              )}
+              <td className="py-4">{index + 1}</td>
+              <td className="py-4 px-2 truncate">
+                {collectionData.data.find((i) => i._id === item.collectionId)
+                  ?.title || null}
+              </td>
+              <td className="py-4 px-4 text-center truncate">{item.title}</td>
+              <td className="py-4">
+                <div
+                  ref={(el) => (keywordContainerRefs.current[item._id] = el)}
+                  className="flex flex-wrap justify-center gap-1.5 px-2"
+                >
+                  {item.keywords?.slice(0, visibleCount).map((word, index) => (
+                    <span
+                      key={index}
+                      ref={(el) => {
+                        if (!keywordRefs.current[item._id])
+                          keywordRefs.current[item._id] = [];
+                        if (el) keywordRefs.current[item._id][index] = el;
+                      }}
+                      className="px-2 py-1 bg-[#0a306c] rounded text-gray-100 text-xs font-medium whitespace-nowrap"
+                    >
+                      {word}
+                    </span>
+                  ))}
+                  {visibleCount < keywords.length && (
+                    <span className="px-2 py-1 bg-[#0a306c] rounded text-gray-100 text-xs font-medium">
+                      +{keywords.length - visibleCount}
+                    </span>
+                  )}
                 </div>
               </td>
-            )}
-            <td className="py-4">{index + 1}</td>
-            <td className="py-4 px-2 truncate">
-              {collectionData.data.find((i) => i._id === item.collectionId)
-                ?.title || null}
-            </td>
-            <td className="py-4 px-4 text-center truncate">{item.title}</td>
-            <td className="py-4">
-              <div className="flex flex-wrap justify-center gap-1.5 px-2">
-                {item.keywords?.map((word, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 bg-[#0a306c] rounded text-gray-100 text-xs font-medium whitespace-nowrap"
+              <td className="py-4">{`${new Date(
+                item.createdAt
+              ).getFullYear()}.${(new Date(item.createdAt).getMonth() + 1)
+                .toString()
+                .padStart(2, "0")}.${new Date(item.createdAt)
+                .getDate()
+                .toString()
+                .padStart(2, "0")}`}</td>
+              <td
+                className="relative py-4"
+                ref={(el) => (menuRefs.current[item._id] = el)}
+              >
+                <div className="more-button flex justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(openMenuId === item._id ? null : item._id);
+                    }}
+                    className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
                   >
-                    {word}
-                  </span>
-                ))}
-              </div>
-            </td>
-            <td className="py-4">{`${new Date(item.createdAt).getFullYear()}.${(
-              new Date(item.createdAt).getMonth() + 1
-            )
-              .toString()
-              .padStart(2, "0")}.${new Date(item.createdAt)
-              .getDate()
-              .toString()
-              .padStart(2, "0")}`}</td>
-            <td
-              className="relative py-4"
-              ref={(el) => (menuRefs.current[item._id] = el)}
-            >
-              <div className="more-button flex justify-center">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpenMenuId(openMenuId === item._id ? null : item._id);
-                  }}
-                  className="p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <EllipsisVertical className="w-5 h-5 text-gray-600" />
-                </button>
-                {openMenuId === item._id && (
-                  <div className="absolute top-full right-0 mt-1 z-10">
-                    <ul className="bg-white border border-gray-200 rounded-lg shadow-lg min-w-[120px]">
-                      <li>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(item._id);
-                          }}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                        >
-                          <PencilLine className="w-4 h-4 stroke-primary" />
-                          <span>수정</span>
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(item);
-                          }}
-                          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                        >
-                          <Trash2 className="w-4 h-4 stroke-[#f65063]" />
-                          <span>삭제</span>
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </td>
-          </tr>
-        ))}
+                    <EllipsisVertical className="w-5 h-5 text-gray-600" />
+                  </button>
+                  {openMenuId === item._id && (
+                    <div className="absolute top-full right-0 mt-1 z-10">
+                      <ul className="bg-white border border-gray-200 rounded-lg shadow-lg min-w-[120px]">
+                        <li>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(item._id);
+                            }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                          >
+                            <PencilLine className="w-4 h-4 stroke-primary" />
+                            <span>수정</span>
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(item);
+                            }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                          >
+                            <Trash2 className="w-4 h-4 stroke-[#f65063]" />
+                            <span>삭제</span>
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
