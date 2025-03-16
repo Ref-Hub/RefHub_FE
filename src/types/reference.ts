@@ -9,7 +9,10 @@ export interface Reference {
   keywords?: string[];
   memo?: string;
   files: ReferenceFile[];
-  createAndShare?: boolean;
+  shared?: boolean;
+  creator?: boolean;
+  editor?: boolean;
+  viewer?: boolean;
   previewData?: string[];
   createdAt: string;
 }

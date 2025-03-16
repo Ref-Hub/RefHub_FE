@@ -23,7 +23,10 @@ import { CollectionResponse } from "@/types/collection";
 // ReferenceCard와 리스트에서 공통으로 사용할 타입 정의
 export interface ReferenceListItem {
   _id: string;
-  createAndShare?: boolean;
+  shared?: boolean;
+  creator?: boolean;
+  editor?: boolean;
+  viewer?: boolean;
   collectionId: string;
   title: string;
   keywords?: string[];
@@ -137,7 +140,10 @@ export default function ReferenceListPage() {
 
             return {
               _id: reference._id,
-              createAndShare: reference.createAndShare,
+              shared: reference.shared,
+              creator: reference.creator,
+              editor: reference.editor,
+              viewer: reference.viewer,
               collectionId: reference.collectionId,
               collectionTitle: collections.data.find(
                 (item) => item._id === reference.collectionId

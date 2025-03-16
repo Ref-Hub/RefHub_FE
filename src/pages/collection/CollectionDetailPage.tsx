@@ -84,7 +84,10 @@ export default function CollectionDetailPage() {
 
             return {
               _id: reference._id,
-              createAndShare: reference.createAndShare,
+              shared: reference.shared,
+              creator: reference.creator,
+              editor: reference.editor,
+              viewer: reference.viewer,
               collectionId: reference.collectionId,
               collectionTitle: collectionResponse.data.find(
                 (item) => item._id === reference.collectionId

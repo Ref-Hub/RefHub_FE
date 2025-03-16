@@ -159,7 +159,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
       (i) => i._id === item.collectionId
     )?.title;
 
-    const text = item.createAndShare
+    const text = item.shared
       ? `${collectionTitle} 컬렉션의 다른 사용자와 공유 중인 ${item.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
       : `${item.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
 
@@ -226,13 +226,13 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
             >
               {(modeValue.isMove || modeValue.isDelete) && (
                 <td className="pl-3">
-                  <div>
+                  <div className={item.viewer ? "invisible" : ""}>
                     <input
                       type="checkbox"
                       id={item._id}
                       checked={isChecked[index]}
                       onChange={(e) =>
-                        handleChange(e, index, item.createAndShare || false)
+                        handleChange(e, index, item.shared || false)
                       }
                       className="hidden"
                     />
@@ -290,7 +290,11 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
                 className="relative py-4"
                 ref={(el) => (menuRefs.current[item._id] = el)}
               >
-                <div className="more-button flex justify-center">
+                <div
+                  className={`more-button flex justify-center ${
+                    item.viewer ? "invisible" : ""
+                  }`}
+                >
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

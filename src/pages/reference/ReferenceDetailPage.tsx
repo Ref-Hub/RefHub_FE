@@ -59,7 +59,7 @@ export default function ReferenceDetailPage() {
   const handleDelete = () => {
     if (!reference) return;
 
-    const text = reference.createAndShare
+    const text = reference.shared
       ? `${
           reference.collectionTitle || "선택한"
         } 컬렉션의 다른 사용자와 공유 중인 ${
@@ -210,7 +210,7 @@ export default function ReferenceDetailPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
             <h2 className="flex items-center gap-2 text-base text-gray-500 mb-2">
-              {reference.createAndShare && (
+              {reference.shared && (
                 <Users className="w-5 h-5 stroke-gray-700" />
               )}
               <span>{reference.collectionTitle || "불러오는 중..."}</span>
