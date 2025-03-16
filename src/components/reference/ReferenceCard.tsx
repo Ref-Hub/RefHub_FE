@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Reference } from "../../types/reference";
 import {
   EllipsisVertical,
@@ -43,6 +43,7 @@ const ReferenceCard: React.FC<
   collectionTitle,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
@@ -144,13 +145,22 @@ const ReferenceCard: React.FC<
         } 컬렉션의 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.\n\n * 해당 컬렉션은 다른 사용자와 공유중입니다 *`
       : `${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
 
-    setAlert({
-      ids: [_id],
-      massage: text,
-      isVisible: true,
-      type: "reference",
-      title: title,
-    });
+    location.pathname.includes("/collections")
+      ? setAlert({
+          ids: [_id],
+          massage: text,
+          isVisible: true,
+          type: "collectionDetailRemoveRef",
+          title: title,
+        })
+      : setAlert({
+          ids: [_id],
+          massage: text,
+          isVisible: true,
+          type: "reference",
+          title: title,
+        });
+
     setIsOpen(false);
   };
 

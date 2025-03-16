@@ -52,6 +52,14 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
         setShareModal((prev) => ({ ...prev, isOpen: false, collectionId: "" }));
         navigate(`/collections`);
         showToast("컬렉션에서 나갔습니다.", "success");
+      } else if (alert.type === "collectionDetailRemoveRef") {
+        if (alert.ids.length === 1) {
+          await referenceService.deleteReference(alert.ids[0]);
+          showToast("삭제가 완료되었습니다.", "success");
+        } else {
+          await referenceService.deleteReferences(alert.ids);
+          showToast("삭제가 완료되었습니다.", "success");
+        }
       } else {
         if (alert.ids.length === 1) {
           await referenceService.deleteReference(alert.ids[0]);

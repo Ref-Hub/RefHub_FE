@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useToast } from "@/contexts/useToast";
 import { FilePlus, LayoutGrid, Text, Users } from "lucide-react";
 import FloatingButton from "@/components/common/FloatingButton";
@@ -34,6 +34,8 @@ export default function CollectionDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useRecoilState(modalState);
   const [referenceData, setReferenceData] = useState<ReferenceListItem[]>([]);
+  const alertPrevIsOpen = useRef<boolean>(alert.isVisible);
+  const modalPrevIsOpen = useRef<boolean>(modal.isOpen);
 
   // collectionData를 useMemo로 관리
   const collectionData = useMemo(
@@ -42,86 +44,95 @@ export default function CollectionDetailPage() {
   );
 
   // 데이터 페칭을 하나의 useEffect로 통합
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // 컬렉션 데이터 가져오기
-        const collectionParams = {
-          page: 1,
-          sortBy: sort.sortType,
-          search: sort.searchWord,
-        };
-        const collectionResponse = await collectionService.getCollectionList(
-          collectionParams
-        );
-        setCollectionDatas(collectionResponse);
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // 컬렉션 데이터 가져오기
+      const collectionParams = {
+        page: 1,
+        sortBy: sort.sortType,
+        search: sort.searchWord,
+      };
+      const collectionResponse = await collectionService.getCollectionList(
+        collectionParams
+      );
+      setCollectionDatas(collectionResponse);
 
-        // 레퍼런스 데이터 가져오기
-        const params = {
-          sortBy: sort.sortType,
-          search: sort.searchWord,
-          collection:
-            collectionResponse.data.find((item) => item._id === collectionId)
-              ?.title || "",
-          filterBy: sort.searchType,
-          view: view,
-          mode: "home",
-        };
+      // 레퍼런스 데이터 가져오기
+      const params = {
+        sortBy: sort.sortType,
+        search: sort.searchWord,
+        collection:
+          collectionResponse.data.find((item) => item._id === collectionId)
+            ?.title || "",
+        filterBy: sort.searchType,
+        view: view,
+        mode: "home",
+      };
 
-        const referenceResponse = await referenceService.getReferenceList(
-          params
-        );
+      const referenceResponse = await referenceService.getReferenceList(params);
 
-        if (!referenceResponse.data) {
-          setReferenceData([]);
-          return;
-        }
-
-        const transformedData: ReferenceListItem[] = referenceResponse.data.map(
-          (reference) => {
-            const files = reference.files || [];
-
-            return {
-              _id: reference._id,
-              shared: reference.shared,
-              creator: reference.creator,
-              editor: reference.editor,
-              viewer: reference.viewer,
-              collectionId: reference.collectionId,
-              collectionTitle: collectionResponse.data.find(
-                (item) => item._id === reference.collectionId
-              )?.title,
-              title: reference.title,
-              keywords: reference.keywords,
-              previewData: reference.previewData,
-              createdAt: reference.createdAt,
-              files: files.map((file) => ({
-                _id: file._id || file.path,
-                type: file.type,
-                path: file.path,
-                size: file.size,
-                previewURL: file.previewURL,
-                previewURLs: file.previewURLs,
-              })),
-            };
-          }
-        );
-
-        setReferenceData(transformedData);
-      } catch (error) {
-        if (error instanceof Error) {
-          showToast(error.message, "error");
-        } else {
-          showToast("데이터를 불러오는데 실패했습니다.", "error");
-        }
-      } finally {
-        setIsLoading(false);
+      if (!referenceResponse.data) {
+        setReferenceData([]);
+        return;
       }
-    };
 
+      const transformedData: ReferenceListItem[] = referenceResponse.data.map(
+        (reference) => {
+          const files = reference.files || [];
+
+          return {
+            _id: reference._id,
+            shared: reference.shared,
+            creator: reference.creator,
+            editor: reference.editor,
+            viewer: reference.viewer,
+            collectionId: reference.collectionId,
+            collectionTitle: collectionResponse.data.find(
+              (item) => item._id === reference.collectionId
+            )?.title,
+            title: reference.title,
+            keywords: reference.keywords,
+            previewData: reference.previewData,
+            createdAt: reference.createdAt,
+            files: files.map((file) => ({
+              _id: file._id || file.path,
+              type: file.type,
+              path: file.path,
+              size: file.size,
+              previewURL: file.previewURL,
+              previewURLs: file.previewURLs,
+            })),
+          };
+        }
+      );
+
+      setReferenceData(transformedData);
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("데이터를 불러오는데 실패했습니다.", "error");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
-  }, [sort, view, modal.isOpen, alert, collectionId]);
+  }, [sort, view, collectionId]);
+
+  useEffect(() => {
+    if (alertPrevIsOpen.current === true && alert.isVisible === false) {
+      fetchData();
+    } else if (modalPrevIsOpen.current === true && modal.isOpen === false) {
+      fetchData();
+    }
+
+    alertPrevIsOpen.current = alert.isVisible;
+    modalPrevIsOpen.current = modal.isOpen;
+  }, [alert.isVisible, modal.isOpen]);
 
   const handleDelete = () => {
     let text = "";

@@ -88,13 +88,21 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
             : (text = `선택한 ${mode.checkItems.length}개의 레퍼런스를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`);
         }
 
-        setAlert({
-          ids: mode.checkItems,
-          massage: text,
-          isVisible: true,
-          type: type,
-          title: "",
-        });
+        type === "collectionDetail"
+          ? setAlert({
+              ids: mode.checkItems,
+              massage: text,
+              isVisible: true,
+              type: "collectionDetailRemoveRef",
+              title: "",
+            })
+          : setAlert({
+              ids: mode.checkItems,
+              massage: text,
+              isVisible: true,
+              type: type,
+              title: "",
+            });
       } else {
         type === "collection"
           ? showToast("선택한 컬렉션이 없습니다.", "error")
