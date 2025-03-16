@@ -22,7 +22,10 @@ const ReferenceCard: React.FC<
   Pick<
     Reference,
     | "_id"
-    | "createAndShare"
+    | "shared"
+    | "creator"
+    | "editor"
+    | "viewer"
     | "title"
     | "keywords"
     | "previewData"
@@ -31,7 +34,8 @@ const ReferenceCard: React.FC<
   >
 > = ({
   _id,
-  createAndShare,
+  shared,
+  viewer,
   title,
   keywords = [],
   previewData = [],
@@ -126,7 +130,7 @@ const ReferenceCard: React.FC<
     setIsChecked(e.target.checked);
     setModeValue((prev: FloatingState) => ({
       ...prev,
-      isShared: [...prev.isShared, createAndShare ?? false],
+      isShared: [...prev.isShared, shared ?? false],
       checkItems: prev.checkItems.includes(e.target.id)
         ? prev.checkItems.filter((i) => i !== e.target.id)
         : [...prev.checkItems, e.target.id],
@@ -134,7 +138,7 @@ const ReferenceCard: React.FC<
   };
 
   const handleDelete = () => {
-    const text = createAndShare
+    const text = shared
       ? `${
           collectionTitle || "선택한"
         } 컬렉션의 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.\n\n * 해당 컬렉션은 다른 사용자와 공유중입니다 *`
@@ -178,57 +182,58 @@ const ReferenceCard: React.FC<
 
   return (
     <div className="relative border border-gray-200 rounded-lg bg-white px-5">
-      {modeValue.isMove || modeValue.isDelete ? (
-        <div>
-          <input
-            type="checkbox"
-            id={_id}
-            checked={isChecked}
-            onChange={handleChange}
-            className="hidden"
-          />
-          <label
-            htmlFor={_id}
-            className={`w-5 h-5 absolute top-4 right-3 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
-              isChecked ? "bg-primary" : "bg-white"
-            }`}
-          >
-            {isChecked && "✔"}
-          </label>
-        </div>
-      ) : (
-        <div ref={addRef}>
-          <EllipsisVertical
-            className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer hover:text-gray-600 transition-colors"
-            onClick={() => setIsOpen(!isOpen)}
-          />
-          {isOpen && (
-            <ul className="absolute top-12 right-1.5 gap-2 inline-flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg min-w-[120px] z-10">
-              <li>
-                <button
-                  onClick={handleEdit}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <PencilLine className="w-4 h-4 stroke-primary" />
-                  <span>수정</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={handleDelete}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4 stroke-[#f65063]" />
-                  <span>삭제</span>
-                </button>
-              </li>
-            </ul>
-          )}
-        </div>
-      )}
+      {!viewer &&
+        (modeValue.isMove || modeValue.isDelete ? (
+          <div>
+            <input
+              type="checkbox"
+              id={_id}
+              checked={isChecked}
+              onChange={handleChange}
+              className="hidden"
+            />
+            <label
+              htmlFor={_id}
+              className={`w-5 h-5 absolute top-4 right-3 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
+                isChecked ? "bg-primary" : "bg-white"
+              }`}
+            >
+              {isChecked && "✔"}
+            </label>
+          </div>
+        ) : (
+          <div ref={addRef}>
+            <EllipsisVertical
+              className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer hover:text-gray-600 transition-colors"
+              onClick={() => setIsOpen(!isOpen)}
+            />
+            {isOpen && (
+              <ul className="absolute top-12 right-1.5 gap-2 inline-flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg min-w-[120px] z-10">
+                <li>
+                  <button
+                    onClick={handleEdit}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <PencilLine className="w-4 h-4 stroke-primary" />
+                    <span>수정</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={handleDelete}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 stroke-[#f65063]" />
+                    <span>삭제</span>
+                  </button>
+                </li>
+              </ul>
+            )}
+          </div>
+        ))}
 
       <h2 className="flex flex-row gap-2 items-center text-base font-normal text-gray-500 mt-4 mb-1 mr-4">
-        {createAndShare && <Users className="w-5 h-5 stroke-gray-700" />}
+        {shared && <Users className="w-5 h-5 stroke-gray-700" />}
         <p className="flex-1 truncate">{collectionTitle || "불러오는 중..."}</p>
       </h2>
 
