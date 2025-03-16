@@ -4,12 +4,15 @@ import { useRecoilValue } from "recoil";
 import { userState, authUtils } from "@/store/auth";
 import AuthHeader from "./AuthHeader";
 import MainHeader from "./MainHeader";
+import Footer from "./Footer";
 
 export default function Layout() {
   const location = useLocation();
   const user = useRecoilValue(userState);
   const isAuthPage = location.pathname.startsWith("/auth/");
   const isLoginPage = location.pathname === "/auth/login";
+  const isHomePage =
+    location.pathname === "/collections" || location.pathname === "/references";
 
   // 현재 로그인 프로세스가 진행 중인지 확인
   const isLoggingIn = isLoginPage && authUtils.getToken();
@@ -34,6 +37,7 @@ export default function Layout() {
       <main className="flex-1">
         <Outlet />
       </main>
+      {isHomePage && <Footer />}
     </div>
   );
 }
