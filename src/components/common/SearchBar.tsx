@@ -1,6 +1,6 @@
 //src/components/common/SearchBar.tsx
 import { useState, useEffect, useRef } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, CircleX } from "lucide-react";
 import Dropdown from "./Dropdown";
 import { useRecoilState } from "recoil";
 import { DropState } from "@/store/collection";
@@ -16,6 +16,10 @@ const SearchBar: React.FC<SearchProps> = ({ type }) => {
   const tagRefs = useRef<(HTMLDivElement | null)[]>([]);
   const moreRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(0);
+
+  useEffect(() => {
+    if (sort.searchWord.length === 0) setSearch("");
+  }, [sort]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -41,6 +45,10 @@ const SearchBar: React.FC<SearchProps> = ({ type }) => {
     setSort((prev) => ({ ...prev, searchWord: search }));
   };
 
+  const handleReset = () => {
+    setSearch("");
+  };
+
   return (
     <div>
       <div className="flex items-center gap-6">
@@ -52,12 +60,18 @@ const SearchBar: React.FC<SearchProps> = ({ type }) => {
         )}
         <div className="relative flex-1">
           <Search className="absolute left-5 top-[33px] stroke-primary" />
+          {search.length > 0 && (
+            <CircleX
+              className="absolute top-[35px] right-3.5 w-6 h-6 fill-gray-700 stroke-white hover: cursor-pointer"
+              onClick={handleReset}
+            />
+          )}
           <input
             type="text"
             placeholder="검색어를 입력해 주세요"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className=" w-full py-[9px] px-12 my-6 bg-[#f9faf9] rounded-[50px] border border-gray-200 gap-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+            className=" w-full py-[9px] px-14 my-6 bg-[#f9faf9] rounded-[50px] border border-gray-200 gap-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
           />
         </div>
         <button

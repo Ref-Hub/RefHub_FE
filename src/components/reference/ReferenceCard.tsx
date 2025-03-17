@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Reference } from "../../types/reference";
 import {
   EllipsisVertical,
@@ -22,7 +22,10 @@ const ReferenceCard: React.FC<
   Pick<
     Reference,
     | "_id"
-    | "createAndShare"
+    | "shared"
+    | "creator"
+    | "editor"
+    | "viewer"
     | "title"
     | "keywords"
     | "previewData"
@@ -31,7 +34,8 @@ const ReferenceCard: React.FC<
   >
 > = ({
   _id,
-  createAndShare,
+  shared,
+  viewer,
   title,
   keywords = [],
   previewData = [],
@@ -39,6 +43,7 @@ const ReferenceCard: React.FC<
   collectionTitle,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
@@ -51,6 +56,36 @@ const ReferenceCard: React.FC<
   const setAlert = useSetRecoilState(alertState);
   const [isChecked, setIsChecked] = useState(false);
   const [imgs, setImgs] = useState<string[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tagRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const moreRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(keywords.length);
+
+  const calculateVisibleTags = useCallback(() => {
+    if (!containerRef.current) return;
+
+    const containerWidth = containerRef.current.offsetWidth;
+    let totalWidth = 0;
+    let lastVisibleIndex = keywords.length;
+
+    for (let i = 0; i < keywords.length; i++) {
+      const tagWidth = tagRefs.current[i]?.offsetWidth || 60;
+      totalWidth += tagWidth + 4;
+
+      const moreWidth = moreRef.current?.offsetWidth || 30;
+      if (totalWidth + moreWidth > containerWidth) {
+        lastVisibleIndex = i;
+        break;
+      }
+    }
+    setVisibleCount(lastVisibleIndex);
+  }, [keywords]);
+
+  useEffect(() => {
+    calculateVisibleTags();
+    window.addEventListener("resize", calculateVisibleTags);
+    return () => window.removeEventListener("resize", calculateVisibleTags);
+  }, [calculateVisibleTags]);
 
   useEffect(() => {
     if (previewData.length > 0) {
@@ -96,7 +131,7 @@ const ReferenceCard: React.FC<
     setIsChecked(e.target.checked);
     setModeValue((prev: FloatingState) => ({
       ...prev,
-      isShared: [...prev.isShared, createAndShare ?? false],
+      isShared: [...prev.isShared, shared ?? false],
       checkItems: prev.checkItems.includes(e.target.id)
         ? prev.checkItems.filter((i) => i !== e.target.id)
         : [...prev.checkItems, e.target.id],
@@ -104,19 +139,28 @@ const ReferenceCard: React.FC<
   };
 
   const handleDelete = () => {
-    const text = createAndShare
+    const text = shared
       ? `${
           collectionTitle || "선택한"
         } 컬렉션의 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.\n\n * 해당 컬렉션은 다른 사용자와 공유중입니다 *`
       : `${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
 
-    setAlert({
-      ids: [_id],
-      massage: text,
-      isVisible: true,
-      type: "reference",
-      title: title,
-    });
+    location.pathname.includes("/collections")
+      ? setAlert({
+          ids: [_id],
+          massage: text,
+          isVisible: true,
+          type: "collectionDetailRemoveRef",
+          title: title,
+        })
+      : setAlert({
+          ids: [_id],
+          massage: text,
+          isVisible: true,
+          type: "reference",
+          title: title,
+        });
+
     setIsOpen(false);
   };
 
@@ -148,57 +192,58 @@ const ReferenceCard: React.FC<
 
   return (
     <div className="relative border border-gray-200 rounded-lg bg-white px-5">
-      {modeValue.isMove || modeValue.isDelete ? (
-        <div>
-          <input
-            type="checkbox"
-            id={_id}
-            checked={isChecked}
-            onChange={handleChange}
-            className="hidden"
-          />
-          <label
-            htmlFor={_id}
-            className={`w-5 h-5 absolute top-4 right-3 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
-              isChecked ? "bg-primary" : "bg-white"
-            }`}
-          >
-            {isChecked && "✔"}
-          </label>
-        </div>
-      ) : (
-        <div ref={addRef}>
-          <EllipsisVertical
-            className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer hover:text-gray-600 transition-colors"
-            onClick={() => setIsOpen(!isOpen)}
-          />
-          {isOpen && (
-            <ul className="absolute top-12 right-1.5 gap-2 inline-flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg min-w-[120px] z-10">
-              <li>
-                <button
-                  onClick={handleEdit}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <PencilLine className="w-4 h-4 stroke-primary" />
-                  <span>수정</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={handleDelete}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4 stroke-[#f65063]" />
-                  <span>삭제</span>
-                </button>
-              </li>
-            </ul>
-          )}
-        </div>
-      )}
+      {!viewer &&
+        (modeValue.isMove || modeValue.isDelete ? (
+          <div>
+            <input
+              type="checkbox"
+              id={_id}
+              checked={isChecked}
+              onChange={handleChange}
+              className="hidden"
+            />
+            <label
+              htmlFor={_id}
+              className={`w-5 h-5 absolute top-4 right-3 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
+                isChecked ? "bg-primary" : "bg-white"
+              }`}
+            >
+              {isChecked && "✔"}
+            </label>
+          </div>
+        ) : (
+          <div ref={addRef}>
+            <EllipsisVertical
+              className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer hover:text-gray-600 transition-colors"
+              onClick={() => setIsOpen(!isOpen)}
+            />
+            {isOpen && (
+              <ul className="absolute top-12 right-1.5 gap-2 inline-flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg min-w-[120px] z-10">
+                <li>
+                  <button
+                    onClick={handleEdit}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <PencilLine className="w-4 h-4 stroke-primary" />
+                    <span>수정</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={handleDelete}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 stroke-[#f65063]" />
+                    <span>삭제</span>
+                  </button>
+                </li>
+              </ul>
+            )}
+          </div>
+        ))}
 
       <h2 className="flex flex-row gap-2 items-center text-base font-normal text-gray-500 mt-4 mb-1 mr-4">
-        {createAndShare && <Users className="w-5 h-5 stroke-gray-700" />}
+        {shared && <Users className="w-5 h-5 stroke-gray-700" />}
         <p className="flex-1 truncate">{collectionTitle || "불러오는 중..."}</p>
       </h2>
 
@@ -209,15 +254,24 @@ const ReferenceCard: React.FC<
         {title}
       </p>
 
-      <div className="flex flex-wrap gap-1.5 mb-3.5 min-h-6">
-        {keywords?.map((word, index) => (
+      <div ref={containerRef} className="flex flex-wrap gap-1.5 mb-3.5 min-h-6">
+        {keywords.slice(0, visibleCount).map((word, index) => (
           <span
             key={`${word}-${index}`}
+            ref={(el) => (tagRefs.current[index] = el)}
             className="px-2 py-1 bg-[#0a306c] rounded text-gray-100 text-xs font-medium"
           >
             {word}
           </span>
         ))}
+        {visibleCount < keywords.length && (
+          <span
+            ref={moreRef}
+            className="px-2 py-1 bg-[#0a306c] rounded text-gray-100 text-xs font-medium"
+          >
+            +{keywords.length - visibleCount}
+          </span>
+        )}
       </div>
 
       <div className="mb-2 min-h-[152px]">
