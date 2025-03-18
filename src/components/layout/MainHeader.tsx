@@ -4,6 +4,7 @@ import { useRecoilState } from "recoil";
 import { userState } from "@/store/auth";
 import SearchBar from "../common/SearchBar";
 import { DropState } from "@/store/collection";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 export default function MainHeader() {
   const navigate = useNavigate();
@@ -48,15 +49,8 @@ export default function MainHeader() {
     });
   };
 
-  const typeStyles = (id: string) =>
-    `text-xl ${
-      getCurrentType() === id
-        ? "text-primary font-bold"
-        : "text-gray-600 font-medium"
-    }`;
-
   return (
-    <header className="bg-white shadow-sm rounded-bl-[48px] rounded-br-[48px] shadow-[0px_4px_10px_0px_rgba(181,184,181,0.10)]">
+    <header className="bg-white dark:bg-dark-bg shadow-sm rounded-bl-[48px] rounded-br-[48px] shadow-[0px_4px_10px_0px_rgba(181,184,181,0.10)] dark:shadow-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center">
@@ -69,23 +63,32 @@ export default function MainHeader() {
           <nav className="flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
             <Link
               to="/collections"
-              className={typeStyles("collection")}
+              className={`text-xl ${
+                getCurrentType() === "collection"
+                  ? "text-primary dark:text-primary font-bold"
+                  : "text-gray-600 dark:text-gray-300 font-medium"
+              }`}
               onClick={handleReset}
             >
               나의 컬렉션
             </Link>
             <Link
               to="/references"
-              className={typeStyles("reference")}
+              className={`text-xl ${
+                getCurrentType() === "reference"
+                  ? "text-primary dark:text-primary font-bold"
+                  : "text-gray-600 dark:text-gray-300 font-medium"
+              }`}
               onClick={handleReset}
             >
               전체 레퍼런스
             </Link>
           </nav>
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <button
               onClick={handleLogout}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               로그아웃
             </button>
