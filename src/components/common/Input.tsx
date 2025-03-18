@@ -1,5 +1,5 @@
 // src/components/common/Input.tsx
-import { forwardRef, useState, KeyboardEvent } from 'react';
+import { forwardRef, useState, KeyboardEvent, useEffect, ChangeEvent } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -12,6 +12,9 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
   isLoading?: boolean;
   isValid?: boolean;
   numbersOnly?: boolean;
+  emailOnly?: boolean;
+  passwordOnly?: boolean;
+  maxLength?: number;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(({
@@ -24,13 +27,25 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   isLoading,
   isValid,
   numbersOnly,
+  emailOnly,
+  passwordOnly,
   type,
   disabled,
   className = '',
   onKeyPress,
+  onChange,
+  value,
+  maxLength,
   ...props
 }, ref) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [inputValue, setInputValue] = useState<string>(value as string || '');
+
+  useEffect(() => {
+    if (value !== undefined) {
+      setInputValue(value as string);
+    }
+  }, [value]);
 
   const sizeStyles = {
     sm: 'px-3 py-1.5 text-sm',
@@ -64,10 +79,40 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   `;
 
   const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    // 숫자만 입력 가능하도록 처리
     if (numbersOnly && !/[0-9]/.test(e.key)) {
       e.preventDefault();
     }
+    
     onKeyPress?.(e);
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    let newValue = e.target.value;
+    
+    // 각 필드 타입별 필터링 로직
+    if (numbersOnly) {
+      // 숫자만 허용
+      newValue = newValue.replace(/[^0-9]/g, '');
+    } else if (emailOnly) {
+      // 이메일에 허용된 문자만 포함 (영문자, 숫자, @, ., _, -, +)
+      newValue = newValue.replace(/[^\w@.+-]/g, '');
+    } else if (passwordOnly) {
+      // 비밀번호에 허용된 문자만 포함 (영문자, 숫자, 특수문자)
+      newValue = newValue.replace(/[^\x20-\x7E]/g, ''); // ASCII 범위의 출력 가능한 문자만 허용
+    }
+    
+    // maxLength 적용
+    if (maxLength && newValue.length > maxLength) {
+      newValue = newValue.slice(0, maxLength);
+    }
+    
+    // DOM 요소의 value 직접 업데이트
+    e.target.value = newValue;
+    setInputValue(newValue);
+    
+    // 원래의 onChange 핸들러 호출
+    onChange?.(e);
   };
 
   const renderPasswordToggle = type === 'password' && (
@@ -102,9 +147,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
         <input
           ref={ref}
           type={inputType}
+          value={inputValue}
           disabled={disabled || isLoading}
           className={baseInputStyles}
           onKeyPress={handleKeyPress}
+          onChange={handleChange}
           {...props}
         />
         {renderPasswordToggle || (rightElement && (
