@@ -1,7 +1,7 @@
 // src/hooks/useTheme.ts
 import { useRecoilState } from "recoil";
 import { useEffect } from "react";
-import { themeState, Theme } from "@/store/theme";
+import { themeState } from "@/store/theme";
 
 export function useTheme() {
   const [theme, setTheme] = useRecoilState(themeState);
