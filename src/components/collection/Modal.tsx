@@ -12,7 +12,7 @@ interface ModalProps {
 
 const Modal: React.FC<ModalProps> = ({ type }) => {
   const types: { [key: string]: string[] } = {
-    create: ["컬렉션 생성", "생성", "컬렉션의 제목을 입력해 주세요."],
+    create: ["컬렉션 생성", "생성"],
     update: ["컬렉션 수정", "수정 완료"],
     move: ["컬렉션 이동", "이동"],
   };
@@ -80,7 +80,7 @@ const Modal: React.FC<ModalProps> = ({ type }) => {
             )}
             <input
               type="text"
-              placeholder={isOpen.type === "create" ? types["create"][2] : ""}
+              placeholder="컬렉션의 제목을 입력해 주세요."
               value={isOpen.title}
               maxLength={20}
               onChange={(e) =>
