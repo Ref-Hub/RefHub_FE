@@ -196,10 +196,15 @@ export default function ReferenceListPage() {
   }
 
   return (
-    <div className="min-h-screen font-sans">
+    <div className="font-sans">
       {modal.isOpen && <Modal type={modal.type} />}
       {alert.isVisible && <Alert message={alert.massage} />}
-      {referenceData?.length > 0 && <FloatingButton type="reference" />}
+      {collections.data.length > 0 && (
+        <FloatingButton
+          type="reference"
+          isData={referenceData.length === 0 ? false : true}
+        />
+      )}
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-10 mb-6">
           <Dropdown type="array" />
