@@ -191,6 +191,7 @@ export default function SignupPage() {
                     })}
                     error={errors.email?.message}
                     disabled={verificationSent}
+                    emailOnly // 이 속성 추가
                   />
                 </div>
                 <Button
@@ -270,6 +271,7 @@ export default function SignupPage() {
                   type="password"
                   placeholder="비밀번호를 다시 입력하세요"
                   className="w-full h-[56px]"
+                  passwordOnly // 이 속성 추가
                   {...register("passwordConfirm", {
                     required: "비밀번호 확인을 입력해주세요",
                     validate: (value) =>

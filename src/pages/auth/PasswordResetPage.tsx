@@ -170,6 +170,7 @@ export default function PasswordResetPage() {
                     })}
                     error={errors.email?.message}
                     disabled={isVerificationSent}
+                    emailOnly // 이 속성 추가
                   />
                 </div>
                 <Button
@@ -243,6 +244,7 @@ export default function PasswordResetPage() {
                     type="password"
                     placeholder="비밀번호를 입력하세요"
                     className="w-full h-[56px]"
+                    passwordOnly // 이 속성 추가
                     {...register("newPassword", {
                       required: "새 비밀번호를 입력해주세요",
                       validate: validatePassword,
@@ -260,6 +262,7 @@ export default function PasswordResetPage() {
                     type="password"
                     placeholder="비밀번호를 다시 입력하세요"
                     className="w-full h-[56px]"
+                    passwordOnly // 이 속성 추가
                     {...register("newPasswordConfirm", {
                       required: "비밀번호 확인을 입력해주세요",
                       validate: (value) =>
