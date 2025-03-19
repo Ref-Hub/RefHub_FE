@@ -52,6 +52,7 @@ export interface UpdateReferenceRequest {
   keywords?: string[];
   memo?: string;
   files: FormData;
+  existingKeywords?: string[]; // 추가
 }
 
 // API 응답 타입들
