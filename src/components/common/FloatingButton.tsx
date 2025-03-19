@@ -21,9 +21,10 @@ import {
 
 interface FABProps {
   type: string;
+  isData?: boolean;
 }
 
-const FloatingButton: React.FC<FABProps> = ({ type }) => {
+const FloatingButton: React.FC<FABProps> = ({ type, isData }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -160,6 +161,7 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
               label={mode.isMove ? "이동하기" : "컬렉션 이동"}
               time={0.6}
               onClick={handleMove}
+              disabled={!isData}
             />
           )}
           <ActionButton
@@ -175,6 +177,7 @@ const FloatingButton: React.FC<FABProps> = ({ type }) => {
             label={mode.isDelete ? "삭제하기" : "삭제"}
             time={0.4}
             onClick={handleDelete}
+            disabled={!isData}
           />
         </div>
       )}
@@ -198,6 +201,7 @@ interface ActionButtonProps {
   label: string;
   time: number;
   onClick: () => void;
+  disabled?: boolean;
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({
@@ -205,11 +209,13 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   label,
   time,
   onClick,
+  disabled,
 }) => {
   return (
     <motion.button
-      className="flex flex-col items-center gap-1 text-sm font-normal"
+      className="flex flex-col items-center gap-1 text-sm font-normal disabled:!opacity-50 disabled:cursor-not-allowed"
       onClick={onClick}
+      disabled={disabled}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0, opacity: 0 }}
