@@ -11,6 +11,7 @@ import { OwnerUser, SharedUser } from "@/types/collection";
 import CreatorIcon from "@/assets/creator.svg";
 import UserIcon from "@/assets/userIcon.svg";
 import TrashIcon from "@/assets/TrashIcon.svg";
+import { useToast } from "@/contexts/useToast";
 
 const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
   const [IsOpen, setIsOpen] = useRecoilState(shareModalState);
@@ -19,6 +20,8 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
   const [collectionTitle, setCollectionTitle] = useState("");
   const [isShare, setIsShare] = useState(false);
   const [email, setEmail] = useState("");
+  const [error, setError] = useState(false);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
   const [creator, setCreator] = useState<OwnerUser>({
     name: "",
@@ -27,6 +30,7 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
   });
   const [loading, setLoading] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const { showToast } = useToast();
 
   // 공유 사용자 목록 조회 (GET)
   const fetchSharedUsers = async () => {
@@ -49,6 +53,18 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+
+    // 이메일 유효성 검사
+    if (!emailRegex.test(value)) {
+      setError(true);
+    } else {
+      setError(false);
+    }
+  };
+
   // 공유 사용자 추가 및 수정 (PATCH)
   const handleAddOrUpdateUser = async (email: string, role?: string) => {
     if (!email.trim()) return;
@@ -61,7 +77,11 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
       await collectionService.updateSharedUsers(collectionId, email, role);
       setEmail("");
     } catch (error) {
-      console.error("사용자 추가 또는 수정 실패:", error);
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("실패했습니다.", "error");
+      }
     } finally {
       fetchSharedUsers();
     }
@@ -189,10 +209,10 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
                         alt="Creator"
                         className="w-7 h-7"
                       />
-                      <span className="text-base text-black font-semibold w-12">
+                      <span className="text-base text-black font-semibold w-12 truncate">
                         {creator.name}
                       </span>
-                      <p className="text-base text-gray-700 font-normal flex-1">
+                      <p className="text-base text-gray-700 font-normal flex-1 truncate">
                         {creator.email}
                       </p>
                     </li>
@@ -204,10 +224,10 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
                       className="flex justify-between gap-2.5 items-center bg-white py-2 px-4 rounded-lg"
                     >
                       <img src={UserIcon} alt="User" className="w-7 h-7" />
-                      <p className="text-base text-black font-semibold w-12">
+                      <p className="text-base text-black font-semibold w-12 truncate">
                         {user.userId.name || ""}
                       </p>
-                      <p className="text-base text-gray-700 font-normal flex-1">
+                      <p className="text-base text-gray-700 font-normal flex-1 truncate">
                         {user.userId.email}
                       </p>
 
@@ -279,22 +299,32 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
                     type="text"
                     placeholder="추가할 멤버의 이메일을 입력해 주세요"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-[80%] py-2 px-4 bg-white text-base font-normal rounded-lg border border-gray-200"
+                    onChange={handleChange}
+                    className={`w-[80%] py-2 px-4 bg-white text-base font-normal rounded-lg border border-gray-200 focus:outline-none focus: border-2 ${
+                      error && email.length != 0
+                        ? "focus:border-red-500"
+                        : "focus:border-primary"
+                    }`}
                     style={{
                       fontSize: "16px",
                       color: "#616161",
                       fontWeight: "bold",
                     }}
                   />
+
                   <button
                     onClick={() => handleAddOrUpdateUser(email)}
-                    disabled={email.length === 0}
+                    disabled={error || email.length === 0}
                     className="bg-primary w-[20%] px-4 py-2 rounded-lg text-white font-bold transition duration-300 ease-in-out hover:bg-primary-dark hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-gray-500"
                   >
                     초대
                   </button>
                 </div>
+                {error && email.length != 0 && (
+                  <p className="text-red-500 text-sm font-normal mt-1">
+                    이메일 형식이 올바르지 않습니다.
+                  </p>
+                )}
               </div>
             ) : (
               <button
