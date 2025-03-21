@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRecoilValue, useRecoilState } from "recoil";
 import {
   modalState,
@@ -30,56 +30,68 @@ const CollectionPage: React.FC = () => {
   const shareModal = useRecoilValue(shareModalState);
   const [collectionData, setCollectionData] =
     useRecoilState<CollectionResponse>(collectionState);
+  const alertPrevIsOpen = useRef<boolean>(alert.isVisible);
+  const modalPrevIsOpen = useRef<boolean>(modal.isOpen);
+  const sharePrevIsOpen = useRef<boolean>(shareModal.isOpen);
 
-  useEffect(() => {
-    const fetchCollections = async () => {
-      setIsLoading(true);
-      const params = {
-        page: currentPage,
-        sortBy: sort.sortType,
-        search: sort.searchWord,
-      };
-
-      try {
-        const response = await collectionService.getCollectionList(params);
-        setCollectionData(response);
-      } catch (error) {
-        if (error instanceof ApiError) {
-          showToast(error.message, "error");
-        } else if (error instanceof Error) {
-          showToast(error.message, "error");
-        } else {
-          showToast("컬렉션 가져오기를 실패했습니다.", "error");
-        }
-
-        // CollectionResponse 타입에 맞게 초기 상태 설정
-        setCollectionData({
-          currentPage: 1,
-          totalPages: 1,
-          totalItemCount: 0,
-          _id: "",
-          title: "",
-          isShared: false,
-          isFavorite: false,
-          refCount: 0,
-          previewImages: [],
-          data: [],
-        });
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchCollections = async () => {
+    setIsLoading(true);
+    const params = {
+      page: currentPage,
+      sortBy: sort.sortType,
+      search: sort.searchWord,
     };
 
+    try {
+      const response = await collectionService.getCollectionList(params);
+      setCollectionData(response);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        showToast(error.message, "error");
+      } else if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("컬렉션 가져오기를 실패했습니다.", "error");
+      }
+
+      // CollectionResponse 타입에 맞게 초기 상태 설정
+      setCollectionData({
+        currentPage: 1,
+        totalPages: 1,
+        totalItemCount: 0,
+        _id: "",
+        title: "",
+        isShared: false,
+        isFavorite: false,
+        refCount: 0,
+        previewImages: [],
+        data: [],
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchCollections();
-  }, [
-    sort,
-    modal.isOpen,
-    currentPage,
-    alert,
-    showToast,
-    setCollectionData,
-    shareModal.isOpen,
-  ]);
+  }, [sort, currentPage, showToast, setCollectionData]);
+
+  useEffect(() => {
+    if (alertPrevIsOpen.current === true && alert.isVisible === false) {
+      fetchCollections();
+    } else if (modalPrevIsOpen.current === true && modal.isOpen === false) {
+      fetchCollections();
+    } else if (
+      sharePrevIsOpen.current === true &&
+      shareModal.isOpen === false
+    ) {
+      fetchCollections();
+    }
+
+    alertPrevIsOpen.current = alert.isVisible;
+    modalPrevIsOpen.current = modal.isOpen;
+    sharePrevIsOpen.current = shareModal.isOpen;
+  }, [alert.isVisible, modal.isOpen, shareModal.isOpen]);
 
   const handleCreate = () => {
     setModal((prev) => ({ ...prev, isOpen: true, type: "create" }));
@@ -100,7 +112,12 @@ const CollectionPage: React.FC = () => {
         <ShareModal collectionId={shareModal.collectionId} />
       )}
       {alert.isVisible && <Alert message={alert.massage} />}
-      {collectionData?.data?.length > 0 && <FloatingButton type="collection" />}
+      {collectionData?.data?.length > 0 && (
+        <FloatingButton
+          type="collection"
+          isData={collectionData.data.length === 0 ? false : true}
+        />
+      )}
 
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-10 mb-6">
@@ -123,11 +140,13 @@ const CollectionPage: React.FC = () => {
               ))}
             </div>
 
-            <Pagination
-              currentPage={currentPage}
-              totalPages={collectionData.totalPages}
-              setPage={setCurrentPage}
-            />
+            {collectionData.totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={collectionData.totalPages}
+                setPage={setCurrentPage}
+              />
+            )}
           </>
         ) : (
           <div className="flex flex-col items-center">

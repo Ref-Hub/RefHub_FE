@@ -119,13 +119,26 @@ const FloatingButton: React.FC<FABProps> = ({ type, isData }) => {
     <div className="fixed bottom-[7%] right-[7%] flex flex-col items-center gap-8 z-10">
       {isOpen && (
         <div className="flex flex-col items-center gap-3">
+          {type != "collectionDetail" && (
+            <ActionButton
+              icon={
+                <FolderPlus
+                  className={`${iconStyles} stroke-primary bg-white`}
+                />
+              }
+              label="컬렉션"
+              time={1.2}
+              onClick={handleCreateCollection}
+            />
+          )}
+
           <ActionButton
             icon={
-              <FolderPlus className={`${iconStyles} stroke-primary bg-white`} />
+              <FilePlus className={`${iconStyles} stroke-primary bg-white`} />
             }
-            label="컬렉션"
-            time={1.2}
-            onClick={handleCreateCollection}
+            label="레퍼런스"
+            time={0.9}
+            onClick={() => navigate("/references/new")}
           />
           {type === "collectionDetail" && (
             <ActionButton
@@ -139,15 +152,7 @@ const FloatingButton: React.FC<FABProps> = ({ type, isData }) => {
               }
             />
           )}
-          <ActionButton
-            icon={
-              <FilePlus className={`${iconStyles} stroke-primary bg-white`} />
-            }
-            label="레퍼런스"
-            time={0.9}
-            onClick={() => navigate("/references/new")}
-          />
-          {type == "reference" && (
+          {type != "collection" && (
             <ActionButton
               icon={
                 <ArrowLeftRight

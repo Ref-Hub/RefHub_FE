@@ -20,6 +20,7 @@ interface InputProps
   isValid?: boolean;
   numbersOnly?: boolean;
   emailOnly?: boolean;
+  nameOnly?: boolean;
   passwordOnly?: boolean;
   maxLength?: number;
 }
@@ -38,6 +39,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       numbersOnly,
       emailOnly,
       passwordOnly,
+      nameOnly,
       type,
       disabled,
       className = "",
@@ -115,6 +117,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       } else if (passwordOnly) {
         // 비밀번호에 허용된 문자만 포함 (영문자, 숫자, 특수문자)
         newValue = newValue.replace(/[^\x20-\x7E]/g, ""); // ASCII 범위의 출력 가능한 문자만 허용
+      } else if (nameOnly) {
+        // 이름에 허용된 문자만 포함 (한글, 영문)
+        // 한글의 경우 조합 중인 글자도 허용하기 위해 정규식 확장
+        newValue = newValue.replace(/[^A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ]/g, "");
       }
 
       // maxLength 적용
