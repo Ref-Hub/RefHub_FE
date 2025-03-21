@@ -1,5 +1,5 @@
 // src/pages/auth/LoginPage.tsx
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const setShareModal = useSetRecoilState(shareModalState);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isEmailValid, setIsEmailValid] = useState<boolean | null>(null);
 
   const {
     register,
@@ -27,12 +28,22 @@ export default function LoginPage() {
   const emailValue = watch("email");
   const passwordValue = watch("password");
 
-  const isEmailValid = (email: string) => {
+  // 이메일 형식 검증 함수
+  const validateEmail = (email: string) => {
     return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email);
   };
 
+  // 이메일 값이 변경될 때마다 유효성 검사
+  useEffect(() => {
+    if (emailValue) {
+      setIsEmailValid(validateEmail(emailValue));
+    } else {
+      setIsEmailValid(null);
+    }
+  }, [emailValue]);
+
   const isButtonActive =
-    emailValue && isEmailValid(emailValue) && passwordValue?.length > 0;
+    emailValue && validateEmail(emailValue) && passwordValue?.length > 0;
 
   const onSubmit = useCallback(
     async (data: LoginForm) => {
@@ -50,7 +61,7 @@ export default function LoginPage() {
         if (error instanceof Error) {
           const errorMessage = error.message;
 
-          // 모든 계정 관련 오류는 버튼 하단 텍스트로만 표시
+          // 계정 관련 오류는 버튼 하단 텍스트로 표시
           if (
             errorMessage.includes("계정 정보") ||
             errorMessage.includes("등록되지 않은 계정") ||
@@ -58,14 +69,11 @@ export default function LoginPage() {
             errorMessage.includes("회원가입") ||
             errorMessage.includes("이메일")
           ) {
-            // 버튼 하단 텍스트로 표시
             setLoginError(errorMessage);
           } else {
-            // 기술적 오류는 토스트로 표시
             showToast(errorMessage, "error");
           }
         } else {
-          // 알 수 없는 오류는 토스트로 표시
           showToast("알 수 없는 오류가 발생했습니다.", "error");
         }
       } finally {
@@ -76,9 +84,9 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex max-h-screen overflow-hidden">
       {/* Left Section */}
-      <div className="hidden lg:block lg:w-1/2">
+      <div className="hidden lg:block lg:w-1/2 flex-shrink-0 overflow-hidden">
         <img
           src="/images/login-intro-bg.svg"
           alt="RefHub Introduction"
@@ -87,15 +95,15 @@ export default function LoginPage() {
       </div>
 
       {/* Right Section */}
-      <div className="flex-1 bg-[#f9faf9] flex items-center justify-center">
-        <div className="w-[520px]">
-          <h2 className="text-center text-2xl font-bold text-primary mb-12">
+      <div className="flex-1 bg-[#f9faf9] flex items-center justify-center overflow-y-auto py-4">
+        <div className="w-full max-w-[520px] px-4">
+          <h2 className="text-center text-2xl font-bold text-primary mb-8 sm:mb-12">
             로그인
           </h2>
 
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-6 bg-white p-8 rounded-lg"
+            className="space-y-6 bg-white p-6 sm:p-8 rounded-lg"
           >
             <div className="space-y-6">
               <div className="space-y-2">
@@ -109,9 +117,13 @@ export default function LoginPage() {
                       message: "올바른 이메일 형식이 아닙니다",
                     },
                   })}
-                  error={errors.email?.message}
-                  className="h-14"
-                  emailOnly // 이 속성 추가
+                  error={
+                    emailValue && !isEmailValid
+                      ? "올바른 이메일 형식이 아닙니다"
+                      : errors.email?.message
+                  }
+                  className="h-12 sm:h-14"
+                  emailOnly
                 />
               </div>
 
@@ -124,13 +136,13 @@ export default function LoginPage() {
                     required: "비밀번호를 입력해주세요",
                   })}
                   error={errors.password?.message}
-                  className="h-14"
-                  passwordOnly // 이 속성 추가
+                  className="h-12 sm:h-14"
+                  passwordOnly
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between my-6">
+            <div className="flex items-center justify-between my-4 sm:my-6">
               <div className="flex items-center">
                 <input
                   id="remember-me"
@@ -154,18 +166,17 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            {/* 로그인 버튼 아래에 오류 메시지 표시 */}
             <button
               type="submit"
               disabled={!isButtonActive || isLoading}
               className={`
-    w-full h-14 rounded-lg font-medium transition-colors duration-200
-    ${
-      isButtonActive && !isLoading
-        ? "bg-primary hover:bg-primary-dark text-white"
-        : "bg-[#8A8D8A] text-white cursor-not-allowed"
-    }
-  `}
+                w-full h-12 sm:h-14 rounded-lg font-medium transition-colors duration-200
+                ${
+                  isButtonActive && !isLoading
+                    ? "bg-primary hover:bg-primary-dark text-white"
+                    : "bg-[#8A8D8A] text-white cursor-not-allowed"
+                }
+              `}
             >
               {isLoading ? "로그인 중..." : "로그인"}
             </button>
@@ -194,7 +205,7 @@ export default function LoginPage() {
             )}
           </form>
 
-          <div className="text-center mt-6">
+          <div className="text-center mt-4 sm:mt-6">
             <span className="text-[#676967] text-sm">계정이 없으신가요? </span>
             <Link
               to="/auth/signup"
