@@ -172,7 +172,12 @@ export default function CollectionDetailPage() {
       {modal.isOpen && <Modal type={modal.type} />}
       {shareModal.isOpen && <ShareModal collectionId={collectionId || ""} />}
       {alert.isVisible && <Alert message={alert.massage} />}
-      {referenceData?.length > 0 && <FloatingButton type="collectionDetail" />}
+
+      <FloatingButton
+        type="collectionDetail"
+        isData={referenceData.length === 0 ? false : true}
+      />
+
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-12 pb-6 border-b border-gray-400">
           <p className="flex items-center text-primary text-3xl font-bold gap-4">
