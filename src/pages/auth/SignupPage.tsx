@@ -155,11 +155,12 @@ export default function SignupPage() {
               label="이름"
               placeholder="이름을 입력하세요"
               className="w-full h-[56px]"
+              nameOnly
               maxLength={10}
               {...register("name", {
                 required: "이름을 입력해주세요",
                 pattern: {
-                  value: /^[A-Za-z가-힣]+$/,
+                  value: /^[A-Za-z가-힣]+$/, // 공백 제거, 완성된 한글만 허용
                   message: "한글 또는 영문만 입력 가능합니다",
                 },
                 maxLength: {
@@ -191,7 +192,7 @@ export default function SignupPage() {
                     })}
                     error={errors.email?.message}
                     disabled={verificationSent}
-                    emailOnly // 이 속성 추가
+                    emailOnly
                   />
                 </div>
                 <Button
