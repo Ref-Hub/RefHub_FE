@@ -187,7 +187,7 @@ export default function SignupPage() {
                       pattern: {
                         value:
                           /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i,
-                        message: "올바른 이메일 형식이 아닙니다",
+                        message: "이메일 형식이 올바르지 않습니다",
                       },
                     })}
                     error={errors.email?.message}
