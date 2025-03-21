@@ -30,11 +30,12 @@ export interface ReferenceFile {
   _id: string;
   type: "link" | "image" | "pdf" | "file";
   path: string;
-  size: number;
+  size: string;
   images?: string[];
   previewURL?: string;
   previewURLs?: string[];
-  filenames?: string[]; // 추가
+  filenames?: string[];
+  content?: string;
 }
 
 // 레퍼런스 생성/수정 시 사용되는 파일 타입
@@ -69,7 +70,7 @@ export interface CreateReferenceResponse {
 export interface ReferenceDetailResponse {
   message: string;
   referenceDetail: {
-    collectionId: string; // 추가
+    collectionId: string;
     collectionTitle: string;
     referenceTitle: string;
     createdAt: string;
@@ -78,10 +79,10 @@ export interface ReferenceDetailResponse {
     attachments: Array<{
       type: "link" | "image" | "pdf" | "file";
       path: string;
-      size: number;
-      images?: string[];
-      previewURL?: string;
-      previewURLs?: string[];
+      size: string; // "200KB", "2MB" 등으로 내려올 수 있으므로 number 대신 string
+      // 단일 파일명 또는 다중 파일명을 모두 지원하도록 optional 프로퍼티 추가
+      filename?: string;
+      filenames?: string[];
     }>;
   };
 }
