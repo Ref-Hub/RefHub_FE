@@ -1,6 +1,6 @@
 // src/pages/reference/ReferenceEditPage.tsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import KeywordInput from "@/components/reference/KeywordInput";
@@ -9,10 +9,7 @@ import { collectionService } from "@/services/collection";
 import { referenceService } from "@/services/reference";
 import { Loader } from "lucide-react";
 import type { CollectionCard } from "@/types/collection";
-import type {
-  CreateReferenceFile,
-  UpdateReferenceRequest,
-} from "@/types/reference";
+import type { CreateReferenceFile } from "@/types/reference";
 
 interface FormData {
   collection: string;
@@ -31,6 +28,10 @@ export default function ReferenceEditPage() {
   const [isLoadingCollections, setIsLoadingCollections] =
     useState<boolean>(false);
   const [collections, setCollections] = useState<CollectionCard[]>([]);
+
+  const [existingFilePaths, setExistingFilePaths] = useState<string[]>([]);
+  const [existingKeywordIds, setExistingKeywordIds] = useState<string[]>([]);
+  const [removedFilePaths, setRemovedFilePaths] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<FormData>({
     collection: "",
@@ -59,38 +60,34 @@ export default function ReferenceEditPage() {
         setIsLoading(true);
         const reference = await referenceService.getReference(referenceId);
 
-        // 파일 데이터 변환
-        // ReferenceEditPage.tsx의 fetchData 함수 내부 파일 변환 로직 수정
-        const convertedFiles: CreateReferenceFile[] = await Promise.all(
-          reference.files.map(async (file) => {
-            const baseFile = {
-              id: file._id,
-              type: file.type,
-              name: file.path.split("/").pop() || "",
-            };
+        // 기존 파일 경로 추출
+        const filePaths = reference.files.map((file) => file.path);
+        setExistingFilePaths(filePaths);
 
-            if (file.type === "link") {
+        // 기존 키워드 ID 추출 - 타입 가드 추가
+        if (reference.keywords) {
+          setExistingKeywordIds(reference.keywords);
+        }
+
+        // 파일 데이터 변환
+        const convertedFiles: CreateReferenceFile[] = reference.files.map(
+          (file) => {
+            if (!file || typeof file !== "object") {
               return {
-                ...baseFile,
-                content: file.path,
-              };
-            } else if (file.type === "image" && file.previewURLs) {
-              // 이미지 배열을 적절한 형식으로 변환
-              const imageContent = file.previewURLs.map((url, index) => ({
-                url,
-                name: file.filenames?.[index] || `image_${index + 1}.jpg`,
-              }));
-              return {
-                ...baseFile,
-                content: JSON.stringify(imageContent),
-              };
-            } else {
-              return {
-                ...baseFile,
-                content: file.previewURL || "",
+                id: Date.now().toString(),
+                type: "link",
+                content: "",
               };
             }
-          })
+            return {
+              id: "path" in file ? file.path : Date.now().toString(),
+              type: file.type as "link" | "image" | "pdf" | "file",
+              // 'path' 프로퍼티가 있을 경우 이름을 추출, 없으면 빈 문자열 할당
+              name: file.path ? file.path.split("/").pop() || "" : "",
+              // undefined가 아닌 항상 문자열을 제공 (빈 문자열로 대체)
+              content: file.content || "",
+            };
+          }
         );
 
         // 폼 데이터 설정
@@ -98,6 +95,7 @@ export default function ReferenceEditPage() {
           collection: reference.collectionTitle || "",
           title: reference.title,
           keywords: reference.keywords || [],
+
           memo: reference.memo || "",
           files:
             convertedFiles.length > 0
@@ -144,13 +142,18 @@ export default function ReferenceEditPage() {
     fetchCollections();
   }, [showToast]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleFileRemove = useCallback((filePath: string) => {
+    // 삭제된 파일 경로 추가
+    setRemovedFilePaths((prev) => [...prev, filePath]);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       setIsSubmitting(true);
 
-      // Validation
+      // 유효성 검사 (기존 코드 유지)
       if (!formData.collection) {
         showToast("컬렉션을 선택해 주세요.", "error");
         return;
@@ -169,18 +172,25 @@ export default function ReferenceEditPage() {
         return;
       }
 
-      // 파일 데이터 준비
+      // 유지할 파일 경로 계산 (삭제된 파일 제외)
+      const filesToKeep = existingFilePaths.filter(
+        (path) => !removedFilePaths.includes(path)
+      );
+
+      // 파일 데이터 준비 (기존 파일 경로 포함)
       const filesFormData = referenceService.prepareFilesFormData(
-        formData.files
+        formData.files,
+        filesToKeep
       );
 
       // API 호출
-      const updateData: UpdateReferenceRequest = {
+      const updateData = {
         collectionTitle: formData.collection,
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,
         files: filesFormData,
+        existingKeywords: existingKeywordIds,
       };
 
       await referenceService.updateReference(referenceId, updateData);
@@ -189,6 +199,7 @@ export default function ReferenceEditPage() {
       navigate(`/references/${referenceId}`);
     } catch (error) {
       console.error("Error updating reference:", error);
+      // 오류 처리 코드 (기존 코드 유지)
       showToast("레퍼런스 수정에 실패했습니다.", "error");
     } finally {
       setIsSubmitting(false);
@@ -342,6 +353,7 @@ export default function ReferenceEditPage() {
                 onChange={(files) => setFormData({ ...formData, files })}
                 maxFiles={5}
                 disabled={isSubmitting}
+                onFileRemove={handleFileRemove}
               />
             </div>
           </div>

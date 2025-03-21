@@ -17,6 +17,7 @@ interface FileItem {
   type: "link" | "image" | "pdf" | "file";
   content: string;
   name?: string;
+  path?: string; // path 속성 추가
 }
 
 interface FileContent {
@@ -29,12 +30,15 @@ interface FileUploadProps {
   onChange: (files: FileItem[]) => void;
   maxFiles?: number;
   disabled?: boolean; // 추가
+  onFileRemove?: (filePath: string) => void;
 }
 
 export default function FileUpload({
   files,
   onChange,
   maxFiles = 5,
+  disabled = false, // 기본값 추가
+  onFileRemove,
 }: FileUploadProps) {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -219,20 +223,82 @@ export default function FileUpload({
   const handleRemoveFile = (index: number, imageIndex?: number) => {
     try {
       if (typeof imageIndex === "number") {
-        // Remove specific image from multiple images
+        // 이미지 리스트에서 특정 이미지 삭제
         const updatedFiles = [...files];
-        const images = JSON.parse(updatedFiles[index].content) as FileContent[];
-        images.splice(imageIndex, 1);
-        updatedFiles[index] = {
-          ...updatedFiles[index],
-          content: JSON.stringify(images),
-        };
-        onChange(updatedFiles);
+        try {
+          const images = JSON.parse(updatedFiles[index].content) as {
+            url: string;
+          }[];
+          const removedImage = images[imageIndex]; // 삭제되는 이미지 정보 저장
+
+          // 이미지 URL이 S3 URL이고 onFileRemove prop이 제공된 경우 호출
+          if (
+            removedImage.url &&
+            (removedImage.url.includes("amazonaws.com") ||
+              removedImage.url.includes("http")) &&
+            onFileRemove
+          ) {
+            onFileRemove(removedImage.url);
+          }
+
+          images.splice(imageIndex, 1);
+          updatedFiles[index] = {
+            ...updatedFiles[index],
+            content: JSON.stringify(images),
+          };
+          onChange(updatedFiles);
+        } catch (error) {
+          console.error("이미지 데이터 파싱 실패:", error);
+          showToast("이미지 삭제에 실패했습니다.", "error");
+        }
       } else {
-        // Remove entire file item
+        // 전체 파일 아이템 삭제
+        const fileToRemove = files[index];
+
+        // 파일이 path 속성을 가지고 있고 onFileRemove prop이 제공된 경우 호출
+        if (fileToRemove.path && onFileRemove) {
+          onFileRemove(fileToRemove.path);
+        }
+        // content가 URL 문자열이고 링크 타입이 아닌 경우
+        else if (
+          fileToRemove.content &&
+          fileToRemove.type !== "link" &&
+          typeof fileToRemove.content === "string" &&
+          (fileToRemove.content.includes("amazonaws.com") ||
+            fileToRemove.content.includes("http")) &&
+          onFileRemove
+        ) {
+          onFileRemove(fileToRemove.content);
+        }
+        // 이미지 리스트의 경우 내부 이미지 URL들을 확인
+        else if (
+          fileToRemove.type === "image" &&
+          typeof fileToRemove.content === "string"
+        ) {
+          try {
+            const images = JSON.parse(fileToRemove.content) as {
+              url: string;
+            }[];
+            images.forEach((img) => {
+              if (
+                img.url &&
+                (img.url.includes("amazonaws.com") ||
+                  img.url.includes("http")) &&
+                onFileRemove
+              ) {
+                onFileRemove(img.url);
+              }
+            });
+          } catch (error) {
+            console.error("이미지 데이터 파싱 실패:", error);
+          }
+        }
+
+        // 파일 목록에서 제거
         onChange(files.filter((_, i) => i !== index));
       }
-    } catch {
+    } catch (error) {
+      console.error("파일 삭제 실패:", error);
       showToast("파일 삭제에 실패했습니다.", "error");
     }
   };
@@ -305,6 +371,7 @@ export default function FileUpload({
             }}
             placeholder="링크를 입력해 주세요."
             className="w-full h-full px-5 py-[13px] border border-gray-200 rounded-lg focus:outline-none focus:border-[#62BA9B]"
+            disabled={disabled} // disabled prop 추가
           />
         </div>
       );
@@ -324,10 +391,12 @@ export default function FileUpload({
                     className="w-full h-full object-cover rounded-lg cursor-pointer"
                     onClick={() => setPreviewImage(image)}
                   />
+                  복사
                   <button
                     type="button"
                     onClick={() => handleRemoveFile(index, imageIndex)}
                     className="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    disabled={disabled} // disabled prop 추가
                   >
                     <X className="w-4 h-4 text-gray-600" />
                   </button>
@@ -345,6 +414,7 @@ export default function FileUpload({
                     multiple={file.type === "image"}
                     className="hidden"
                     onChange={(e) => handleFileChange(e, index)}
+                    disabled={disabled} // disabled prop 추가
                   />
                   <Plus className="w-6 h-6 text-gray-400" />
                 </label>
@@ -373,13 +443,16 @@ export default function FileUpload({
             accept={file.type === "pdf" ? ".pdf" : undefined}
             className="hidden"
             onChange={(e) => handleFileChange(e, index)}
+            disabled={disabled} // disabled prop 추가
           />
           파일 변경
         </label>
       </div>
     ) : (
       <label
-        className="flex-1 flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors cursor-pointer"
+        className={`flex-1 flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors ${
+          disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+        }`}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => handleDrop(e, index)}
       >
@@ -388,6 +461,7 @@ export default function FileUpload({
           accept={file.type === "pdf" ? ".pdf" : undefined}
           className="hidden"
           onChange={(e) => handleFileChange(e, index)}
+          disabled={disabled} // disabled prop 추가
         />
         <div className="flex flex-col items-center gap-2 text-gray-500">
           <Plus className="w-6 h-6" />
@@ -475,7 +549,10 @@ export default function FileUpload({
               key={type}
               type="button"
               onClick={() => handleAddFileField(type)}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg border border-gray-200 hover:border-[#62BA9B] hover:text-[#62BA9B] transition-colors"
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg border border-gray-200 hover:border-[#62BA9B] hover:text-[#62BA9B] transition-colors ${
+                disabled ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={disabled} // disabled prop 추가
             >
               <Icon className="w-5 h-5" />
               <span>{label}</span>

@@ -36,7 +36,7 @@ export interface ReferenceListItem {
     _id: string;
     type: string;
     path: string;
-    size: number;
+    size: string; // 수정: number -> string
     previewURL?: string;
     previewURLs?: string[];
   }>;
