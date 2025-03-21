@@ -91,21 +91,23 @@ class ReferenceService {
         keywords: referenceDetail.keywords || [],
         memo: referenceDetail.memo || "",
         files: await Promise.all(
-          referenceDetail.attachments.map(async (attachment) => ({
-            _id: attachment.path,
-            type: attachment.type,
-            path: attachment.path,
-            size: attachment.size,
-            images: attachment.images,
-            previewURL: attachment.previewURL
-              ? await this.transformUrl(attachment.previewURL)
-              : undefined,
-            previewURLs: attachment.previewURLs
-              ? await Promise.all(
-                  attachment.previewURLs.map((url) => this.transformUrl(url))
-                )
-              : undefined,
-          }))
+          referenceDetail.attachments.map(async (attachment) => {
+            // filename 혹은 filenames를 처리
+            const filenames = attachment.filenames
+              ? attachment.filenames
+              : attachment.filename
+              ? [attachment.filename]
+              : [];
+            return {
+              _id: attachment.path,
+              type: attachment.type as "link" | "image" | "pdf" | "file",
+              path: attachment.path,
+              size: attachment.size, // 이제 size는 string 타입
+              name: filenames.length > 0 ? filenames[0] : "",
+              filenames,
+              content: "",
+            };
+          })
         ),
       };
     } catch (error) {
@@ -258,34 +260,33 @@ class ReferenceService {
         formData.append("links", file.content);
       } else if (file.type === "image") {
         try {
-          // S3 URL 형식인지 확인
+          // S3 URL 형식이면 기존 파일 경로(existingFiles)에서 처리하므로 건너뜀
           if (
             file.content &&
             (file.content.includes("amazonaws.com") ||
               file.content.includes("http"))
           ) {
-            // S3 URL은 existingFiles에서 처리되므로 여기서는 건너뜀
             return;
           }
 
           const images = JSON.parse(file.content);
           if (Array.isArray(images)) {
             images.forEach((image: { url: string }) => {
-              // base64 데이터인 경우에만 변환
               if (image.url && image.url.startsWith("data:")) {
                 try {
                   const blobData = this.base64ToBlob(image.url);
+                  // 각 이미지마다 고유한 key(images1, images2, ...)로 추가
                   formData.append(
                     `images${imageCount}`,
                     blobData,
                     file.name || "image.jpg"
                   );
+                  imageCount++; // 이미지마다 카운터를 증가시켜 고유 key를 보장
                 } catch (blobError) {
                   console.error("이미지 blob 변환 실패:", blobError);
                 }
               }
             });
-            imageCount++;
           }
         } catch (error) {
           console.error("이미지 데이터 파싱 실패:", error);
