@@ -165,7 +165,7 @@ export default function PasswordResetPage() {
                       required: "이메일을 입력해주세요",
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: "올바른 이메일 형식이 아닙니다",
+                        message: "이메일 형식이 올바르지 않습니다",
                       },
                     })}
                     error={errors.email?.message}
