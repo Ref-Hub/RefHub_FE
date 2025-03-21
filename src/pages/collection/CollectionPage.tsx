@@ -123,11 +123,13 @@ const CollectionPage: React.FC = () => {
               ))}
             </div>
 
-            <Pagination
-              currentPage={currentPage}
-              totalPages={collectionData.totalPages}
-              setPage={setCurrentPage}
-            />
+            {collectionData.totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={collectionData.totalPages}
+                setPage={setCurrentPage}
+              />
+            )}
           </>
         ) : (
           <div className="flex flex-col items-center">
