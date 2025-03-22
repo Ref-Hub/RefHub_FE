@@ -158,7 +158,7 @@ export default function SignupPage() {
               {...register("name", {
                 required: "이름을 입력해주세요",
                 pattern: {
-                  value: /^[A-Za-z가-힣]+$/, // 공백 제거, 완성된 한글만 허용
+                  value: /^[A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ]+$/, // 한글 자음/모음 추가
                   message: "한글 또는 영문만 입력 가능합니다",
                 },
                 maxLength: {
@@ -257,6 +257,7 @@ export default function SignupPage() {
                   type="password"
                   placeholder="비밀번호를 입력하세요"
                   className="w-full h-[56px]"
+                  passwordOnly
                   {...register("password", {
                     required: "비밀번호를 입력해주세요",
                     validate: validatePassword,
