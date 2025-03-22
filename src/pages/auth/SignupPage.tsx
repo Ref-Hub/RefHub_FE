@@ -257,6 +257,7 @@ export default function SignupPage() {
                   type="password"
                   placeholder="비밀번호를 입력하세요"
                   className="w-full h-[56px]"
+                  passwordOnly
                   {...register("password", {
                     required: "비밀번호를 입력해주세요",
                     validate: validatePassword,
