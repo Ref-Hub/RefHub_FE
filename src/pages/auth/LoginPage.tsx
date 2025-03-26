@@ -16,7 +16,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const setShareModal = useSetRecoilState(shareModalState);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [isEmailValid, setIsEmailValid] = useState<boolean | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const {
     register,
@@ -36,11 +37,21 @@ export default function LoginPage() {
   // 이메일 값이 변경될 때마다 유효성 검사
   useEffect(() => {
     if (emailValue) {
-      setIsEmailValid(validateEmail(emailValue));
+      const isValid = validateEmail(emailValue);
+      if (!isValid) {
+        setEmailError("이메일 형식이 올바르지 않습니다");
+      } else {
+        setEmailError(null);
+      }
     } else {
-      setIsEmailValid(null);
+      setEmailError(null);
     }
   }, [emailValue]);
+
+  // 비밀번호 입력 필드 변경 시 관련 에러 초기화
+  useEffect(() => {
+    setPasswordError(null);
+  }, [passwordValue]);
 
   const isButtonActive =
     emailValue && validateEmail(emailValue) && passwordValue?.length > 0;
@@ -49,7 +60,10 @@ export default function LoginPage() {
     async (data: LoginForm) => {
       if (isLoading) return;
 
+      // 에러 상태 초기화
       setLoginError(null);
+      setEmailError(null);
+      setPasswordError(null);
       setIsLoading(true);
 
       try {
@@ -61,20 +75,21 @@ export default function LoginPage() {
         if (error instanceof Error) {
           const errorMessage = error.message;
 
-          // 계정 관련 오류는 버튼 하단 텍스트로 표시
-          if (
+          // 에러 메시지 분류
+          if (errorMessage.includes("이메일") || errorMessage.includes("등록되지 않은 계정")) {
+            setEmailError(errorMessage);
+          } else if (errorMessage.includes("비밀번호")) {
+            setPasswordError(errorMessage);
+          } else if (
             errorMessage.includes("계정 정보") ||
-            errorMessage.includes("등록되지 않은 계정") ||
-            errorMessage.includes("비밀번호") ||
-            errorMessage.includes("회원가입") ||
-            errorMessage.includes("이메일")
+            errorMessage.includes("회원가입")
           ) {
             setLoginError(errorMessage);
           } else {
-            showToast(errorMessage, "error");
+            setLoginError(errorMessage);
           }
         } else {
-          showToast("알 수 없는 오류가 발생했습니다.", "error");
+          setLoginError("알 수 없는 오류가 발생했습니다.");
         }
       } finally {
         setIsLoading(false);
@@ -117,11 +132,7 @@ export default function LoginPage() {
                       message: "이메일 형식이 올바르지 않습니다",
                     },
                   })}
-                  error={
-                    emailValue && !isEmailValid
-                      ? "이메일 형식이 올바르지 않습니다"
-                      : errors.email?.message
-                  }
+                  error={emailError || errors.email?.message}
                   className="h-12 sm:h-14"
                   emailOnly
                 />
@@ -135,7 +146,7 @@ export default function LoginPage() {
                   {...register("password", {
                     required: "비밀번호를 입력해주세요",
                   })}
-                  error={errors.password?.message}
+                  error={passwordError || errors.password?.message}
                   className="h-12 sm:h-14"
                   passwordOnly
                 />
@@ -181,7 +192,7 @@ export default function LoginPage() {
               {isLoading ? "로그인 중..." : "로그인"}
             </button>
 
-            {/* 오류 메시지 표시 영역 */}
+            {/* 일반 에러 메시지 표시 영역 */}
             {loginError && (
               <div className="mt-3 px-3 py-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
                 <p className="flex items-center">
