@@ -143,7 +143,12 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
     }
   };
 
-  const handleRowClick = (id: string, event: React.MouseEvent) => {
+  const handleRowClick = (
+    id: string,
+    event: React.MouseEvent,
+    index: number,
+    isShared: boolean
+  ) => {
     if (
       (event.target as HTMLElement).closest(".more-button") ||
       (event.target as HTMLElement).closest("input[type='checkbox']") ||
@@ -151,7 +156,23 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
     ) {
       return;
     }
-    navigate(`/references/${id}`);
+
+    if (modeValue.isMove || modeValue.isDelete) {
+      setIsChecked((prev) => {
+        const newState = [...prev];
+        newState[index] = !newState[index];
+        return newState;
+      });
+      setModeValue((prev) => ({
+        ...prev,
+        isShared: [...prev.isShared, isShared],
+        checkItems: prev.checkItems.includes(id)
+          ? prev.checkItems.filter((i) => i !== id)
+          : [...prev.checkItems, id],
+      }));
+    } else {
+      navigate(`/references/${id}`);
+    }
   };
 
   const handleDelete = (item: ReferenceCardProps) => {
@@ -221,7 +242,9 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
           return (
             <tr
               key={index}
-              onClick={(e) => handleRowClick(item._id, e)}
+              onClick={(e) =>
+                handleRowClick(item._id, e, index, item.shared || false)
+              }
               className="text-center text-black text-base font-normal border-b border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors duration-200"
             >
               {(modeValue.isMove || modeValue.isDelete) && (

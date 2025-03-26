@@ -30,7 +30,6 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   isFavorite,
   isShared,
   creator,
-  editor,
   viewer,
 }) => {
   const navigate = useNavigate();
