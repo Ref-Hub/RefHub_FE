@@ -74,7 +74,6 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
       setMode({
         isMove: false,
         isDelete: false,
-        isShared: [],
         checkItems: [],
       });
       setAlert((prev) => ({ ...prev, isVisible: false, ids: [] }));

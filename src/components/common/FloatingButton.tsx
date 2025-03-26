@@ -18,13 +18,15 @@ import {
   FilePlus,
   Share2,
 } from "lucide-react";
+import { ReferenceListItem } from "@/pages/reference/ReferenceListPage";
+import { CollectionCard } from "@/types/collection";
 
 interface FABProps {
   type: string;
-  isData?: boolean;
+  data: ReferenceListItem[] | CollectionCard[];
 }
 
-const FloatingButton: React.FC<FABProps> = ({ type, isData }) => {
+const FloatingButton: React.FC<FABProps> = ({ type, data }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +36,7 @@ const FloatingButton: React.FC<FABProps> = ({ type, isData }) => {
   const setShareOpen = useSetRecoilState(shareModalState);
 
   useEffect(() => {
-    setMode({ isMove: false, isDelete: false, checkItems: [], isShared: [] });
+    setMode({ isMove: false, isDelete: false, checkItems: [] });
   }, [isOpen]);
 
   const handleCreateCollection = () => {
@@ -79,7 +81,11 @@ const FloatingButton: React.FC<FABProps> = ({ type, isData }) => {
     } else {
       if (mode.checkItems.length > 0) {
         let text = "";
-        if (mode.isShared.includes(true)) {
+        if (
+          data.some(
+            (item) => mode.checkItems.includes(item._id) && item.isShared
+          )
+        ) {
           type === "collection"
             ? (text = `공유 중인 컬렉션을 포함한 ${mode.checkItems.length}개의 컬렉션을 삭제하시겠습니까? 컬렉션 내 모든 레퍼런스가 삭제되며, \n복구할 수 없습니다.`)
             : (text = `공유 중인 레퍼런스를 포함한 ${mode.checkItems.length}개의 레퍼런스를 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.`);
@@ -166,7 +172,7 @@ const FloatingButton: React.FC<FABProps> = ({ type, isData }) => {
               label={mode.isMove ? "이동하기" : "컬렉션 이동"}
               time={0.6}
               onClick={handleMove}
-              disabled={!isData}
+              disabled={data.length === 0}
             />
           )}
           <ActionButton
@@ -182,7 +188,7 @@ const FloatingButton: React.FC<FABProps> = ({ type, isData }) => {
             label={mode.isDelete ? "삭제하기" : "삭제"}
             time={0.4}
             onClick={handleDelete}
-            disabled={!isData}
+            disabled={data.length === 0}
           />
         </div>
       )}
