@@ -83,10 +83,10 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
   }, [modeValue.isDelete, modeValue.isMove, items.length]);
 
   useEffect(() => {
-    collectionData.data.length === modeValue.checkItems.length
+    items.length === isChecked.filter((i) => i === true).length
       ? setIsTotal(true)
       : setIsTotal(false);
-  }, [modeValue.checkItems, collectionData.data.length]);
+  }, [isChecked, items.length]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
