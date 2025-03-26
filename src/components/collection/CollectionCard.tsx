@@ -29,6 +29,9 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   previewImages,
   isFavorite,
   isShared,
+  creator,
+  editor,
+  viewer,
 }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -140,70 +143,77 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   return (
     <div className="relative border border-gray-200 rounded-lg bg-white px-5">
       {/* 체크박스 or 더보기 */}
-      {modeValue.isMove || modeValue.isDelete ? (
-        <div>
-          <input
-            type="checkbox"
-            id={_id}
-            checked={isChecked}
-            onChange={(e) => handleChange(e)}
-            className="hidden"
-          />
-          <label
-            htmlFor={_id}
-            className={`w-5 h-5 absolute top-4 right-3 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
-              isChecked ? "bg-primary" : "bg-white"
-            }`}
-          >
-            {isChecked && "✔"}
-          </label>
-        </div>
-      ) : (
-        <div ref={addRef}>
-          <EllipsisVertical
-            className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer"
-            onClick={() => setIsOpen(!isOpen)}
-          />
-          {isOpen && (
-            <ul className="absolute top-12 right-1.5 gap-2 inline-flex flex-col bg-white border border-gray-100 rounded shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)] z-10">
-              <li
-                className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
-                onClick={() =>
-                  setModalOpen({
-                    id: _id,
-                    title: title,
-                    isOpen: true,
-                    type: "update",
-                  })
-                }
-              >
-                <PencilLine className="w-5 h-5 stroke-primary" />
-                <p className="text-black text-sm font-normal">수정</p>
-              </li>
-              <li
-                className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
-                onClick={handleDelete}
-              >
-                <Trash2 className="w-5 h-5 stroke-[#f65063]" />
-                <p className="text-black text-sm font-normal">삭제</p>
-              </li>
-              <li
-                onClick={() =>
-                  setShareOpen((prev) => ({
-                    ...prev,
-                    isOpen: true,
-                    collectionId: _id,
-                  }))
-                }
-                className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
-              >
-                <Share2 className="w-5 h-5 stroke-[#676967]" />
-                <p className="text-black text-sm font-normal">공유</p>
-              </li>
-            </ul>
-          )}
-        </div>
-      )}
+      {!viewer &&
+        (modeValue.isMove || modeValue.isDelete ? (
+          <div>
+            <input
+              type="checkbox"
+              id={_id}
+              checked={isChecked}
+              onChange={(e) => handleChange(e)}
+              className="hidden"
+            />
+            <label
+              htmlFor={_id}
+              className={`w-5 h-5 absolute top-4 right-3 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
+                isChecked ? "bg-primary" : "bg-white"
+              }`}
+            >
+              {isChecked && "✔"}
+            </label>
+          </div>
+        ) : (
+          <div ref={addRef}>
+            <EllipsisVertical
+              className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer"
+              onClick={() => setIsOpen(!isOpen)}
+            />
+            {isOpen && (
+              <ul className="absolute top-12 right-1.5 gap-2 inline-flex flex-col bg-white border border-gray-100 rounded shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)] z-10">
+                {!viewer && (
+                  <li
+                    className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
+                    onClick={() =>
+                      setModalOpen({
+                        id: _id,
+                        title: title,
+                        isOpen: true,
+                        type: "update",
+                      })
+                    }
+                  >
+                    <PencilLine className="w-5 h-5 stroke-primary" />
+                    <p className="text-black text-sm font-normal">수정</p>
+                  </li>
+                )}
+                {creator && (
+                  <li
+                    className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="w-5 h-5 stroke-[#f65063]" />
+                    <p className="text-black text-sm font-normal">삭제</p>
+                  </li>
+                )}
+                {creator && (
+                  <li
+                    onClick={() =>
+                      setShareOpen((prev) => ({
+                        ...prev,
+                        isOpen: true,
+                        collectionId: _id,
+                      }))
+                    }
+                    className="inline-flex items-center gap-2 px-4 py-2 text-gray-700 text-center rounded cursor-pointer hover:bg-gray-200"
+                  >
+                    <Share2 className="w-5 h-5 stroke-[#676967]" />
+                    <p className="text-black text-sm font-normal">공유</p>
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
+        ))}
 
       {/* Header Section */}
       <div className="flex items-center mt-4 gap-1">

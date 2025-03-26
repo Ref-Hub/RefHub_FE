@@ -136,6 +136,9 @@ const CollectionPage: React.FC = () => {
                   isShared={collection.isShared}
                   refCount={collection.refCount}
                   previewImages={collection.previewImages}
+                  creator={collection.creator}
+                  editor={collection.editor}
+                  viewer={collection.viewer}
                 />
               ))}
             </div>
