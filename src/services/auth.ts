@@ -149,6 +149,15 @@ class AuthService {
     }
   }
 
+  async deleteUser(): Promise<void> {
+    try {
+      const response = await api.delete("/api/users/delete");
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
   // 토큰 갱신
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
     try {
