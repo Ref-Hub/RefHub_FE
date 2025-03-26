@@ -1,16 +1,31 @@
 // src/components/layout/Footer.tsx
+import { useState } from 'react';
 import { Mail, Instagram } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { authService } from '@/services/auth';
+import { useToast } from '@/contexts/useToast';
 
 export default function Footer() {
-  const navigate = useNavigate();
   const { logout } = useAuth();
+  const { showToast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleWithdrawal = () => {
+  const handleWithdrawal = async () => {
     if (window.confirm('정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-      logout();
-      navigate('/auth/login');
+      try {
+        setIsLoading(true);
+        await authService.deleteUser();
+        showToast('탈퇴가 완료되었습니다. 7일 이내에 로그인할 경우, 계정이 복구됩니다.', 'success');
+        logout(); // 탈퇴 후 로그아웃 처리
+      } catch (error) {
+        if (error instanceof Error) {
+          showToast(error.message, 'error');
+        } else {
+          showToast('회원탈퇴 중 오류가 발생했습니다.', 'error');
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -47,9 +62,10 @@ export default function Footer() {
             </a>
             <button 
               onClick={handleWithdrawal}
-              className="underline hover:text-red-500 transition-colors"
+              disabled={isLoading}
+              className="underline hover:text-red-500 transition-colors disabled:opacity-50"
             >
-              탈퇴하기
+              {isLoading ? '처리 중...' : '탈퇴하기'}
             </button>
           </div>
         </div>
