@@ -142,7 +142,7 @@ const ReferenceCard: React.FC<
     const text = shared
       ? `${
           collectionTitle || "선택한"
-        } 컬렉션의 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.\n\n * 해당 컬렉션은 다른 사용자와 공유중입니다 *`
+        } 컬렉션의 다른 사용자와 공유 중인 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
       : `${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
 
     location.pathname.includes("/collections")
