@@ -24,7 +24,6 @@ interface DropdownState {
 export interface FloatingState {
   isMove: boolean;
   isDelete: boolean;
-  isShared: boolean[];
   checkItems: string[];
 }
 
@@ -80,7 +79,6 @@ export const floatingModeState = atom<FloatingState>({
   default: {
     isMove: false,
     isDelete: false,
-    isShared: [],
     checkItems: [],
   },
 });

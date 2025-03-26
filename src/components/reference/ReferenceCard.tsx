@@ -131,7 +131,6 @@ const ReferenceCard: React.FC<
     setIsChecked(e.target.checked);
     setModeValue((prev: FloatingState) => ({
       ...prev,
-      isShared: [...prev.isShared, shared ?? false],
       checkItems: prev.checkItems.includes(e.target.id)
         ? prev.checkItems.filter((i) => i !== e.target.id)
         : [...prev.checkItems, e.target.id],
@@ -169,8 +168,26 @@ const ReferenceCard: React.FC<
     setIsOpen(false);
   };
 
-  const handleTitleClick = () => {
-    navigate(`/references/${_id}`);
+  const handleReferenceClick = (event: React.MouseEvent) => {
+    if (
+      (event.target as HTMLElement).closest(".more-button") ||
+      (event.target as HTMLElement).closest("input[type='checkbox']") ||
+      (event.target as HTMLElement).closest("label")
+    ) {
+      return;
+    }
+
+    if (modeValue.isMove || modeValue.isDelete) {
+      setIsChecked(!isChecked);
+      setModeValue((prev: FloatingState) => ({
+        ...prev,
+        checkItems: prev.checkItems.includes(_id)
+          ? prev.checkItems.filter((i) => i !== _id)
+          : [...prev.checkItems, _id],
+      }));
+    } else {
+      navigate(`/references/${_id}`);
+    }
   };
 
   if (!collectionData?.data?.length) {
@@ -191,7 +208,10 @@ const ReferenceCard: React.FC<
   }
 
   return (
-    <div className="relative border border-gray-200 rounded-lg bg-white px-5">
+    <div
+      className="relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer"
+      onClick={(e) => handleReferenceClick(e)}
+    >
       {!viewer &&
         (modeValue.isMove || modeValue.isDelete ? (
           <div>
@@ -214,7 +234,7 @@ const ReferenceCard: React.FC<
         ) : (
           <div ref={addRef}>
             <EllipsisVertical
-              className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer hover:text-gray-600 transition-colors"
+              className="more-button w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer hover:text-gray-600 transition-colors"
               onClick={() => setIsOpen(!isOpen)}
             />
             {isOpen && (
@@ -247,10 +267,7 @@ const ReferenceCard: React.FC<
         <p className="flex-1 truncate">{collectionTitle || "불러오는 중..."}</p>
       </h2>
 
-      <p
-        onClick={handleTitleClick}
-        className="text-black text-lg font-bold mb-3 flex-1 truncate hover:cursor-pointer hover:underline"
-      >
+      <p className="text-black text-lg font-bold mb-3 flex-1 truncate hover:underline">
         {title}
       </p>
 

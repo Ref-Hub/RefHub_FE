@@ -23,7 +23,7 @@ import { CollectionResponse } from "@/types/collection";
 // ReferenceCard와 리스트에서 공통으로 사용할 타입 정의
 export interface ReferenceListItem {
   _id: string;
-  shared?: boolean;
+  isShared?: boolean;
   creator?: boolean;
   editor?: boolean;
   viewer?: boolean;
@@ -141,7 +141,7 @@ export default function ReferenceListPage() {
 
           return {
             _id: reference._id,
-            shared: reference.shared,
+            isShared: reference.shared,
             creator: reference.creator,
             editor: reference.editor,
             viewer: reference.viewer,
@@ -213,10 +213,7 @@ export default function ReferenceListPage() {
       {modal.isOpen && <Modal type={modal.type} />}
       {alert.isVisible && <Alert message={alert.massage} />}
       {collections.data.length > 0 && (
-        <FloatingButton
-          type="reference"
-          isData={referenceData.length === 0 ? false : true}
-        />
+        <FloatingButton type="reference" data={referenceData} />
       )}
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-10 mb-6">

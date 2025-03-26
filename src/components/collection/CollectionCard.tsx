@@ -69,7 +69,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
 
   useEffect(() => {
     setIsChecked(false);
-    setModeValue((prev) => ({ ...prev, isShared: [], checkItems: [] }));
+    setModeValue((prev) => ({ ...prev, checkItems: [] }));
   }, [modeValue.isMove, modeValue.isDelete]);
 
   useEffect(() => {
@@ -88,7 +88,6 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
     setIsChecked(e.target.checked);
     setModeValue((prev) => ({
       ...prev,
-      isShared: [...prev.isShared, isShared],
       checkItems: prev.checkItems.includes(e.target.id)
         ? prev.checkItems.filter((i) => i !== e.target.id)
         : [...prev.checkItems, e.target.id],

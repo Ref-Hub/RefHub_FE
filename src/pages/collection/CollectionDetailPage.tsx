@@ -83,7 +83,7 @@ export default function CollectionDetailPage() {
 
           return {
             _id: reference._id,
-            shared: reference.shared,
+            isShared: reference.shared,
             creator: reference.creator,
             editor: reference.editor,
             viewer: reference.viewer,
@@ -174,10 +174,7 @@ export default function CollectionDetailPage() {
       {alert.isVisible && <Alert message={alert.massage} />}
 
       {!collectionData?.viewer && (
-        <FloatingButton
-          type="collectionDetail"
-          isData={referenceData.length === 0 ? false : true}
-        />
+        <FloatingButton type="collectionDetail" data={referenceData} />
       )}
 
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
