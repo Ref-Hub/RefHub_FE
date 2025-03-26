@@ -1,15 +1,14 @@
 // src/components/layout/MainHeader.tsx
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useRecoilState } from "recoil";
-import { userState } from "@/store/auth";
 import SearchBar from "../common/SearchBar";
 import { DropState } from "@/store/collection";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function MainHeader() {
-  const navigate = useNavigate();
+  const { logout } = useAuth(); // useAuth 훅에서 logout 함수 가져오기
   const location = useLocation();
-  const [, setUser] = useRecoilState(userState);
   const [, setSort] = useRecoilState(DropState);
 
   // URL 경로에 따라 현재 타입 결정
@@ -35,9 +34,9 @@ export default function MainHeader() {
     );
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    navigate("/auth/login");
+  const handleLogout = async () => {
+    // 수정된 코드: useAuth의 logout 함수 호출
+    await logout();
   };
 
   const handleReset = () => {
