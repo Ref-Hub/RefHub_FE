@@ -49,6 +49,12 @@ const SearchBar: React.FC<SearchProps> = ({ type }) => {
     setSearch("");
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch(search);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center gap-6">
@@ -71,6 +77,7 @@ const SearchBar: React.FC<SearchProps> = ({ type }) => {
             placeholder="검색어를 입력해 주세요"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
             className=" w-full py-[9px] px-14 my-6 bg-[#f9faf9] rounded-[50px] border border-gray-200 gap-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
           />
         </div>
