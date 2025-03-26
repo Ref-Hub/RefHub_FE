@@ -131,7 +131,6 @@ const ReferenceCard: React.FC<
     setIsChecked(e.target.checked);
     setModeValue((prev: FloatingState) => ({
       ...prev,
-      isShared: [...prev.isShared, shared ?? false],
       checkItems: prev.checkItems.includes(e.target.id)
         ? prev.checkItems.filter((i) => i !== e.target.id)
         : [...prev.checkItems, e.target.id],
@@ -142,7 +141,7 @@ const ReferenceCard: React.FC<
     const text = shared
       ? `${
           collectionTitle || "선택한"
-        } 컬렉션의 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.\n\n * 해당 컬렉션은 다른 사용자와 공유중입니다 *`
+        } 컬렉션의 다른 사용자와 공유 중인 ${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
       : `${title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
 
     location.pathname.includes("/collections")
@@ -169,8 +168,26 @@ const ReferenceCard: React.FC<
     setIsOpen(false);
   };
 
-  const handleTitleClick = () => {
-    navigate(`/references/${_id}`);
+  const handleReferenceClick = (event: React.MouseEvent) => {
+    if (
+      (event.target as HTMLElement).closest(".more-button") ||
+      (event.target as HTMLElement).closest("input[type='checkbox']") ||
+      (event.target as HTMLElement).closest("label")
+    ) {
+      return;
+    }
+
+    if (modeValue.isMove || modeValue.isDelete) {
+      setIsChecked(!isChecked);
+      setModeValue((prev: FloatingState) => ({
+        ...prev,
+        checkItems: prev.checkItems.includes(_id)
+          ? prev.checkItems.filter((i) => i !== _id)
+          : [...prev.checkItems, _id],
+      }));
+    } else {
+      navigate(`/references/${_id}`);
+    }
   };
 
   if (!collectionData?.data?.length) {
@@ -191,7 +208,10 @@ const ReferenceCard: React.FC<
   }
 
   return (
-    <div className="relative border border-gray-200 rounded-lg bg-white px-5">
+    <div
+      className="relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer"
+      onClick={(e) => handleReferenceClick(e)}
+    >
       {!viewer &&
         (modeValue.isMove || modeValue.isDelete ? (
           <div>
@@ -214,7 +234,7 @@ const ReferenceCard: React.FC<
         ) : (
           <div ref={addRef}>
             <EllipsisVertical
-              className="w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer hover:text-gray-600 transition-colors"
+              className="more-button w-6 h-6 absolute top-4 right-1.5 hover:cursor-pointer hover:text-gray-600 transition-colors"
               onClick={() => setIsOpen(!isOpen)}
             />
             {isOpen && (
@@ -247,10 +267,7 @@ const ReferenceCard: React.FC<
         <p className="flex-1 truncate">{collectionTitle || "불러오는 중..."}</p>
       </h2>
 
-      <p
-        onClick={handleTitleClick}
-        className="text-black text-lg font-bold mb-3 flex-1 truncate hover:cursor-pointer hover:underline"
-      >
+      <p className="text-black text-lg font-bold mb-3 flex-1 truncate hover:underline">
         {title}
       </p>
 

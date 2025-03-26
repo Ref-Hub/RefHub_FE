@@ -113,10 +113,7 @@ const CollectionPage: React.FC = () => {
       )}
       {alert.isVisible && <Alert message={alert.massage} />}
       {collectionData?.data?.length > 0 && (
-        <FloatingButton
-          type="collection"
-          isData={collectionData.data.length === 0 ? false : true}
-        />
+        <FloatingButton type="collection" data={collectionData.data} />
       )}
 
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
@@ -136,6 +133,9 @@ const CollectionPage: React.FC = () => {
                   isShared={collection.isShared}
                   refCount={collection.refCount}
                   previewImages={collection.previewImages}
+                  creator={collection.creator}
+                  editor={collection.editor}
+                  viewer={collection.viewer}
                 />
               ))}
             </div>

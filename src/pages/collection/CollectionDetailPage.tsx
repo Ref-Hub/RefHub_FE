@@ -83,7 +83,7 @@ export default function CollectionDetailPage() {
 
           return {
             _id: reference._id,
-            shared: reference.shared,
+            isShared: reference.shared,
             creator: reference.creator,
             editor: reference.editor,
             viewer: reference.viewer,
@@ -173,10 +173,9 @@ export default function CollectionDetailPage() {
       {shareModal.isOpen && <ShareModal collectionId={collectionId || ""} />}
       {alert.isVisible && <Alert message={alert.massage} />}
 
-      <FloatingButton
-        type="collectionDetail"
-        isData={referenceData.length === 0 ? false : true}
-      />
+      {!collectionData?.viewer && (
+        <FloatingButton type="collectionDetail" data={referenceData} />
+      )}
 
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-12 pb-6 border-b border-gray-400">
@@ -187,25 +186,29 @@ export default function CollectionDetailPage() {
             {collectionData?.title}
           </p>
           <div className="flex text-lg font-bold gap-1.5">
-            <button
-              className="px-8 py-3 bg-white rounded-[50px] border border-gray-200 text-[#f65063] hover:bg-gray-100"
-              onClick={handleDelete}
-            >
-              컬렉션 삭제
-            </button>
-            <button
-              className="px-8 py-3 bg-primary rounded-[50px] text-[#F9FAF9] hover:bg-primary-dark"
-              onClick={() =>
-                setModal({
-                  id: collectionId ? collectionId.toString() : "",
-                  title: collectionData?.title || "",
-                  isOpen: true,
-                  type: "update",
-                })
-              }
-            >
-              수정
-            </button>
+            {collectionData?.creator && (
+              <button
+                className="px-8 py-3 bg-white rounded-[50px] border border-gray-200 text-[#f65063] hover:bg-gray-100"
+                onClick={handleDelete}
+              >
+                컬렉션 삭제
+              </button>
+            )}
+            {!collectionData?.viewer && (
+              <button
+                className="px-8 py-3 bg-primary rounded-[50px] text-[#F9FAF9] hover:bg-primary-dark"
+                onClick={() =>
+                  setModal({
+                    id: collectionId ? collectionId.toString() : "",
+                    title: collectionData?.title || "",
+                    isOpen: true,
+                    type: "update",
+                  })
+                }
+              >
+                수정
+              </button>
+            )}
           </div>
         </div>
         <div className="flex items-center justify-between mt-10 mb-6">

@@ -83,10 +83,10 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
   }, [modeValue.isDelete, modeValue.isMove, items.length]);
 
   useEffect(() => {
-    collectionData.data.length === modeValue.checkItems.length
+    items.length === isChecked.filter((i) => i === true).length
       ? setIsTotal(true)
       : setIsTotal(false);
-  }, [modeValue.checkItems, collectionData.data.length]);
+  }, [isChecked, items.length]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -106,8 +106,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    index: number,
-    isShared: boolean
+    index: number
   ) => {
     if (e.target.id === "total") {
       if (isTotal) {
@@ -115,7 +114,6 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
         setIsChecked((prev) => prev.map(() => false));
         setModeValue((prev) => ({
           ...prev,
-          isShared: [],
           checkItems: [],
         }));
       } else {
@@ -123,7 +121,6 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
         setIsChecked((prev) => prev.map(() => true));
         setModeValue((prev) => ({
           ...prev,
-          isShared: collectionData.data.map((item) => item.isShared),
           checkItems: collectionData.data.map((item) => item._id),
         }));
       }
@@ -135,7 +132,6 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
       });
       setModeValue((prev) => ({
         ...prev,
-        isShared: [...prev.isShared, isShared],
         checkItems: prev.checkItems.includes(e.target.id)
           ? prev.checkItems.filter((i) => i !== e.target.id)
           : [...prev.checkItems, e.target.id],
@@ -143,7 +139,11 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
     }
   };
 
-  const handleRowClick = (id: string, event: React.MouseEvent) => {
+  const handleRowClick = (
+    id: string,
+    event: React.MouseEvent,
+    index: number
+  ) => {
     if (
       (event.target as HTMLElement).closest(".more-button") ||
       (event.target as HTMLElement).closest("input[type='checkbox']") ||
@@ -151,7 +151,22 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
     ) {
       return;
     }
-    navigate(`/references/${id}`);
+
+    if (modeValue.isMove || modeValue.isDelete) {
+      setIsChecked((prev) => {
+        const newState = [...prev];
+        newState[index] = !newState[index];
+        return newState;
+      });
+      setModeValue((prev) => ({
+        ...prev,
+        checkItems: prev.checkItems.includes(id)
+          ? prev.checkItems.filter((i) => i !== id)
+          : [...prev.checkItems, id],
+      }));
+    } else {
+      navigate(`/references/${id}`);
+    }
   };
 
   const handleDelete = (item: ReferenceCardProps) => {
@@ -189,7 +204,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
                   type="checkbox"
                   id="total"
                   checked={isTotal}
-                  onChange={(e) => handleChange(e, 0, false)}
+                  onChange={(e) => handleChange(e, 0)}
                   className="hidden"
                 />
                 <label
@@ -221,7 +236,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
           return (
             <tr
               key={index}
-              onClick={(e) => handleRowClick(item._id, e)}
+              onClick={(e) => handleRowClick(item._id, e, index)}
               className="text-center text-black text-base font-normal border-b border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors duration-200"
             >
               {(modeValue.isMove || modeValue.isDelete) && (
@@ -231,9 +246,7 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
                       type="checkbox"
                       id={item._id}
                       checked={isChecked[index]}
-                      onChange={(e) =>
-                        handleChange(e, index, item.shared || false)
-                      }
+                      onChange={(e) => handleChange(e, index)}
                       className="hidden"
                     />
                     <label

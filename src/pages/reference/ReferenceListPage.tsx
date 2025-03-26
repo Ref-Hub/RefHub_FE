@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRecoilValue, useRecoilState } from "recoil";
 import { useNavigate } from "react-router-dom";
 import { FilePlus, LayoutGrid, Text } from "lucide-react";
@@ -23,7 +23,7 @@ import { CollectionResponse } from "@/types/collection";
 // ReferenceCard와 리스트에서 공통으로 사용할 타입 정의
 export interface ReferenceListItem {
   _id: string;
-  shared?: boolean;
+  isShared?: boolean;
   creator?: boolean;
   editor?: boolean;
   viewer?: boolean;
@@ -52,6 +52,8 @@ export default function ReferenceListPage() {
   const [collections, setCollections] = useRecoilState(collectionState);
   const [isLoading, setIsLoading] = useState(true);
   const [referenceData, setReferenceData] = useState<ReferenceListItem[]>([]);
+  const alertPrevIsOpen = useRef<boolean>(alert.isVisible);
+  const modalPrevIsOpen = useRef<boolean>(modal.isOpen);
 
   // 컬렉션 데이터 로드
   useEffect(() => {
@@ -113,72 +115,83 @@ export default function ReferenceListPage() {
   }, [setCollections, showToast]);
 
   // 레퍼런스 데이터 로드
-  useEffect(() => {
-    const loadReferences = async () => {
-      setIsLoading(true);
-      try {
-        const params = {
-          sortBy: sort.sortType,
-          search: sort.searchWord,
-          collection: sort.collections,
-          filterBy: sort.searchType,
-          view: view,
-          mode: "home",
-        };
+  const loadReferences = async () => {
+    setIsLoading(true);
+    try {
+      const params = {
+        sortBy: sort.sortType,
+        search: sort.searchWord,
+        collection: sort.collections,
+        filterBy: sort.searchType,
+        view: view,
+        mode: "home",
+      };
 
-        const response = await referenceService.getReferenceList(params);
+      const response = await referenceService.getReferenceList(params);
 
-        if (!response.data) {
-          console.log("No data in response");
-          setReferenceData([]);
-          return;
-        }
-
-        const transformedData: ReferenceListItem[] = response.data.map(
-          (reference) => {
-            const files = reference.files || [];
-
-            return {
-              _id: reference._id,
-              shared: reference.shared,
-              creator: reference.creator,
-              editor: reference.editor,
-              viewer: reference.viewer,
-              collectionId: reference.collectionId,
-              collectionTitle: collections.data.find(
-                (item) => item._id === reference.collectionId
-              )?.title,
-              title: reference.title,
-              keywords: reference.keywords,
-              previewData: reference.previewData,
-              createdAt: reference.createdAt,
-              files: files.map((file) => ({
-                _id: file._id || file.path,
-                type: file.type,
-                path: file.path,
-                size: file.size,
-                previewURL: file.previewURL,
-                previewURLs: file.previewURLs,
-              })),
-            };
-          }
-        );
-
-        setReferenceData(transformedData);
-      } catch (error) {
-        console.error("Error loading references:", error);
-        if (error instanceof Error) {
-          showToast(error.message, "error");
-        } else {
-          showToast("레퍼런스 데이터를 불러오는데 실패했습니다.", "error");
-        }
-      } finally {
-        setIsLoading(false);
+      if (!response.data) {
+        console.log("No data in response");
+        setReferenceData([]);
+        return;
       }
-    };
 
+      const transformedData: ReferenceListItem[] = response.data.map(
+        (reference) => {
+          const files = reference.files || [];
+
+          return {
+            _id: reference._id,
+            isShared: reference.shared,
+            creator: reference.creator,
+            editor: reference.editor,
+            viewer: reference.viewer,
+            collectionId: reference.collectionId,
+            collectionTitle: collections.data.find(
+              (item) => item._id === reference.collectionId
+            )?.title,
+            title: reference.title,
+            keywords: reference.keywords,
+            previewData: reference.previewData,
+            createdAt: reference.createdAt,
+            files: files.map((file) => ({
+              _id: file._id || file.path,
+              type: file.type,
+              path: file.path,
+              size: file.size,
+              previewURL: file.previewURL,
+              previewURLs: file.previewURLs,
+            })),
+          };
+        }
+      );
+
+      setReferenceData(transformedData);
+    } catch (error) {
+      console.error("Error loading references:", error);
+      if (error instanceof Error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("레퍼런스 데이터를 불러오는데 실패했습니다.", "error");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadReferences();
-  }, [sort, modal.isOpen, view, alert, showToast]);
+  }, [sort, view, showToast]);
+
+  useEffect(() => {
+    if (alertPrevIsOpen.current === true && alert.isVisible === false) {
+      loadReferences();
+    } else if (modalPrevIsOpen.current === true && modal.isOpen === false) {
+      loadReferences();
+    }
+
+    alertPrevIsOpen.current = alert.isVisible;
+    modalPrevIsOpen.current = modal.isOpen;
+  }, [alert.isVisible, modal.isOpen]);
 
   const viewStyles = (id: string) =>
     `w-[50px] h-[50px] p-[9px] rounded-full overflow-visible hover:cursor-pointer ${
@@ -200,10 +213,7 @@ export default function ReferenceListPage() {
       {modal.isOpen && <Modal type={modal.type} />}
       {alert.isVisible && <Alert message={alert.massage} />}
       {collections.data.length > 0 && (
-        <FloatingButton
-          type="reference"
-          isData={referenceData.length === 0 ? false : true}
-        />
+        <FloatingButton type="reference" data={referenceData} />
       )}
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-10 mb-6">

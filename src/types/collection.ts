@@ -5,6 +5,9 @@ export interface CollectionCard {
   isShared: boolean;
   isFavorite: boolean;
   refCount: number;
+  creator?: boolean;
+  editor?: boolean;
+  viewer?: boolean;
   previewImages: string[];
 }
 
