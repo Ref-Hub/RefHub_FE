@@ -193,7 +193,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
                     <p className="text-black text-sm font-normal">삭제</p>
                   </li>
                 )}
-                {creator && (
+                {
                   <li
                     onClick={() =>
                       setShareOpen((prev) => ({
@@ -207,7 +207,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
                     <Share2 className="w-5 h-5 stroke-[#676967]" />
                     <p className="text-black text-sm font-normal">공유</p>
                   </li>
-                )}
+                }
               </ul>
             )}
           </div>
