@@ -53,55 +53,47 @@ export default function FileUpload({
     onChange([...files, { id: Date.now().toString(), type, content: "" }]);
   };
 
+  // src/components/reference/FileUpload.tsx
+  // 수정된 validateFile 함수:
+
   const validateFile = (
     file: File,
     type: "image" | "pdf" | "file"
   ): boolean => {
+    // 파일 크기 제한만 유지 (20MB)
     if (file.size > 20 * 1024 * 1024) {
       showToast("20MB 이하 파일만 첨부 가능합니다.", "error");
       return false;
     }
 
-    const allowedImageTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-    ];
-    const allowedFileExtensions = [
-      ".doc",
-      ".docx",
-      ".xls",
-      ".xlsx",
-      ".txt",
-      ".zip",
-      ".rar",
-    ];
+    // 이미지 타입으로 지정된 경우만 이미지 형식 검사
+    if (type === "image") {
+      const allowedImageTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
 
-    if (type === "image" && !allowedImageTypes.includes(file.type)) {
-      showToast(
-        "JPG, PNG, GIF, WEBP 형식의 이미지만 첨부 가능합니다.",
-        "error"
-      );
-      return false;
+      if (!allowedImageTypes.includes(file.type)) {
+        showToast(
+          "JPG, PNG, GIF, WEBP 형식의 이미지만 첨부 가능합니다.",
+          "error"
+        );
+        return false;
+      }
     }
 
+    // PDF 타입으로 지정된 경우만 PDF 형식 검사
     if (type === "pdf" && file.type !== "application/pdf") {
       showToast("PDF 형식의 파일만 첨부 가능합니다.", "error");
       return false;
     }
 
+    // 파일 타입일 경우 모든 형식 허용 (이미지, PDF 포함)
     if (type === "file") {
-      const fileExtension = `.${file.name.split(".").pop()?.toLowerCase()}`;
-      if (allowedFileExtensions.includes(fileExtension)) {
-        return true;
-      }
-      if (file.type.startsWith("image/") || file.type === "application/pdf") {
-        showToast("이미지 및 PDF는 해당 유형으로 첨부해주세요.", "error");
-        return false;
-      }
-      showToast("지원하지 않는 파일 형식입니다.", "error");
-      return false;
+      // 모든 파일 형식 허용 (제한 없음)
+      return true;
     }
 
     return true;
