@@ -31,35 +31,47 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
 
   const handleDelete = async () => {
     try {
-      // 회원탈퇴 케이스 - 다른 API 호출 방지를 위해 먼저 처리
+      // 회원탈퇴 확인 케이스
       if (alert.type === "withdrawal") {
         try {
-          // Alert 창 즉시 닫기 (다른 API 호출 방지)
+          // Alert 창 즉시 닫기
           setAlert((prev) => ({ ...prev, isVisible: false }));
           
           // 회원탈퇴 API 호출
-          const response = await authService.deleteUser();
+          await authService.deleteUser();
           
           // 성공 시 로그인 정보 삭제
           authUtils.clearAll(); // 로컬 스토리지 정리
           setUser(null); // Recoil 상태 초기화
           
-          // 로그인 페이지로 이동하면서 성공 메시지 전달
-          navigate("/auth/login", { 
-            replace: true,
-            state: { 
-              withdrawalSuccess: true, 
-              message: response.message || "탈퇴가 완료되었습니다. 7일 이내에 로그인할 경우, 계정이 복구됩니다."
-            }
+          // 두 번째 Alert 표시 (탈퇴 완료 알림)
+          setAlert({
+            type: "withdrawalComplete",
+            massage: "탈퇴가 완료되었습니다.\n7일 이내 로그인 시 계정을 복구할 수 있습니다.",
+            isVisible: true,
+            ids: [],
+            title: "",
           });
         } catch (error) {
-          // 에러 처리 - Alert 창이 이미 닫혔으므로 토스트로 에러 표시
+          // 에러 처리
           if (error instanceof Error) {
             showToast(error.message, "error");
           } else {
             showToast("회원탈퇴 중 오류가 발생했습니다.", "error");
           }
         }
+        
+        // 더 이상 진행하지 않고 종료
+        return;
+      }
+      
+      // 회원탈퇴 완료 알림 케이스
+      if (alert.type === "withdrawalComplete") {
+        // Alert 창 닫기
+        setAlert((prev) => ({ ...prev, isVisible: false }));
+        
+        // 즉시 로그인 페이지로 이동 - 완전한 페이지 새로고침을 통해 API 요청 방지
+        window.location.href = "/auth/login";
         
         // 더 이상 진행하지 않고 종료
         return;
@@ -124,6 +136,9 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
     }
   };
 
+  // 두 번째 Alert (withdrawalComplete)에는 취소 버튼 없이 확인 버튼만 표시
+  const showCancelButton = alert.type !== "withdrawalComplete";
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/25 z-50">
       <motion.div
@@ -142,17 +157,21 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
             {message}
           </p>
           <div className="flex gap-1 mt-8 mb-3">
+            {showCancelButton && (
+              <>
+                <button
+                  className="flex justify-center items-center w-[172px] h-[50px] px-6 py-4 rounded-lg text-gray-700 text-lg font-bold hover:bg-gray-100 transition-colors"
+                  onClick={() =>
+                    setAlert((prev) => ({ ...prev, isVisible: false }))
+                  }
+                >
+                  취소
+                </button>
+                <div className="w-[2px] h-[50px] bg-gray-200"></div>
+              </>
+            )}
             <button
-              className="flex justify-center items-center w-[172px] h-[50px] px-6 py-4 rounded-lg text-gray-700 text-lg font-bold hover:bg-gray-100 transition-colors"
-              onClick={() =>
-                setAlert((prev) => ({ ...prev, isVisible: false }))
-              }
-            >
-              취소
-            </button>
-            <div className="w-[2px] h-[50px] bg-gray-200"></div>
-            <button
-              className="flex justify-center items-center w-[172px] h-[50px] px-6 py-4 rounded-lg text-primary text-lg font-bold hover:bg-gray-100 transition-colors"
+              className={`flex justify-center items-center ${showCancelButton ? "w-[172px]" : "w-full"} h-[50px] px-6 py-4 rounded-lg text-primary text-lg font-bold hover:bg-gray-100 transition-colors`}
               onClick={handleDelete}
             >
               확인
