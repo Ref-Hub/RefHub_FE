@@ -149,7 +149,7 @@ class AuthService {
     }
   }
 
-  async deleteUser(): Promise<void> {
+  async deleteUser(): Promise<{ message: string }> {
     try {
       const response = await api.delete("/api/users/delete");
       return response.data;
