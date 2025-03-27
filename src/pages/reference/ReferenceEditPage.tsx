@@ -159,6 +159,19 @@ export default function ReferenceEditPage() {
         showToast("제목을 입력해 주세요.", "error");
         return;
       }
+
+      const invalidLinks = formData.files.filter(
+        file => file.type === "link" && 
+                file.content && 
+                !(file.content.startsWith('http://') || file.content.startsWith('https://'))
+      );
+      
+      if (invalidLinks.length > 0) {
+        showToast("http:// 또는 https://로 시작하는 링크를 입력해 주세요.", "error");
+        return;
+      }
+
+      
       if (formData.files.some((file) => !file.content)) {
         showToast("모든 자료를 입력해 주세요.", "error");
         return;
