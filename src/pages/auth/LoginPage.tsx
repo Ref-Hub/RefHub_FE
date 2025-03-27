@@ -1,7 +1,7 @@
 // src/pages/auth/LoginPage.tsx
 import { useState, useCallback, useEffect } from "react"; 
 import { useForm } from "react-hook-form";
-import { Link, useNavigate, useLocation } from "react-router-dom"; 
+import { Link, useNavigate } from "react-router-dom"; 
 import { useToast } from "@/contexts/useToast";
 import { Input } from "@/components/common/Input";
 import { authService } from "@/services/auth";
@@ -11,7 +11,6 @@ import { shareModalState } from "@/store/collection";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const location = useLocation(); 
   const { showToast } = useToast();
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,20 +26,7 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginForm>();
 
-  // withdrawalSuccess 확인 useEffect 추가
-  useEffect(() => {
-    const state = location.state as {
-      withdrawalSuccess?: boolean;
-      message?: string;
-    } | null;
 
-    if (state?.withdrawalSuccess) {
-      showToast(state.message || "탈퇴가 완료되었습니다.", "success");
-
-      // 상태를 사용한 후 히스토리에서 제거 (새로고침 시 중복 표시 방지)
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state, showToast]);
 
   const emailValue = watch("email");
   const passwordValue = watch("password");
