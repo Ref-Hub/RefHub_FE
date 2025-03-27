@@ -44,6 +44,17 @@ export default function FileUpload({
   } | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
+  // 에러 상태 추가
+  const [validationErrors, setValidationErrors] = useState<{
+    [key: string]: string;
+  }>({});
+
+  // 링크 유효성 검사 함수 추가
+  const validateLink = (url: string): boolean => {
+    if (!url) return true; // 빈 링크는 다른 곳에서 검증
+    return url.startsWith("http://") || url.startsWith("https://");
+  };
+
   const handleAddFileField = (type: "link" | "image" | "pdf" | "file") => {
     if (files.length >= maxFiles) {
       showToast(`최대 ${maxFiles}개까지만 추가할 수 있습니다.`, "error");
@@ -286,7 +297,7 @@ export default function FileUpload({
   const renderUploadField = (file: FileItem, index: number) => {
     if (file.type === "link") {
       return (
-        <div className="w-full h-[50px] relative">
+        <div className="w-full">
           <input
             type="text"
             value={file.content}
@@ -294,10 +305,44 @@ export default function FileUpload({
               const updatedFiles = [...files];
               updatedFiles[index] = { ...file, content: e.target.value };
               onChange(updatedFiles);
+
+              // 사용자가 입력을 시작하면 오류 지우기
+              if (validationErrors[`link-${index}`]) {
+                const newErrors = { ...validationErrors };
+                delete newErrors[`link-${index}`];
+                setValidationErrors(newErrors);
+              }
+            }}
+            onBlur={(e) => {
+              // focus가 빠져나갈 때 유효성 검사
+              if (e.target.value && !validateLink(e.target.value)) {
+                setValidationErrors({
+                  ...validationErrors,
+                  [`link-${index}`]:
+                    "http:// 또는 https://로 시작하는 링크를 입력해 주세요.",
+                });
+              }
             }}
             placeholder="링크를 입력해 주세요."
-            className="w-full h-full px-5 py-[13px] border border-gray-200 rounded-lg focus:outline-none focus:border-[#62BA9B]"
+            className={`w-full h-[50px] px-5 py-[13px] border ${
+              validationErrors[`link-${index}`]
+                ? "border-red-500"
+                : "border-gray-200"
+            } rounded-lg focus:outline-none ${
+              validationErrors[`link-${index}`]
+                ? "focus:border-red-500"
+                : "focus:border-[#62BA9B]"
+            }`}
           />
+
+          {/* 오류 메시지가 있을 때만 공간 추가 */}
+          {validationErrors[`link-${index}`] && (
+            <div className="h-6 mt-2">
+              <p className="text-red-500 text-sm ml-1">
+                http:// 또는 https://로 시작하는 링크를 입력해 주세요.
+              </p>
+            </div>
+          )}
         </div>
       );
     }
@@ -401,41 +446,54 @@ export default function FileUpload({
             onDragStart={(e) => handleDragStart(e, index)}
             onDragOver={(e) => handleDragOver(e, index)}
             onDragEnd={handleDragEnd}
-            className={`flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-[#62BA9B] transition-colors ${
+            className={`flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-[#62BA9B] transition-colors ${
               draggedIndex === index ? "opacity-50" : ""
             }`}
           >
-            <GripVertical className="cursor-move text-gray-400 hover:text-gray-600" />
+            {/* 드래그 핸들 + 타입 선택기를 감싸는 컨테이너 */}
+            <div className="flex flex-col">
+              <div className="flex gap-4 items-center">
+                <GripVertical className="cursor-move text-gray-400 hover:text-gray-600" />
 
-            {/* File Type Selector */}
-            <div className="relative w-32">
-              <select
-                value={file.type}
-                onChange={(e) =>
-                  handleTypeChange(index, e.target.value as FileItem["type"])
-                }
-                className="w-full appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:border-[#62BA9B]"
-              >
-                <option value="link">링크</option>
-                <option value="image">이미지</option>
-                <option value="pdf">PDF</option>
-                <option value="file">파일</option>
-              </select>
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                {/* File Type Selector */}
+                <div className="relative w-32">
+                  <select
+                    value={file.type}
+                    onChange={(e) =>
+                      handleTypeChange(
+                        index,
+                        e.target.value as FileItem["type"]
+                      )
+                    }
+                    className="w-full h-[50px] appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:border-[#62BA9B]"
+                  >
+                    <option value="link">링크</option>
+                    <option value="image">이미지</option>
+                    <option value="pdf">PDF</option>
+                    <option value="file">파일</option>
+                  </select>
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg
+                      className="w-4 h-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
+
+              {/* 오류 메시지가 있을 때만 왼쪽에도 동일한 공간 추가 */}
+              {file.type === "link" && validationErrors[`link-${index}`] && (
+                <div className="h-6 mt-2 invisible">공간 유지용</div>
+              )}
             </div>
 
             {/* File Content */}

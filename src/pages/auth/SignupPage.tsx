@@ -16,6 +16,8 @@ export default function SignupPage() {
   const [isVerified, setIsVerified] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  // Add new state for verification error
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -43,9 +45,16 @@ export default function SignupPage() {
   const password = watch("password");
   const passwordConfirm = watch("passwordConfirm");
 
+  // Clear verification error when code changes
+  useEffect(() => {
+    if (verificationError) {
+      setVerificationError(null);
+    }
+  }, [verificationCode]);
+
   const isEmailValid = email && !errors.email;
   const isVerificationComplete =
-    verificationCode?.length === 6 && !errors.verificationCode;
+    verificationCode?.length === 6 && !errors.verificationCode && !verificationError;
   const isPasswordValid =
     password && passwordConfirm && !errors.password && !errors.passwordConfirm;
 
@@ -81,6 +90,7 @@ export default function SignupPage() {
       setVerificationSent(true);
       setCountdown(600); // 10분
       clearErrors("verificationCode");
+      setVerificationError(null); // Clear any existing verification errors
       showToast("인증번호가 발송되었습니다.", "success");
     } catch (error) {
       if (error instanceof Error) {
@@ -107,13 +117,15 @@ export default function SignupPage() {
       });
 
       setIsVerified(true);
+      setVerificationError(null); // Clear any errors on success
       setCurrentStep("PASSWORD");
       showToast("인증이 완료되었습니다.", "success");
     } catch (error) {
       if (error instanceof Error) {
-        showToast(error.message, "error");
+        // Set error message instead of showing toast
+        setVerificationError("인증번호가 일치하지 않습니다.");
       } else {
-        showToast("인증에 실패했습니다.", "error");
+        setVerificationError("인증에 실패했습니다.");
       }
     } finally {
       setIsLoading(false);
@@ -235,7 +247,7 @@ export default function SignupPage() {
                       message: "인증번호는 6자리 숫자입니다",
                     },
                   })}
-                  error={errors.verificationCode?.message}
+                  error={verificationError || errors.verificationCode?.message}
                 />
                 <Button
                   type="button"

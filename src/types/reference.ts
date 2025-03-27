@@ -37,6 +37,14 @@ export interface ReferenceFile {
   filenames?: string[]; // 추가
 }
 
+export interface ReferenceFormData {
+  collectionTitle: string;
+  title: string;
+  keywords?: string[];
+  memo?: string;
+  files: CreateReferenceFile[];
+}
+
 // 레퍼런스 생성/수정 시 사용되는 파일 타입
 export interface CreateReferenceFile {
   id: string;
