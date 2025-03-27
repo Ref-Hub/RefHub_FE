@@ -28,7 +28,7 @@ export interface FloatingState {
 }
 
 interface AlertState {
-  type: string;
+  type: string; // 여기에 "withdrawal"(회원탈퇴) 타입을 사용할 예정
   massage: string;
   ids: string[];
   isVisible: boolean;
