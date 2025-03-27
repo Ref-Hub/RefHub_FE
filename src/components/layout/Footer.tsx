@@ -1,32 +1,23 @@
 // src/components/layout/Footer.tsx
 import { useState } from 'react';
 import { Mail, Instagram } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { authService } from '@/services/auth';
-import { useToast } from '@/contexts/useToast';
+import { useSetRecoilState } from 'recoil';
+import { alertState } from '@/store/collection';
 
 export default function Footer() {
-  const { logout } = useAuth();
-  const { showToast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleWithdrawal = async () => {
-    if (window.confirm('정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-      try {
-        setIsLoading(true);
-        await authService.deleteUser();
-        showToast('탈퇴가 완료되었습니다. 7일 이내에 로그인할 경우, 계정이 복구됩니다.', 'success');
-        logout(); // 탈퇴 후 로그아웃 처리
-      } catch (error) {
-        if (error instanceof Error) {
-          showToast(error.message, 'error');
-        } else {
-          showToast('회원탈퇴 중 오류가 발생했습니다.', 'error');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  const [isLoading] = useState(false);
+  const setAlert = useSetRecoilState(alertState);
+
+  const handleWithdrawal = () => {
+    // Alert 컴포넌트를 이용한 확인
+    setAlert({
+      type: "withdrawal", // 새로운 타입 "withdrawal" 사용
+      massage: "정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.\n7일 이내에 로그인할 경우, 계정이 복구됩니다.",
+      isVisible: true,
+      ids: [], // 회원탈퇴에는 사용하지 않지만 필수 필드
+      title: "" // 회원탈퇴에는 사용하지 않지만 필수 필드
+    });
   };
 
   return (
