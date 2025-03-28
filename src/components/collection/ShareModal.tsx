@@ -14,7 +14,8 @@ import TrashIcon from "@/assets/TrashIcon.svg";
 import { useToast } from "@/contexts/useToast";
 
 const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
-  const [IsOpen, setIsOpen] = useRecoilState(shareModalState);
+  const [, setIsOpen] = useRecoilState(shareModalState);
+  const userEmail = localStorage.getItem("email");
   const collectiondatas = useRecoilValue(collectionState);
   const [alert, setAlert] = useRecoilState(alertState);
   const [collectionTitle, setCollectionTitle] = useState("");
@@ -45,7 +46,7 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
       setCreator(response.owner);
       setSharedUsers(response.sharing);
       setIsShare(response.sharing.length > 0);
-      setIsOwner(IsOpen.userEmail === response.owner.email);
+      setIsOwner(userEmail === response.owner.email);
     } catch (error) {
       console.error("사용자 목록 조회 실패:", error);
     } finally {
@@ -131,9 +132,10 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
 
   const handleOut = () => {
     if (!collectionId) return;
-    const id = sharedUsers.find(
-      (item) => item.userId.email === IsOpen.userEmail
-    )?.userId._id;
+    const id = sharedUsers.find((item) => item.userId.email === userEmail)
+      ?.userId._id;
+
+    if (!id) return;
 
     setAlert({
       ids: [collectionId, id || ""],

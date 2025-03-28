@@ -8,6 +8,7 @@ import {
   modalState,
   alertState,
   collectionState,
+  floatingModeState,
 } from "@/store/collection";
 import ReferenceCard from "@/components/reference/ReferenceCard";
 import ReferenceList from "@/components/reference/ReferenceList";
@@ -54,6 +55,8 @@ export default function ReferenceListPage() {
   const [referenceData, setReferenceData] = useState<ReferenceListItem[]>([]);
   const alertPrevIsOpen = useRef<boolean>(alert.isVisible);
   const modalPrevIsOpen = useRef<boolean>(modal.isOpen);
+  const [isFloatOpen, setIsFloatOpen] = useState(false);
+  const [modeValue] = useRecoilState(floatingModeState);
 
   // 컬렉션 데이터 로드
   useEffect(() => {
@@ -142,6 +145,7 @@ export default function ReferenceListPage() {
           return {
             _id: reference._id,
             isShared: reference.shared,
+            shared: reference.shared,
             creator: reference.creator,
             editor: reference.editor,
             viewer: reference.viewer,
@@ -193,6 +197,23 @@ export default function ReferenceListPage() {
     modalPrevIsOpen.current = modal.isOpen;
   }, [alert.isVisible, modal.isOpen]);
 
+  const handleFloating = (event: React.MouseEvent) => {
+    if (!isFloatOpen) return;
+
+    if (
+      (modeValue.isMove || modeValue.isDelete) &&
+      (event.target as HTMLElement).closest('[data-testid="reference-card"]')
+    ) {
+      return;
+    }
+
+    if ((event.target as HTMLElement).closest('[data-testid="floating-btn"]')) {
+      return;
+    }
+
+    setIsFloatOpen(false);
+  };
+
   const viewStyles = (id: string) =>
     `w-[50px] h-[50px] p-[9px] rounded-full overflow-visible hover:cursor-pointer ${
       view === id
@@ -209,11 +230,16 @@ export default function ReferenceListPage() {
   }
 
   return (
-    <div className="font-sans">
+    <div className="font-sans" onClick={(e) => handleFloating(e)}>
       {modal.isOpen && <Modal type={modal.type} />}
       {alert.isVisible && <Alert message={alert.massage} />}
       {collections.data.length > 0 && (
-        <FloatingButton type="reference" data={referenceData} />
+        <FloatingButton
+          type="reference"
+          data={referenceData}
+          isOpen={isFloatOpen}
+          setIsOpen={setIsFloatOpen}
+        />
       )}
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-10 mb-6">

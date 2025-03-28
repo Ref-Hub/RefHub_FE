@@ -11,6 +11,7 @@ import {
   collectionState,
   alertState,
   shareModalState,
+  floatingModeState,
 } from "@/store/collection";
 import { useRecoilValue, useRecoilState } from "recoil";
 import Dropdown from "@/components/common/Dropdown";
@@ -31,11 +32,13 @@ export default function CollectionDetailPage() {
   const shareModal = useRecoilValue(shareModalState);
   const [alert, setAlert] = useRecoilState(alertState);
   const [collectionDatas, setCollectionDatas] = useRecoilState(collectionState);
+  const [modeValue] = useRecoilState(floatingModeState);
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useRecoilState(modalState);
   const [referenceData, setReferenceData] = useState<ReferenceListItem[]>([]);
   const alertPrevIsOpen = useRef<boolean>(alert.isVisible);
   const modalPrevIsOpen = useRef<boolean>(modal.isOpen);
+  const [isFloatOpen, setIsFloatOpen] = useState(false);
 
   // collectionData를 useMemo로 관리
   const collectionData = useMemo(
@@ -84,6 +87,7 @@ export default function CollectionDetailPage() {
           return {
             _id: reference._id,
             isShared: reference.shared,
+            shared: reference.shared,
             creator: reference.creator,
             editor: reference.editor,
             viewer: reference.viewer,
@@ -152,6 +156,23 @@ export default function CollectionDetailPage() {
     });
   };
 
+  const handleFloating = (event: React.MouseEvent) => {
+    if (!isFloatOpen) return;
+
+    if (
+      (modeValue.isMove || modeValue.isDelete) &&
+      (event.target as HTMLElement).closest('[data-testid="reference-card"]')
+    ) {
+      return;
+    }
+
+    if ((event.target as HTMLElement).closest('[data-testid="floating-btn"]')) {
+      return;
+    }
+
+    setIsFloatOpen(false);
+  };
+
   const viewStyles = (id: string) =>
     `w-[50px] h-[50px] p-[9px] rounded-full overflow-visible hover:cursor-pointer ${
       view === id
@@ -168,13 +189,17 @@ export default function CollectionDetailPage() {
   }
 
   return (
-    <div className="font-sans">
+    <div className="font-sans min-h-screen" onClick={(e) => handleFloating(e)}>
       {modal.isOpen && <Modal type={modal.type} />}
       {shareModal.isOpen && <ShareModal collectionId={collectionId || ""} />}
       {alert.isVisible && <Alert message={alert.massage} />}
-
-      {!collectionData?.viewer && (
-        <FloatingButton type="collectionDetail" data={referenceData} />
+      {referenceData.length > 0 && (
+        <FloatingButton
+          type="collectionDetail"
+          data={referenceData}
+          isOpen={isFloatOpen}
+          setIsOpen={setIsFloatOpen}
+        />
       )}
 
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
@@ -241,7 +266,7 @@ export default function CollectionDetailPage() {
                 ? `검색 결과가 없어요.\n다른 검색어로 시도해 보세요!`
                 : `아직 추가된 레퍼런스가 없어요.\n자료를 추가해보세요!`}
             </p>
-            {sort.searchWord.length === 0 && (
+            {sort.searchWord.length === 0 && !collectionData?.viewer && (
               <button
                 onClick={() => navigate("/references/new")}
                 className="flex w-fit px-12 py-4 gap-3 rounded-full bg-primary hover:bg-primary-dark"

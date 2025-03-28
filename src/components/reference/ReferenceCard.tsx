@@ -172,7 +172,8 @@ const ReferenceCard: React.FC<
     if (
       (event.target as HTMLElement).closest(".more-button") ||
       (event.target as HTMLElement).closest("input[type='checkbox']") ||
-      (event.target as HTMLElement).closest("label")
+      (event.target as HTMLElement).closest("label") ||
+      (event.target as HTMLElement).closest("li")
     ) {
       return;
     }
@@ -209,6 +210,7 @@ const ReferenceCard: React.FC<
 
   return (
     <div
+      data-testid="reference-card"
       className="relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer"
       onClick={(e) => handleReferenceClick(e)}
     >
