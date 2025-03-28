@@ -6,6 +6,7 @@ import FileUpload from "@/components/reference/FileUpload";
 import { useReferenceCreate } from "@/hooks/useReferenceCreate";
 import { collectionService } from "@/services/collection";
 import { Loader } from "lucide-react";
+import CollectionDropdown from "@/components/common/CollectionDropdown";
 import type { CollectionCard } from "@/types/collection";
 
 interface FileItem {
@@ -49,13 +50,28 @@ export default function ReferenceCreatePage() {
     const fetchCollections = async () => {
       try {
         setIsLoadingCollections(true);
+        // 컬렉션을 제목 오름차순으로 정렬하도록 요청
         const response = await collectionService.getCollectionList({
           page: 1,
-          sortBy: "createdAt",
+          sortBy: "sortAsc", // 제목 오름차순 정렬 파라미터
           search: "",
         });
-        setCollections(response.data || []); // CollectionResponse의 data 배열 사용
-      } catch (_) {
+
+        // 가져온 데이터가 있다면
+        if (response.data && response.data.length > 0) {
+          // 즐겨찾기 항목을 최상단으로 정렬
+          const sortedCollections = [...response.data].sort((a, b) => {
+            // 즐겨찾기가 되어 있는 항목이 위로 오도록 정렬
+            if (a.isFavorite && !b.isFavorite) return -1;
+            if (!a.isFavorite && b.isFavorite) return 1;
+            return 0; // 둘 다 즐겨찾기거나 둘 다 아니면 기존 순서 유지
+          });
+
+          setCollections(sortedCollections);
+        } else {
+          setCollections([]);
+        }
+      } catch (error) {
         showToast("컬렉션 목록을 불러오는데 실패했습니다.", "error");
       } finally {
         setIsLoadingCollections(false);
@@ -126,21 +142,15 @@ export default function ReferenceCreatePage() {
                 </span>
               </label>
               <div className="relative">
-                <select
+                <CollectionDropdown
+                  options={collections}
                   value={formData.collection}
-                  onChange={(e) =>
-                    setFormData({ ...formData, collection: e.target.value })
+                  onChange={(value) =>
+                    setFormData({ ...formData, collection: value })
                   }
+                  placeholder="저장할 컬렉션을 선택하세요."
                   disabled={isLoadingCollections}
-                  className="w-full h-[56px] border border-gray-300 rounded-lg px-4 appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">저장할 컬렉션을 선택하세요.</option>
-                  {collections.map((collection) => (
-                    <option key={collection._id} value={collection.title}>
-                      {collection.title}
-                    </option>
-                  ))}
-                </select>
+                />
                 {isLoadingCollections && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     <Loader className="w-4 h-4 animate-spin text-gray-400" />

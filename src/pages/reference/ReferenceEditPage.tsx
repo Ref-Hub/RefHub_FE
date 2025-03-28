@@ -9,6 +9,7 @@ import { collectionService } from "@/services/collection";
 import { referenceService } from "@/services/reference";
 import { Loader } from "lucide-react";
 import type { CollectionCard } from "@/types/collection";
+import CollectionDropdown from "@/components/common/CollectionDropdown";
 import type {
   CreateReferenceFile,
   UpdateReferenceRequest,
@@ -161,17 +162,23 @@ export default function ReferenceEditPage() {
       }
 
       const invalidLinks = formData.files.filter(
-        file => file.type === "link" && 
-                file.content && 
-                !(file.content.startsWith('http://') || file.content.startsWith('https://'))
+        (file) =>
+          file.type === "link" &&
+          file.content &&
+          !(
+            file.content.startsWith("http://") ||
+            file.content.startsWith("https://")
+          )
       );
-      
+
       if (invalidLinks.length > 0) {
-        showToast("http:// 또는 https://로 시작하는 링크를 입력해 주세요.", "error");
+        showToast(
+          "http:// 또는 https://로 시작하는 링크를 입력해 주세요.",
+          "error"
+        );
         return;
       }
 
-      
       if (formData.files.some((file) => !file.content)) {
         showToast("모든 자료를 입력해 주세요.", "error");
         return;
@@ -251,21 +258,15 @@ export default function ReferenceEditPage() {
                 </span>
               </label>
               <div className="relative">
-                <select
+                <CollectionDropdown
+                  options={collections}
                   value={formData.collection}
-                  onChange={(e) =>
-                    setFormData({ ...formData, collection: e.target.value })
+                  onChange={(value) =>
+                    setFormData({ ...formData, collection: value })
                   }
+                  placeholder="저장할 컬렉션을 선택하세요."
                   disabled={isLoadingCollections}
-                  className="w-full h-[56px] border border-gray-300 rounded-lg px-4 appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">저장할 컬렉션을 선택하세요.</option>
-                  {collections.map((collection) => (
-                    <option key={collection._id} value={collection.title}>
-                      {collection.title}
-                    </option>
-                  ))}
-                </select>
+                />
                 {isLoadingCollections && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     <Loader className="w-4 h-4 animate-spin text-gray-400" />
