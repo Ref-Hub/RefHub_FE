@@ -11,6 +11,7 @@ import {
   collectionState,
   alertState,
   shareModalState,
+  floatingModeState,
 } from "@/store/collection";
 import { useRecoilValue, useRecoilState } from "recoil";
 import Dropdown from "@/components/common/Dropdown";
@@ -31,11 +32,13 @@ export default function CollectionDetailPage() {
   const shareModal = useRecoilValue(shareModalState);
   const [alert, setAlert] = useRecoilState(alertState);
   const [collectionDatas, setCollectionDatas] = useRecoilState(collectionState);
+  const [modeValue] = useRecoilState(floatingModeState);
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useRecoilState(modalState);
   const [referenceData, setReferenceData] = useState<ReferenceListItem[]>([]);
   const alertPrevIsOpen = useRef<boolean>(alert.isVisible);
   const modalPrevIsOpen = useRef<boolean>(modal.isOpen);
+  const [isFloatOpen, setIsFloatOpen] = useState(false);
 
   // collectionData를 useMemo로 관리
   const collectionData = useMemo(
@@ -153,6 +156,23 @@ export default function CollectionDetailPage() {
     });
   };
 
+  const handleFloating = (event: React.MouseEvent) => {
+    if (!isFloatOpen) return;
+
+    if (
+      (modeValue.isMove || modeValue.isDelete) &&
+      (event.target as HTMLElement).closest('[data-testid="reference-card"]')
+    ) {
+      return;
+    }
+
+    if ((event.target as HTMLElement).closest('[data-testid="floating-btn"]')) {
+      return;
+    }
+
+    setIsFloatOpen(false);
+  };
+
   const viewStyles = (id: string) =>
     `w-[50px] h-[50px] p-[9px] rounded-full overflow-visible hover:cursor-pointer ${
       view === id
@@ -169,12 +189,17 @@ export default function CollectionDetailPage() {
   }
 
   return (
-    <div className="font-sans">
+    <div className="font-sans min-h-screen" onClick={(e) => handleFloating(e)}>
       {modal.isOpen && <Modal type={modal.type} />}
       {shareModal.isOpen && <ShareModal collectionId={collectionId || ""} />}
       {alert.isVisible && <Alert message={alert.massage} />}
       {referenceData.length > 0 && (
-        <FloatingButton type="collectionDetail" data={referenceData} />
+        <FloatingButton
+          type="collectionDetail"
+          data={referenceData}
+          isOpen={isFloatOpen}
+          setIsOpen={setIsFloatOpen}
+        />
       )}
 
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">

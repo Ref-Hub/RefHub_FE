@@ -166,6 +166,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
 
   return (
     <div
+      data-testid="collection-card"
       className="relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer"
       onClick={(e) => handleDetail(e)}
     >

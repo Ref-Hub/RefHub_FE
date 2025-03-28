@@ -6,6 +6,7 @@ import {
   collectionState,
   alertState,
   shareModalState,
+  floatingModeState,
 } from "@/store/collection";
 import { collectionService } from "@/services/collection";
 import FloatingButton from "@/components/common/FloatingButton";
@@ -26,6 +27,7 @@ const CollectionPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const sort = useRecoilValue(DropState);
   const [modal, setModal] = useRecoilState(modalState);
+  const [modeValue] = useRecoilState(floatingModeState);
   const alert = useRecoilValue(alertState);
   const shareModal = useRecoilValue(shareModalState);
   const [collectionData, setCollectionData] =
@@ -33,6 +35,7 @@ const CollectionPage: React.FC = () => {
   const alertPrevIsOpen = useRef<boolean>(alert.isVisible);
   const modalPrevIsOpen = useRef<boolean>(modal.isOpen);
   const sharePrevIsOpen = useRef<boolean>(shareModal.isOpen);
+  const [isFloatOpen, setIsFloatOpen] = useState(false);
 
   const fetchCollections = async () => {
     setIsLoading(true);
@@ -97,6 +100,23 @@ const CollectionPage: React.FC = () => {
     setModal((prev) => ({ ...prev, isOpen: true, type: "create" }));
   };
 
+  const handleFloating = (event: React.MouseEvent) => {
+    if (!isFloatOpen) return;
+
+    if (
+      modeValue.isDelete &&
+      (event.target as HTMLElement).closest('[data-testid="collection-card"]')
+    ) {
+      return;
+    }
+
+    if ((event.target as HTMLElement).closest('[data-testid="floating-btn"]')) {
+      return;
+    }
+
+    setIsFloatOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -106,14 +126,19 @@ const CollectionPage: React.FC = () => {
   }
 
   return (
-    <div className="font-sans">
+    <div className="font-sans" onClick={(e) => handleFloating(e)}>
       {modal.isOpen && <Modal type={modal.type} />}
       {shareModal.isOpen && (
         <ShareModal collectionId={shareModal.collectionId} />
       )}
       {alert.isVisible && <Alert message={alert.massage} />}
       {collectionData?.data?.length > 0 && (
-        <FloatingButton type="collection" data={collectionData.data} />
+        <FloatingButton
+          type="collection"
+          data={collectionData.data}
+          isOpen={isFloatOpen}
+          setIsOpen={setIsFloatOpen}
+        />
       )}
 
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
