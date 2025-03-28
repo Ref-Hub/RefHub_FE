@@ -145,6 +145,7 @@ const FloatingButton: React.FC<FABProps> = ({ type, data }) => {
             label="레퍼런스"
             time={0.9}
             onClick={() => navigate("/references/new")}
+            disabled={data[0].viewer}
           />
           {type === "collectionDetail" && (
             <ActionButton
@@ -172,7 +173,7 @@ const FloatingButton: React.FC<FABProps> = ({ type, data }) => {
               label={mode.isMove ? "이동하기" : "컬렉션 이동"}
               time={0.6}
               onClick={handleMove}
-              disabled={data.length === 0}
+              disabled={data.length === 0 || data[0].viewer}
             />
           )}
           <ActionButton
@@ -188,7 +189,7 @@ const FloatingButton: React.FC<FABProps> = ({ type, data }) => {
             label={mode.isDelete ? "삭제하기" : "삭제"}
             time={0.4}
             onClick={handleDelete}
-            disabled={data.length === 0}
+            disabled={data.length === 0 || data[0].viewer}
           />
         </div>
       )}
