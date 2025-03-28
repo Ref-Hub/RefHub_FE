@@ -43,7 +43,7 @@ export default function LoginPage() {
 
       try {
         await authService.login(data, rememberMe);
-        setShareModal((prev) => ({ ...prev, userEmail: data.email }));
+        localStorage.setItem("email", data.email);
         navigate("/");
         showToast("로그인이 완료되었습니다.", "success");
       } catch (error) {

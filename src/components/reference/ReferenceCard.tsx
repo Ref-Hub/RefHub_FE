@@ -172,7 +172,8 @@ const ReferenceCard: React.FC<
     if (
       (event.target as HTMLElement).closest(".more-button") ||
       (event.target as HTMLElement).closest("input[type='checkbox']") ||
-      (event.target as HTMLElement).closest("label")
+      (event.target as HTMLElement).closest("label") ||
+      (event.target as HTMLElement).closest("li")
     ) {
       return;
     }

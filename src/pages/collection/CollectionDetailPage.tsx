@@ -84,6 +84,7 @@ export default function CollectionDetailPage() {
           return {
             _id: reference._id,
             isShared: reference.shared,
+            shared: reference.shared,
             creator: reference.creator,
             editor: reference.editor,
             viewer: reference.viewer,
@@ -172,8 +173,7 @@ export default function CollectionDetailPage() {
       {modal.isOpen && <Modal type={modal.type} />}
       {shareModal.isOpen && <ShareModal collectionId={collectionId || ""} />}
       {alert.isVisible && <Alert message={alert.massage} />}
-
-      {!collectionData?.viewer && (
+      {referenceData.length > 0 && (
         <FloatingButton type="collectionDetail" data={referenceData} />
       )}
 
@@ -241,7 +241,7 @@ export default function CollectionDetailPage() {
                 ? `검색 결과가 없어요.\n다른 검색어로 시도해 보세요!`
                 : `아직 추가된 레퍼런스가 없어요.\n자료를 추가해보세요!`}
             </p>
-            {sort.searchWord.length === 0 && (
+            {sort.searchWord.length === 0 && !collectionData?.viewer && (
               <button
                 onClick={() => navigate("/references/new")}
                 className="flex w-fit px-12 py-4 gap-3 rounded-full bg-primary hover:bg-primary-dark"

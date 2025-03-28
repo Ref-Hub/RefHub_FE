@@ -142,6 +142,7 @@ export default function ReferenceListPage() {
           return {
             _id: reference._id,
             isShared: reference.shared,
+            shared: reference.shared,
             creator: reference.creator,
             editor: reference.editor,
             viewer: reference.viewer,
