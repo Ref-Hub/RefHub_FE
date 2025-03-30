@@ -1,5 +1,5 @@
 //src/components/common/FloatingButton.tsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useToast } from "@/contexts/useToast";
@@ -24,12 +24,19 @@ import { CollectionCard } from "@/types/collection";
 interface FABProps {
   type: string;
   data: ReferenceListItem[] | CollectionCard[];
+  isOpen: boolean;
+  setIsOpen: any;
 }
 
-const FloatingButton: React.FC<FABProps> = ({ type, data }) => {
+const FloatingButton: React.FC<FABProps> = ({
+  type,
+  data,
+  isOpen,
+  setIsOpen,
+}) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  //const [isOpen, setIsOpen] = useState(false);
   const setModalOpen = useSetRecoilState(modalState);
   const [mode, setMode] = useRecoilState(floatingModeState);
   const setAlert = useSetRecoilState(alertState);
@@ -122,7 +129,10 @@ const FloatingButton: React.FC<FABProps> = ({ type, data }) => {
     "w-16 h-16 p-4 rounded-full shadow-[0px_0px_10px_0px_rgba(0,0,0,0.08)] overflow-visible";
 
   return (
-    <div className="fixed bottom-[7%] right-[7%] flex flex-col items-center gap-8 z-10">
+    <div
+      data-testid="floating-btn"
+      className="fixed bottom-[7%] right-[7%] flex flex-col items-center gap-8 z-10"
+    >
       {isOpen && (
         <div className="flex flex-col items-center gap-3">
           {type != "collectionDetail" && (
@@ -145,6 +155,7 @@ const FloatingButton: React.FC<FABProps> = ({ type, data }) => {
             label="레퍼런스"
             time={0.9}
             onClick={() => navigate("/references/new")}
+            disabled={type === "collectionDetail" ? data[0].viewer : undefined}
           />
           {type === "collectionDetail" && (
             <ActionButton
@@ -172,7 +183,9 @@ const FloatingButton: React.FC<FABProps> = ({ type, data }) => {
               label={mode.isMove ? "이동하기" : "컬렉션 이동"}
               time={0.6}
               onClick={handleMove}
-              disabled={data.length === 0}
+              disabled={
+                type === "collectionDetail" ? data[0].viewer : data.length === 0
+              }
             />
           )}
           <ActionButton
@@ -188,7 +201,9 @@ const FloatingButton: React.FC<FABProps> = ({ type, data }) => {
             label={mode.isDelete ? "삭제하기" : "삭제"}
             time={0.4}
             onClick={handleDelete}
-            disabled={data.length === 0}
+            disabled={
+              type === "collectionDetail" ? data[0].viewer : data.length === 0
+            }
           />
         </div>
       )}
