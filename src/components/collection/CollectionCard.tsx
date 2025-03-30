@@ -113,6 +113,8 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
       } else {
         showToast("실패했습니다.", "error");
       }
+    } finally {
+      window.location.reload();
     }
   };
 
