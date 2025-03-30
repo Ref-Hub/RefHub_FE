@@ -202,7 +202,10 @@ export default function ReferenceListPage() {
 
     if (
       (modeValue.isMove || modeValue.isDelete) &&
-      (event.target as HTMLElement).closest('[data-testid="reference-card"]')
+      ((event.target as HTMLElement).closest(
+        '[data-testid="reference-card"]'
+      ) ||
+        (event.target as HTMLElement).closest('[data-testid="reference-list"]'))
     ) {
       return;
     }
