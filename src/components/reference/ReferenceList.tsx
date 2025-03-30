@@ -121,7 +121,9 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
         setIsChecked((prev) => prev.map(() => true));
         setModeValue((prev) => ({
           ...prev,
-          checkItems: collectionData.data.map((item) => item._id),
+          checkItems: items
+            .filter((item) => !item.viewer)
+            .map((item) => item._id),
         }));
       }
     } else {
@@ -194,7 +196,10 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
   };
 
   return (
-    <table className="table-auto border-collapse w-full">
+    <table
+      className="table-auto border-collapse w-full"
+      data-testid="reference-list"
+    >
       <thead className="bg-gray-100">
         <tr>
           {(modeValue.isMove || modeValue.isDelete) && (
