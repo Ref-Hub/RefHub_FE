@@ -196,7 +196,9 @@ export default function ReferenceEditPage() {
 
       // API 호출
       const updateData: UpdateReferenceRequest = {
-        collectionTitle: formData.collection,
+        collectionId: formData.collection,
+        collectionTitle:
+          collections.find((i) => i._id === formData.collection)?.title || "",
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,

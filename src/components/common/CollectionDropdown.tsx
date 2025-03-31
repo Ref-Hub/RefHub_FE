@@ -27,22 +27,25 @@ const CollectionDropdown: React.FC<CollectionDropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   // 선택된 옵션의 정보 찾기
-  const selectedOption = options.find(option => option.title === value);
+  const selectedOption = options.find((option) => option._id === value);
 
   // 옵션을 즐겨찾기와 일반으로 분리
-  const favoriteOptions = options.filter(option => option.isFavorite);
-  const regularOptions = options.filter(option => !option.isFavorite);
+  const favoriteOptions = options.filter((option) => option.isFavorite);
+  const regularOptions = options.filter((option) => !option.isFavorite);
 
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -50,14 +53,13 @@ const CollectionDropdown: React.FC<CollectionDropdownProps> = ({
   }, []);
 
   return (
-    <div 
-      ref={dropdownRef}
-      className={`relative w-full ${className}`}
-    >
+    <div ref={dropdownRef} className={`relative w-full ${className}`}>
       {/* 드롭다운 헤더 */}
       <div
         className={`flex items-center justify-between w-full h-[56px] px-4 border border-gray-300 rounded-lg appearance-none bg-white hover:border-primary transition-colors ${
-          disabled ? "bg-gray-100 cursor-not-allowed opacity-60" : "cursor-pointer"
+          disabled
+            ? "bg-gray-100 cursor-not-allowed opacity-60"
+            : "cursor-pointer"
         }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
@@ -94,12 +96,12 @@ const CollectionDropdown: React.FC<CollectionDropdownProps> = ({
                     <div
                       key={option._id}
                       className={`flex items-center px-4 py-3 text-sm ${
-                        option.title === value
+                        option._id === value
                           ? "bg-primary-light text-primary"
                           : "text-gray-700 hover:bg-gray-50"
                       } cursor-pointer`}
                       onClick={() => {
-                        onChange(option.title);
+                        onChange(option._id);
                         setIsOpen(false);
                       }}
                     >
@@ -115,17 +117,16 @@ const CollectionDropdown: React.FC<CollectionDropdownProps> = ({
               {/* 일반 그룹 */}
               {regularOptions.length > 0 && (
                 <>
-
                   {regularOptions.map((option) => (
                     <div
                       key={option._id}
                       className={`flex items-center px-4 py-3 text-sm ${
-                        option.title === value
+                        option._id === value
                           ? "bg-primary-light text-primary"
                           : "text-gray-700 hover:bg-gray-50"
                       } cursor-pointer`}
                       onClick={() => {
-                        onChange(option.title);
+                        onChange(option._id);
                         setIsOpen(false);
                       }}
                     >

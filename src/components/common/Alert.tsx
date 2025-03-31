@@ -36,18 +36,19 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
         try {
           // Alert 창 즉시 닫기
           setAlert((prev) => ({ ...prev, isVisible: false }));
-          
+
           // 회원탈퇴 API 호출
           await authService.deleteUser();
-          
+
           // 성공 시 로그인 정보 삭제
           authUtils.clearAll(); // 로컬 스토리지 정리
           setUser(null); // Recoil 상태 초기화
-          
+
           // 두 번째 Alert 표시 (탈퇴 완료 알림)
           setAlert({
             type: "withdrawalComplete",
-            massage: "탈퇴가 완료되었습니다.\n7일 이내 로그인 시 계정을 복구할 수 있습니다.",
+            massage:
+              "탈퇴가 완료되었습니다.\n7일 이내 로그인 시 계정을 복구할 수 있습니다.",
             isVisible: true,
             ids: [],
             title: "",
@@ -60,23 +61,23 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
             showToast("회원탈퇴 중 오류가 발생했습니다.", "error");
           }
         }
-        
+
         // 더 이상 진행하지 않고 종료
         return;
       }
-      
+
       // 회원탈퇴 완료 알림 케이스
       if (alert.type === "withdrawalComplete") {
         // Alert 창 닫기
         setAlert((prev) => ({ ...prev, isVisible: false }));
-        
+
         // 즉시 로그인 페이지로 이동 - 완전한 페이지 새로고침을 통해 API 요청 방지
         window.location.href = "/auth/login";
-        
+
         // 더 이상 진행하지 않고 종료
         return;
       }
-      
+
       // 다른 케이스들 처리
       if (alert.type === "collection") {
         await collectionService.deleteCollection(alert.ids);
@@ -113,13 +114,13 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
         if (alert.ids.length === 1) {
           await referenceService.deleteReference(alert.ids[0]);
           showToast("삭제가 완료되었습니다.", "success");
-          navigate("/references");
+          navigate(-1);
         } else {
           await referenceService.deleteReferences(alert.ids);
           showToast("삭제가 완료되었습니다.", "success");
         }
       }
-      
+
       // Alert 창 닫기 및 상태 초기화
       setMode({
         isMove: false,
@@ -171,7 +172,9 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
               </>
             )}
             <button
-              className={`flex justify-center items-center ${showCancelButton ? "w-[172px]" : "w-full"} h-[50px] px-6 py-4 rounded-lg text-primary text-lg font-bold hover:bg-gray-100 transition-colors`}
+              className={`flex justify-center items-center ${
+                showCancelButton ? "w-[172px]" : "w-full"
+              } h-[50px] px-6 py-4 rounded-lg text-primary text-lg font-bold hover:bg-gray-100 transition-colors`}
               onClick={handleDelete}
             >
               확인
