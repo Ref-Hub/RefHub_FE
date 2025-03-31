@@ -75,6 +75,7 @@ class ReferenceService {
   }
 
   // 단일 레퍼런스 조회
+  // src/services/reference.ts의 getReference 메서드 부분
   async getReference(id: string): Promise<Reference> {
     try {
       const response = await api.get<ReferenceDetailResponse>(
@@ -97,6 +98,9 @@ class ReferenceService {
             path: attachment.path,
             size: attachment.size,
             images: attachment.images,
+            // 파일명 관련 필드 추가
+            filename: attachment.filename,
+            filenames: attachment.filenames,
             previewURL: attachment.previewURL
               ? await this.transformUrl(attachment.previewURL)
               : undefined,
@@ -240,9 +244,11 @@ class ReferenceService {
         try {
           const images = JSON.parse(file.content);
           if (Array.isArray(images)) {
-            images.forEach((image: { url: string }) => {
+            images.forEach((image: { url: string; name?: string }) => {
               const blobData = this.base64ToBlob(image.url);
-              formData.append(`images${imageCount}`, blobData);
+              // 여기서 파일명 지정 - 원본 파일명 사용
+              const fileName = image.name || "image.png";
+              formData.append(`images${imageCount}`, blobData, fileName);
             });
             imageCount++;
           }
@@ -251,10 +257,10 @@ class ReferenceService {
         }
       } else if (file.type === "pdf") {
         const blobData = this.base64ToBlob(file.content);
-        formData.append("files", blobData, file.name);
+        formData.append("files", blobData, file.name || "document.pdf");
       } else {
         const blobData = this.base64ToBlob(file.content);
-        formData.append("otherFiles", blobData, file.name);
+        formData.append("otherFiles", blobData, file.name || "file");
       }
     });
 

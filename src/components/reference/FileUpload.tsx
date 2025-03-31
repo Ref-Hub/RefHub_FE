@@ -133,7 +133,7 @@ export default function FileUpload({
         if (!validateFile(file, fileType as "image" | "pdf" | "file")) continue;
 
         const content = await readFileAsDataURL(file);
-        contents.push({ url: content, name: file.name });
+        contents.push(content); // 이제 url과 name을 모두 포함
       }
 
       if (contents.length > 0) {
@@ -170,10 +170,16 @@ export default function FileUpload({
     }
   };
 
-  const readFileAsDataURL = (file: File): Promise<string> => {
+  const readFileAsDataURL = (
+    file: File
+  ): Promise<{ url: string; name: string }> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
+      reader.onload = () =>
+        resolve({
+          url: reader.result as string,
+          name: file.name, // 원본 파일명 저장
+        });
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
