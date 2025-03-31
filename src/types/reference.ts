@@ -38,6 +38,7 @@ export interface ReferenceFile {
 }
 
 export interface ReferenceFormData {
+  collectionId: string;
   collectionTitle: string;
   title: string;
   keywords?: string[];
@@ -55,6 +56,7 @@ export interface CreateReferenceFile {
 
 // 레퍼런스 생성/수정 요청 페이로드
 export interface UpdateReferenceRequest {
+  collectionId: string;
   collectionTitle: string;
   title: string;
   keywords?: string[];

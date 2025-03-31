@@ -1,11 +1,23 @@
 // src/pages/error/NotFoundPage.tsx
+import { useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { authUtils } from '@/store/auth';
+
 export default function NotFoundPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-800">404</h1>
-        <p className="text-gray-600 mt-2">페이지를 찾을 수 없습니다.</p>
-      </div>
-    </div>
-  );
+  const navigate = useNavigate();
+  const isAuthenticated = authUtils.getToken();
+  
+  useEffect(() => {
+    // 인증 상태에 따라 적절한 페이지로 리다이렉트
+    if (isAuthenticated) {
+      navigate('/collections', { replace: true });
+    } else {
+      navigate('/auth/login', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // 즉시 리다이렉트 처리
+  return isAuthenticated 
+    ? <Navigate to="/collections" replace /> 
+    : <Navigate to="/auth/login" replace />;
 }

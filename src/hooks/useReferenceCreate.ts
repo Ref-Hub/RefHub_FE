@@ -5,6 +5,7 @@ import { useToast } from "@/contexts/useToast";
 import { referenceService } from "@/services/reference";
 
 interface ReferenceFormData {
+  collectionId: string;
   collectionTitle: string;
   title: string;
   keywords: string[];
@@ -68,6 +69,7 @@ export function useReferenceCreate() {
 
       // Create reference
       const response = await referenceService.createReference({
+        collectionId: formData.collectionId,
         collectionTitle: formData.collectionTitle,
         title: formData.title,
         keywords: formData.keywords,

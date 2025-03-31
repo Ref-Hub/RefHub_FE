@@ -10,7 +10,10 @@ export function useReferenceEdit() {
   const { showToast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const updateReference = async (referenceId: string, formData: ReferenceFormData) => {
+  const updateReference = async (
+    referenceId: string,
+    formData: ReferenceFormData
+  ) => {
     try {
       setIsLoading(true);
 
@@ -26,13 +29,20 @@ export function useReferenceEdit() {
 
       // 링크 형식 유효성 검사 추가
       const invalidLinks = formData.files.filter(
-        (file: CreateReferenceFile) => file.type === "link" && 
-                file.content && 
-                !(file.content.startsWith('http://') || file.content.startsWith('https://'))
+        (file: CreateReferenceFile) =>
+          file.type === "link" &&
+          file.content &&
+          !(
+            file.content.startsWith("http://") ||
+            file.content.startsWith("https://")
+          )
       );
-      
+
       if (invalidLinks.length > 0) {
-        showToast("http:// 또는 https://로 시작하는 링크를 입력해 주세요.", "error");
+        showToast(
+          "http:// 또는 https://로 시작하는 링크를 입력해 주세요.",
+          "error"
+        );
         return;
       }
 
@@ -42,10 +52,13 @@ export function useReferenceEdit() {
       }
 
       // 파일 데이터 준비
-      const filesFormData = referenceService.prepareFilesFormData(formData.files);
+      const filesFormData = referenceService.prepareFilesFormData(
+        formData.files
+      );
 
       // 레퍼런스 수정 API 호출
       const response = await referenceService.updateReference(referenceId, {
+        collectionId: formData.collectionId,
         collectionTitle: formData.collectionTitle,
         title: formData.title,
         keywords: formData.keywords,
