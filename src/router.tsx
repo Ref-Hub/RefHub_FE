@@ -1,3 +1,4 @@
+// src/router.tsx
 import {
   createBrowserRouter,
   Navigate,
@@ -16,7 +17,13 @@ import ReferenceListPage from "@/pages/reference/ReferenceListPage";
 import ReferenceDetailPage from "@/pages/reference/ReferenceDetailPage";
 import ReferenceCreatePage from "@/pages/reference/ReferenceCreatePage";
 import ReferenceEditPage from "@/pages/reference/ReferenceEditPage";
-import NotFoundPage from "@/pages/error/NotFoundPage";
+
+// 404 페이지 처리를 위한 컴포넌트
+const NotFoundRedirect = () => {
+  // 인증 여부 확인
+  const token = localStorage.getItem("accessToken");
+  return token ? <Navigate to="/collections" replace /> : <Navigate to="/auth/login" replace />;
+};
 
 // 인증 관련 라우트
 const authRoutes: RouteObject[] = [
@@ -100,17 +107,18 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    errorElement: <NotFoundPage />,
+    errorElement: <NotFoundRedirect />, // 오류 발생 시 인증 상태에 따라 리다이렉트
     children: [
       {
         path: "auth",
         children: authRoutes,
       },
       ...protectedRoutes,
+      // 명시적인 와일드카드 경로 추가
       {
         path: "*",
-        element: <Navigate to="/auth/login" replace />,
-      },
+        element: <NotFoundRedirect />
+      }
     ],
   },
 ]);
