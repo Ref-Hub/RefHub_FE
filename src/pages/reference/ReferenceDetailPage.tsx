@@ -40,6 +40,29 @@ export default function ReferenceDetailPage() {
         setIsLoading(true);
         const data = await referenceService.getReference(referenceId);
         setReference(data);
+
+        const params = {
+          sortBy: "latest",
+          search: "",
+          collection: "all",
+          filterBy: "all",
+          view: "card",
+          mode: "home",
+        };
+
+        const referenceList = await referenceService.getReferenceList(params);
+        const findReference = referenceList.data.find(
+          (i) => i._id === referenceId
+        );
+
+        setReference((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...findReference,
+              }
+            : null
+        );
       } catch (error) {
         console.error("Error fetching reference:", error);
         showToast("레퍼런스를 불러오는데 실패했습니다.", "error");
@@ -221,20 +244,25 @@ export default function ReferenceDetailPage() {
           </div>
           <div className="flex flex-col items-end gap-4">
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleDelete}
-                className="px-6 py-2 text-red-500 border border-red-500 bg-white rounded-full hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                삭제
-              </button>
-              <button
-                onClick={handleEdit}
-                className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                수정
-              </button>
+              {!reference.viewer && (
+                <button
+                  onClick={handleDelete}
+                  className="px-6 py-2 text-red-500 border border-red-500 bg-white rounded-full hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  삭제
+                </button>
+              )}
+              {!reference.viewer && (
+                <button
+                  onClick={handleEdit}
+                  className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  수정
+                </button>
+              )}
             </div>
             <p className="text-sm text-gray-500">
+              생성일시{" "}
               {reference.createdAt
                 ? new Date(reference.createdAt).toLocaleDateString("ko-KR", {
                     year: "numeric",

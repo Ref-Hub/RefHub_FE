@@ -107,6 +107,10 @@ export const router = createBrowserRouter([
         children: authRoutes,
       },
       ...protectedRoutes,
+      {
+        path: "*",
+        element: <Navigate to="/auth/login" replace />,
+      },
     ],
   },
 ]);
