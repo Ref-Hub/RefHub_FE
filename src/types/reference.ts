@@ -38,6 +38,7 @@ export interface ReferenceFile {
 }
 
 export interface ReferenceFormData {
+  collectionId: string;
   collectionTitle: string;
   title: string;
   keywords?: string[];
