@@ -141,13 +141,13 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
   const showCancelButton = alert.type !== "withdrawalComplete";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/25 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/25 z-50 p-4">
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="px-6 rounded-2xl bg-[#f9faf9] w-[404px] border border-gray-200 drop-shadow-lg"
+        className="px-6 rounded-2xl bg-[#f9faf9] w-full max-w-[404px] border border-gray-200 drop-shadow-lg"
       >
         <div className="flex flex-col items-center relative">
           <X
@@ -157,11 +157,11 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
           <p className="text-base font-normal mt-16 whitespace-pre-line text-center">
             {message}
           </p>
-          <div className="flex gap-1 mt-8 mb-3">
+          <div className="flex gap-1 mt-8 mb-3 w-full">
             {showCancelButton && (
               <>
                 <button
-                  className="flex justify-center items-center w-[172px] h-[50px] px-6 py-4 rounded-lg text-gray-700 text-lg font-bold hover:bg-gray-100 transition-colors"
+                  className="flex justify-center items-center w-[50%] h-[50px] px-6 py-4 rounded-lg text-gray-700 text-lg font-bold hover:bg-gray-100 transition-colors"
                   onClick={() =>
                     setAlert((prev) => ({ ...prev, isVisible: false }))
                   }
@@ -173,7 +173,7 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
             )}
             <button
               className={`flex justify-center items-center ${
-                showCancelButton ? "w-[172px]" : "w-full"
+                showCancelButton ? "w-[50%]" : "w-full"
               } h-[50px] px-6 py-4 rounded-lg text-primary text-lg font-bold hover:bg-gray-100 transition-colors`}
               onClick={handleDelete}
             >

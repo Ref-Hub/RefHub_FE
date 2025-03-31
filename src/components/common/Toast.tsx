@@ -1,6 +1,6 @@
 // src/components/common/Toast.tsx
-import { type ToastType } from '@/contexts/types'; // 경로 수정
-import { CheckCircle, X } from 'lucide-react';
+import { type ToastType } from "@/contexts/types"; // 경로 수정
+import { CheckCircle, X } from "lucide-react";
 
 interface ToastProps {
   message: string;
@@ -10,12 +10,12 @@ interface ToastProps {
 
 export function Toast({ message, type, onClose }: ToastProps) {
   return (
-    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-[716px] flex items-center">
+    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-[716px] flex items-center">
       <div
         className={`
           w-full px-6 py-4 flex items-center justify-between
           rounded-[50px] shadow-lg
-          ${type === 'success' ? 'bg-primary' : 'bg-red-500'}
+          ${type === "success" ? "bg-primary" : "bg-red-500"}
           text-white
         `}
       >

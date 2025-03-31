@@ -58,7 +58,7 @@ const Modal: React.FC<ModalProps> = ({ type }) => {
   };
 
   return (
-    <div className="flex fixed top-0 left-0 w-full h-full bg-black/60 z-20 items-center justify-center">
+    <div className="flex fixed top-0 left-0 w-full h-full bg-black/60 z-20 items-center justify-center p-4">
       <div className="flex flex-col items-center w-[520px] h-[294px] py-6 px-8 relative bg-[#f9faf9] rounded-2xl">
         <X
           className="absolute w-9 h-9 top-6 right-6 stroke-gray-700 hover: cursor-pointer"
@@ -71,7 +71,7 @@ const Modal: React.FC<ModalProps> = ({ type }) => {
           <p className="text-base font-normal mt-8">{`선택한 ${alert.ids.length}개의 레퍼런스를 옮길 컬렉션을 선택해주세요.`}</p>
         )}
         {type !== "move" ? (
-          <div className="relative">
+          <div className="relative w-full">
             {isOpen.title.length > 0 && (
               <CircleX
                 className="absolute top-8 right-5 w-6 h-6 fill-gray-700 stroke-white hover: cursor-pointer"
@@ -86,7 +86,7 @@ const Modal: React.FC<ModalProps> = ({ type }) => {
               onChange={(e) =>
                 setIsOpen((prev) => ({ ...prev, title: e.target.value }))
               }
-              className=" w-[456px] mt-4 py-4 px-5 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+              className="w-full mt-4 py-4 pl-5 pr-12 bg-white truncate rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
             />
           </div>
         ) : (
