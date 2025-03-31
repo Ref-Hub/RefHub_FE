@@ -148,7 +148,7 @@ const CollectionPage: React.FC = () => {
 
         {collectionData?.data?.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {collectionData.data.map((collection) => (
                 <CollectionCard
                   key={collection._id}

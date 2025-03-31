@@ -203,17 +203,17 @@ export default function CollectionDetailPage() {
       )}
 
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
-        <div className="flex items-center justify-between mt-12 pb-6 border-b border-gray-400">
-          <p className="flex items-center text-primary text-3xl font-bold gap-4">
+        <div className="flex sm:flex-row flex-col gap-3 items-center justify-between mt-12 pb-6 border-b border-gray-400">
+          <p className="flex w-full items-center text-primary sm:text-3xl text-2xl font-bold gap-4">
             {collectionData?.isShared && (
-              <Users className="w-9 h-9 stroke-primary" />
+              <Users className="w-9 h-9 min-w-7 stroke-primary" />
             )}
             {collectionData?.title}
           </p>
-          <div className="flex text-lg font-bold gap-1.5">
+          <div className="flex w-full justify-end text-lg font-bold gap-1.5">
             {collectionData?.creator && (
               <button
-                className="px-8 py-3 bg-white rounded-[50px] border border-gray-200 text-[#f65063] hover:bg-gray-100"
+                className="sm:px-8 px-6 py-3 bg-white rounded-[50px] border border-gray-200 text-[#f65063] hover:bg-gray-100"
                 onClick={handleDelete}
               >
                 컬렉션 삭제
@@ -221,7 +221,7 @@ export default function CollectionDetailPage() {
             )}
             {!collectionData?.viewer && (
               <button
-                className="px-8 py-3 bg-primary rounded-[50px] text-[#F9FAF9] hover:bg-primary-dark"
+                className="sm:px-8 px-6 py-3 bg-primary rounded-[50px] text-[#F9FAF9] hover:bg-primary-dark"
                 onClick={() =>
                   setModal({
                     id: collectionId ? collectionId.toString() : "",
