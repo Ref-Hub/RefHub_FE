@@ -34,7 +34,8 @@ export interface ReferenceFile {
   images?: string[];
   previewURL?: string;
   previewURLs?: string[];
-  filenames?: string[]; // 추가
+  filename?: string;
+  filenames?: string[];
 }
 
 export interface ReferenceFormData {
@@ -78,7 +79,7 @@ export interface CreateReferenceResponse {
 export interface ReferenceDetailResponse {
   message: string;
   referenceDetail: {
-    collectionId: string; // 추가
+    collectionId: string;
     collectionTitle: string;
     referenceTitle: string;
     createdAt: string;
@@ -91,6 +92,9 @@ export interface ReferenceDetailResponse {
       images?: string[];
       previewURL?: string;
       previewURLs?: string[];
+      // 여기에 추가
+      filename?: string;
+      filenames?: string[];
     }>;
   };
 }

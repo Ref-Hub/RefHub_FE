@@ -143,14 +143,23 @@ export default function ReferenceDetailPage() {
                   onClick={() =>
                     setSelectedImage({
                       url,
-                      name: file.filenames?.[index] || `이미지 ${index + 1}`,
-                      downloadUrl: url, // 추가: downloadUrl 전달
+                      // 수정된 부분: 이미지의 경우 filenames 배열의 해당 인덱스 파일명 사용
+                      // filenames가 없거나 해당 인덱스의 값이 없는 경우에만 기본값 사용
+                      name:
+                        file.filenames && file.filenames[index]
+                          ? file.filenames[index]
+                          : `이미지 ${index + 1}`,
+                      downloadUrl: url,
                     })
                   }
                 >
                   <img
                     src={url}
-                    alt={file.filenames?.[index] || `Preview ${index + 1}`}
+                    alt={
+                      file.filenames && file.filenames[index]
+                        ? file.filenames[index]
+                        : `Preview ${index + 1}`
+                    }
                     className="w-full h-full object-cover rounded-lg"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
