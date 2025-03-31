@@ -5,7 +5,6 @@ import { referenceService } from "@/services/reference";
 import { useSetRecoilState, useRecoilValue } from "recoil";
 import Alert from "@/components/common/Alert";
 import LinkPreview from "@/components/reference/LinkPreview";
-import { alertState } from "@/store/collection";
 import {
   Users,
   Loader,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import ImagePreviewModal from "@/components/reference/ImagePreviewModal";
 import { Reference, ReferenceFile } from "@/types/reference";
+import { alertState } from "@/store/collection";
 
 export default function ReferenceDetailPage() {
   const { referenceId } = useParams<{ referenceId: string }>();
@@ -29,7 +29,7 @@ export default function ReferenceDetailPage() {
   const [selectedImage, setSelectedImage] = useState<{
     url: string;
     name?: string;
-    downloadUrl?: string; // 추가: downloadUrl 타입 정의
+    downloadUrl?: string;
   } | null>(null);
 
   useEffect(() => {
@@ -39,29 +39,46 @@ export default function ReferenceDetailPage() {
       try {
         setIsLoading(true);
         const data = await referenceService.getReference(referenceId);
-        setReference(data);
 
-        const params = {
+        // ✅ previewURL들을 transformUrl 처리
+        const transformedFiles = await Promise.all(
+          data.files.map(async (file) => {
+            if (file.type === "image" && file.previewURLs) {
+              const previewURLs = await Promise.all(
+                file.previewURLs.map((url) =>
+                  referenceService["transformUrl"](url)
+                )
+              );
+              return { ...file, previewURLs };
+            } else if (file.type === "pdf" && file.previewURL) {
+              const previewURL = await referenceService["transformUrl"](
+                file.previewURL
+              );
+              return { ...file, previewURL };
+            } else {
+              return file;
+            }
+          })
+        );
+
+        setReference({ ...data, files: transformedFiles });
+
+        // 추가 정보 병합
+        const referenceList = await referenceService.getReferenceList({
           sortBy: "latest",
           search: "",
           collection: "all",
           filterBy: "all",
           view: "card",
           mode: "home",
-        };
+        });
 
-        const referenceList = await referenceService.getReferenceList(params);
         const findReference = referenceList.data.find(
           (i) => i._id === referenceId
         );
 
         setReference((prev) =>
-          prev
-            ? {
-                ...prev,
-                ...findReference,
-              }
-            : null
+          prev ? { ...prev, ...findReference } : null
         );
       } catch (error) {
         console.error("Error fetching reference:", error);
@@ -83,11 +100,7 @@ export default function ReferenceDetailPage() {
     if (!reference) return;
 
     const text = reference.shared
-      ? `${
-          reference.collectionTitle || "선택한"
-        } 컬렉션의 다른 사용자와 공유 중인 ${
-          reference.title
-        }를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
+      ? `${reference.collectionTitle || "선택한"} 컬렉션의 다른 사용자와 공유 중인 ${reference.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
       : `${reference.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
 
     setAlert({
@@ -97,13 +110,10 @@ export default function ReferenceDetailPage() {
       type: "reference",
       title: reference.title,
     });
-
-    return;
   };
 
   const renderFilePreview = (file: ReferenceFile) => {
     switch (file.type) {
-      // renderFilePreview 함수 내 link case 부분만 수정
       case "link":
         return (
           <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
@@ -143,11 +153,9 @@ export default function ReferenceDetailPage() {
                   onClick={() =>
                     setSelectedImage({
                       url,
-                      // 수정된 부분: 이미지의 경우 filenames 배열의 해당 인덱스 파일명 사용
-                      // filenames가 없거나 해당 인덱스의 값이 없는 경우에만 기본값 사용
                       name:
                         file.filenames && file.filenames[index]
-                          ? file.filenames[index]
+                          ? decodeURIComponent(file.filenames[index])
                           : `이미지 ${index + 1}`,
                       downloadUrl: url,
                     })
@@ -234,7 +242,6 @@ export default function ReferenceDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Alert component */}
       {alert.isVisible && <Alert message={alert.massage} />}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
@@ -256,7 +263,7 @@ export default function ReferenceDetailPage() {
               {!reference.viewer && (
                 <button
                   onClick={handleDelete}
-                  className="px-6 py-2 text-red-500 border border-red-500 bg-white rounded-full hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 text-red-500 border border-red-500 bg-white rounded-full hover:bg-red-50 transition-colors"
                 >
                   삭제
                 </button>
@@ -264,7 +271,7 @@ export default function ReferenceDetailPage() {
               {!reference.viewer && (
                 <button
                   onClick={handleEdit}
-                  className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-hover transition-colors flex items-center gap-2"
                 >
                   수정
                 </button>
@@ -283,10 +290,8 @@ export default function ReferenceDetailPage() {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="h-px bg-gray-200 mb-4" />
 
-        {/* Keywords */}
         {reference.keywords && reference.keywords.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {reference.keywords.map((keyword, index) => (
@@ -300,7 +305,6 @@ export default function ReferenceDetailPage() {
           </div>
         )}
 
-        {/* Memo */}
         {reference.memo && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">메모</h3>
@@ -312,7 +316,6 @@ export default function ReferenceDetailPage() {
           </div>
         )}
 
-        {/* Files */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">첨부 자료</h3>
           <div className="space-y-4">
@@ -323,13 +326,12 @@ export default function ReferenceDetailPage() {
         </div>
       </div>
 
-      {/* Image Preview Modal */}
       <ImagePreviewModal
         isOpen={!!selectedImage}
         onClose={() => setSelectedImage(null)}
         imageUrl={selectedImage?.url || ""}
         imageName={selectedImage?.name}
-        downloadUrl={selectedImage?.downloadUrl} // 추가: downloadUrl 전달
+        downloadUrl={selectedImage?.downloadUrl}
       />
     </div>
   );

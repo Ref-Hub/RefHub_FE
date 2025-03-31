@@ -51,7 +51,7 @@ export default function MainHeader() {
   return (
     <header className="bg-white dark:bg-dark-bg shadow-sm rounded-bl-[48px] rounded-br-[48px] shadow-[0px_4px_10px_0px_rgba(181,184,181,0.10)] dark:shadow-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-start justify-between sm:h-16 h-20 mt-4">
           <Link to="/" className="flex items-center" onClick={handleReset}>
             <img
               src="/images/icon_with_text.svg"
@@ -59,7 +59,7 @@ export default function MainHeader() {
               className="h-8"
             />
           </Link>
-          <nav className="flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
+          <nav className="flex w-full justify-center space-x-8 absolute left-1/2 sm:top-5 top-[70px] transform -translate-x-1/2">
             <Link
               to="/collections"
               className={`text-xl ${

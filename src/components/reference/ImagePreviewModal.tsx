@@ -1,6 +1,6 @@
 // src/components/reference/ImagePreviewModal.tsx
-import Modal from '@/components/common/Modal';
-import { Download } from 'lucide-react';
+import Modal from "@/components/common/Modal";
+import { Download } from "lucide-react";
 
 interface ImagePreviewModalProps {
   isOpen: boolean;
@@ -15,30 +15,30 @@ export default function ImagePreviewModal({
   onClose,
   imageUrl,
   imageName,
-  downloadUrl
+  downloadUrl,
 }: ImagePreviewModalProps) {
   const handleDownload = async () => {
     if (!downloadUrl) return;
-    
+
     try {
       // URL로부터 파일 다운로드
       const response = await fetch(downloadUrl);
       const blob = await response.blob();
-      
+
       // 다운로드 링크 생성
-      const downloadLink = document.createElement('a');
+      const downloadLink = document.createElement("a");
       downloadLink.href = window.URL.createObjectURL(blob);
-      downloadLink.download = imageName || 'image';  // 파일명 지정
-      
+      downloadLink.download = imageName || "image"; // 파일명 지정
+
       // 링크 클릭하여 다운로드 실행
       document.body.appendChild(downloadLink);
       downloadLink.click();
-      
+
       // 생성한 요소 정리
       document.body.removeChild(downloadLink);
       window.URL.revokeObjectURL(downloadLink.href);
     } catch (error) {
-      console.error('Download failed:', error);
+      console.error("Download failed:", error);
     }
   };
 
@@ -53,12 +53,12 @@ export default function ImagePreviewModal({
           <div className="flex-1 min-w-0">
             {imageName && (
               <h3 className="text-lg font-semibold text-gray-900 truncate">
-                {imageName}
+                {imageName ? decodeURIComponent(imageName) : ""}
               </h3>
             )}
           </div>
           {downloadUrl && (
-            <button 
+            <button
               onClick={handleDownload}
               className="flex items-center gap-1.5 px-3 py-1.5 ml-4 text-sm bg-white border border-gray-200 rounded-md hover:border-primary hover:text-primary transition-colors"
             >
@@ -67,7 +67,7 @@ export default function ImagePreviewModal({
             </button>
           )}
         </div>
-        <div className="relative w-full" style={{ paddingTop: '75%' }}>
+        <div className="relative w-full" style={{ paddingTop: "75%" }}>
           <img
             src={imageUrl}
             alt={imageName || "Preview"}
