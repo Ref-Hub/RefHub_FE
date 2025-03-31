@@ -23,6 +23,8 @@ export interface GetReferenceParams {
   collection: string | string[];
   view: string;
   mode: string;
+  search?: string; 
+  filterBy?: string;
 }
 
 // 파일 관련 타입들

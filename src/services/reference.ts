@@ -34,6 +34,11 @@ class ReferenceService {
   private async transformUrl(url?: string): Promise<string> {
     if (!url) return "";
 
+    // S3 URL 직접 접근 방지 → fetchWithAuth로 처리
+    if (url.includes("s3.ap-northeast-2.amazonaws.com")) {
+      return await this.fetchWithAuth(url);
+    }
+
     if (!url.includes("://")) {
       const fullUrl = `${this.baseUrl}${url}`;
       if (url.includes("/api/references/file/")) {
@@ -75,7 +80,7 @@ class ReferenceService {
   }
 
   // 단일 레퍼런스 조회
-  // src/services/reference.ts의 getReference 메서드 부분
+
   async getReference(id: string): Promise<Reference> {
     try {
       const response = await api.get<ReferenceDetailResponse>(
@@ -98,9 +103,13 @@ class ReferenceService {
             path: attachment.path,
             size: attachment.size,
             images: attachment.images,
-            // 파일명 관련 필드 추가
-            filename: attachment.filename,
-            filenames: attachment.filenames,
+            // 파일명 디코딩 처리
+            filename: attachment.filename
+              ? decodeURIComponent(attachment.filename)
+              : undefined,
+            filenames: attachment.filenames
+              ? attachment.filenames.map((name) => decodeURIComponent(name))
+              : undefined,
             previewURL: attachment.previewURL
               ? await this.transformUrl(attachment.previewURL)
               : undefined,
@@ -233,6 +242,7 @@ class ReferenceService {
   }
 
   // 파일 데이터 준비
+
   prepareFilesFormData(files: CreateReferenceFile[]): FormData {
     const formData = new FormData();
     let imageCount = 1;
@@ -248,7 +258,22 @@ class ReferenceService {
               const blobData = this.base64ToBlob(image.url);
               // 여기서 파일명 지정 - 원본 파일명 사용
               const fileName = image.name || "image.png";
-              formData.append(`images${imageCount}`, blobData, fileName);
+
+              // 파일 확장자 추출
+              const fileExtension = fileName.split(".").pop() || "";
+              // 파일명과 확장자 분리
+              const nameWithoutExtension = fileName.substring(
+                0,
+                fileName.lastIndexOf(".")
+              );
+
+              // 파일명을 URL 안전한 형태로 인코딩 (확장자 제외)
+              const encodedName = encodeURIComponent(nameWithoutExtension);
+
+              // 인코딩된 이름과 확장자 결합
+              const encodedFileName = `${encodedName}.${fileExtension}`;
+
+              formData.append(`images${imageCount}`, blobData, encodedFileName);
             });
             imageCount++;
           }
@@ -257,10 +282,33 @@ class ReferenceService {
         }
       } else if (file.type === "pdf") {
         const blobData = this.base64ToBlob(file.content);
-        formData.append("files", blobData, file.name || "document.pdf");
+        // PDF 파일명도 동일하게 인코딩 처리
+        const fileName = file.name || "document.pdf";
+        const fileExtension = fileName.split(".").pop() || "";
+        const nameWithoutExtension = fileName.substring(
+          0,
+          fileName.lastIndexOf(".")
+        );
+        const encodedFileName = `${encodeURIComponent(
+          nameWithoutExtension
+        )}.${fileExtension}`;
+
+        formData.append("files", blobData, encodedFileName);
       } else {
         const blobData = this.base64ToBlob(file.content);
-        formData.append("otherFiles", blobData, file.name || "file");
+        // 기타 파일명도 인코딩 처리
+        const fileName = file.name || "file";
+        const fileExtension =
+          fileName.indexOf(".") > -1 ? fileName.split(".").pop() || "" : "";
+        const nameWithoutExtension =
+          fileName.indexOf(".") > -1
+            ? fileName.substring(0, fileName.lastIndexOf("."))
+            : fileName;
+        const encodedFileName = fileExtension
+          ? `${encodeURIComponent(nameWithoutExtension)}.${fileExtension}`
+          : encodeURIComponent(nameWithoutExtension);
+
+        formData.append("otherFiles", blobData, encodedFileName);
       }
     });
 
