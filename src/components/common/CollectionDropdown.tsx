@@ -6,6 +6,7 @@ interface CollectionOption {
   _id: string;
   title: string;
   isFavorite: boolean;
+  viewer?: boolean;
 }
 
 interface CollectionDropdownProps {
@@ -32,8 +33,12 @@ const CollectionDropdown: React.FC<CollectionDropdownProps> = ({
   const selectedOption = options.find((option) => option._id === value);
 
   // 옵션을 즐겨찾기와 일반으로 분리
-  const favoriteOptions = options.filter((option) => option.isFavorite);
-  const regularOptions = options.filter((option) => !option.isFavorite);
+  const favoriteOptions = options.filter(
+    (option) => option.isFavorite && !option.viewer
+  );
+  const regularOptions = options.filter(
+    (option) => !option.isFavorite && !option.viewer
+  );
 
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
