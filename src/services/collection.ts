@@ -144,7 +144,7 @@ class CollectionService {
   async getImage(url: string): Promise<string> {
     if (!url) return "";
 
-    // S3 URL을 항상 fetchWithAuth로 처리
+    // S3 URL handling - Modified to ensure all S3 bucket URLs use fetchWithAuth
     if (
       url.includes("s3.ap-northeast-2.amazonaws.com") ||
       url.includes("refhub-bucket")
