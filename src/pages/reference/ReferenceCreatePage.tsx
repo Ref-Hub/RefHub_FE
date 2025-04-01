@@ -115,9 +115,9 @@ export default function ReferenceCreatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-400">
           <div className="flex items-center gap-2">
             <h1 className="text-primary text-2xl font-semibold">
               레퍼런스 추가
@@ -135,11 +135,11 @@ export default function ReferenceCreatePage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex gap-4 items-start">
+          <div className="flex gap-4 items-start flex-wrap">
             {/* Collection Selection */}
             <div className="w-[244px]">
               <label className="block mb-2">
-                <span className="text-gray-700">
+                <span className="text-black">
                   컬렉션 <span className="text-red-500">*</span>
                 </span>
               </label>
@@ -163,10 +163,13 @@ export default function ReferenceCreatePage() {
 
             {/* Title Input */}
             <div className="flex-1">
-              <label className="block mb-2">
-                <span className="text-gray-700">
+              <label className="block mb-2 relative">
+                <span className="text-black">
                   제목 <span className="text-red-500">*</span>
                 </span>
+                <div className="text-right text-sm text-gray-500 mt-1 absolute right-0 top-0">
+                  {formData.title.length}/20
+                </div>
               </label>
               <input
                 type="text"
@@ -177,20 +180,17 @@ export default function ReferenceCreatePage() {
                 maxLength={20}
                 placeholder="레퍼런스의 제목을 입력해 주세요."
                 disabled={isSubmitting}
-                className="w-full h-[56px] border border-gray-300 rounded-lg px-4 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full h-[56px] min-w-48 border border-gray-300 rounded-lg px-4 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
-              <div className="text-right text-sm text-gray-500 mt-1">
-                {formData.title.length}/20
-              </div>
             </div>
           </div>
 
           {/* Keywords Input */}
           <div>
             <label className="block mb-2">
-              <span className="text-gray-700">키워드</span>
+              <span className="text-black">키워드</span>
             </label>
-            <div className="border border-gray-300 rounded-lg px-4 py-2 min-h-[56px]">
+            <div className="border border-gray-300 bg-white rounded-lg px-4 py-2 min-h-[56px]">
               <KeywordInput
                 keywords={formData.keywords}
                 onChange={(keywords) => setFormData({ ...formData, keywords })}
@@ -206,8 +206,11 @@ export default function ReferenceCreatePage() {
 
           {/* Memo Input */}
           <div>
-            <label className="block mb-2">
-              <span className="text-gray-700">메모</span>
+            <label className="block mb-2 relative">
+              <span className="text-black">메모</span>
+              <div className="text-right text-sm text-gray-500 mt-1 absolute right-0 top-0">
+                {formData.memo.length}/500
+              </div>
             </label>
             <textarea
               value={formData.memo}
@@ -219,16 +222,13 @@ export default function ReferenceCreatePage() {
               disabled={isSubmitting}
               className="w-full h-32 border border-gray-300 rounded-lg px-4 py-2 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
-            <div className="text-right text-sm text-gray-500 mt-1">
-              {formData.memo.length}/500
-            </div>
           </div>
 
           {/* File Upload Section */}
           <div>
             <div className="flex items-center gap-2 mb-2">
               <label className="block">
-                <span className="text-gray-700">
+                <span className="text-black">
                   자료 첨부 <span className="text-red-500">*</span>
                 </span>
               </label>
@@ -236,7 +236,7 @@ export default function ReferenceCreatePage() {
                 최대 5개까지 추가 가능합니다.
               </span>
             </div>
-            <div className="border border-gray-300 rounded-lg p-4">
+            <div>
               <FileUpload
                 files={formData.files}
                 onChange={(files) => setFormData({ ...formData, files })}

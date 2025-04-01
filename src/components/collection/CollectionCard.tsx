@@ -292,7 +292,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
         {imgs.length === 0 && (
           <div className="bg-gray-100 w-full py-4 flex justify-center rounded-lg flex-col items-center gap-5">
             <img src={folder} className="w-[54%]" />
-            <p className="text-gray-700 text-sm font-normal">
+            <p className="text-gray-700 text-sm font-normal px-2">
               아직 레퍼런스가 없어요.
             </p>
           </div>

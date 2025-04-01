@@ -147,8 +147,8 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
   };
 
   return (
-    <div className="flex fixed top-0 left-0 w-full h-full bg-black/60 z-20 items-center justify-center">
-      <div className="flex flex-col items-center w-[520px] py-6 px-8 relative bg-[#f9faf9] rounded-2xl">
+    <div className="flex fixed top-0 left-0 w-full h-full bg-black/60 z-20 items-center justify-center p-4">
+      <div className="flex flex-col items-center w-full max-w-[520px] py-6 px-8 relative bg-[#f9faf9] rounded-2xl">
         {/* 닫기 버튼 */}
         <X
           className="absolute w-9 h-9 top-6 right-6 stroke-gray-700 cursor-pointer"
@@ -174,18 +174,18 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
           >
             <div
               className={`w-[50%] h-12 bg-primary rounded-[50px] transform transition-transform duration-500 ${
-                isShare ? "translate-x-56" : "translate-x-0.5"
+                isShare ? "translate-x-[98%]" : "translate-x-[2%]"
               }`}
             />
             <p
-              className={`absolute left-[85px] ${
+              className={`absolute sm:left-[18%] left-[15%] ${
                 isShare ? "text-primary" : "text-white"
               }`}
             >
               나만보기
             </p>
             <p
-              className={`absolute right-[85px] ${
+              className={`absolute sm:right-[18%] right-[15%] ${
                 isShare ? "text-white" : "text-primary"
               }`}
             >
@@ -271,7 +271,7 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
                             <img
                               src={TrashIcon}
                               alt="Delete"
-                              className="w-5 h-5 cursor-pointer"
+                              className="min-w-4 min-h-4 cursor-pointer"
                             />
                           </button>
                         </div>
@@ -290,34 +290,36 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
             {isOwner ? (
               <div>
                 <p className="text-s text-gray-600 mt-3">추가하기</p>
-                <div className="relative flex gap-3 mt-4 w-full justify-center">
-                  {email.length > 0 && (
-                    <CircleX
-                      className="absolute top-3 right-28 w-6 h-6 fill-gray-700 stroke-white cursor-pointer"
-                      onClick={() => setEmail("")}
+                <div className="flex gap-3 mt-4 w-full justify-center">
+                  <div className="relative flex w-full">
+                    {email.length > 0 && (
+                      <CircleX
+                        className="absolute top-3 right-[4%] w-6 h-6 fill-gray-700 stroke-white cursor-pointer"
+                        onClick={() => setEmail("")}
+                      />
+                    )}
+                    <input
+                      type="text"
+                      placeholder="추가할 멤버의 이메일을 입력해 주세요"
+                      value={email}
+                      onChange={handleChange}
+                      className={`w-full py-2 pl-4 pr-9 bg-white text-base truncate font-normal rounded-lg border border-gray-200 focus:outline-none focus: border-2 ${
+                        error && email.length != 0
+                          ? "focus:border-red-500"
+                          : "focus:border-primary"
+                      }`}
+                      style={{
+                        fontSize: "16px",
+                        color: "#616161",
+                        fontWeight: "bold",
+                      }}
                     />
-                  )}
-                  <input
-                    type="text"
-                    placeholder="추가할 멤버의 이메일을 입력해 주세요"
-                    value={email}
-                    onChange={handleChange}
-                    className={`w-[80%] py-2 px-4 bg-white text-base font-normal rounded-lg border border-gray-200 focus:outline-none focus: border-2 ${
-                      error && email.length != 0
-                        ? "focus:border-red-500"
-                        : "focus:border-primary"
-                    }`}
-                    style={{
-                      fontSize: "16px",
-                      color: "#616161",
-                      fontWeight: "bold",
-                    }}
-                  />
+                  </div>
 
                   <button
                     onClick={() => handleAddOrUpdateUser(email)}
                     disabled={error || email.length === 0}
-                    className="bg-primary w-[20%] px-4 py-2 rounded-lg text-white font-bold transition duration-300 ease-in-out hover:bg-primary-dark hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-gray-500"
+                    className="bg-primary w-[90px] px-4 py-2 rounded-lg text-white font-bold transition duration-300 ease-in-out hover:bg-primary-dark hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-gray-500"
                   >
                     초대
                   </button>

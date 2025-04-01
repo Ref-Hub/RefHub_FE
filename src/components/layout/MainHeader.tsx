@@ -51,7 +51,7 @@ export default function MainHeader() {
   return (
     <header className="bg-white dark:bg-dark-bg shadow-sm rounded-bl-[48px] rounded-br-[48px] shadow-[0px_4px_10px_0px_rgba(181,184,181,0.10)] dark:shadow-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-start justify-between sm:h-16 h-20 mt-4">
+        <div className="flex items-start justify-between sm:h-16 h-24 mt-4">
           <Link to="/" className="flex items-center" onClick={handleReset}>
             <img
               src="/images/icon_with_text.svg"

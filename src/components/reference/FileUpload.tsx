@@ -452,7 +452,7 @@ export default function FileUpload({
             onDragStart={(e) => handleDragStart(e, index)}
             onDragOver={(e) => handleDragOver(e, index)}
             onDragEnd={handleDragEnd}
-            className={`flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-[#62BA9B] transition-colors ${
+            className={`flex items-start gap-4 p-4 bg-white border border-gray-100 shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)] rounded-lg hover:border-[#62BA9B] transition-colors ${
               draggedIndex === index ? "opacity-50" : ""
             }`}
           >
@@ -471,7 +471,7 @@ export default function FileUpload({
                         e.target.value as FileItem["type"]
                       )
                     }
-                    className="w-full h-[50px] appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:border-[#62BA9B]"
+                    className="w-full h-[50px] appearance-none bg-white text-gray-700 border border-gray-200 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:border-[#62BA9B]"
                   >
                     <option value="link">링크</option>
                     <option value="image">이미지</option>
@@ -520,23 +520,28 @@ export default function FileUpload({
 
       {/* Add File Buttons */}
       {files.length < maxFiles && (
-        <div className="flex gap-3 justify-center">
-          {[
-            { type: "link" as const, icon: Link, label: "링크" },
-            { type: "image" as const, icon: ImageIcon, label: "이미지" },
-            { type: "pdf" as const, icon: FileText, label: "PDF" },
-            { type: "file" as const, icon: FileIcon, label: "파일" },
-          ].map(({ type, icon: Icon, label }) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => handleAddFileField(type)}
-              className="flex items-center gap-2 px-6 py-3 rounded-lg border border-gray-200 hover:border-[#62BA9B] hover:text-[#62BA9B] transition-colors"
-            >
-              <Icon className="w-5 h-5" />
-              <span>{label}</span>
-            </button>
-          ))}
+        <div className="flex flex-col items-center gap-3">
+          <p>자료 추가</p>
+          <div className="flex gap-4 justify-center">
+            {[
+              { type: "link" as const, icon: Link, label: "링크" },
+              { type: "image" as const, icon: ImageIcon, label: "이미지" },
+              { type: "pdf" as const, icon: FileText, label: "PDF" },
+              { type: "file" as const, icon: FileIcon, label: "파일" },
+            ].map(({ type, icon: Icon, label }) => (
+              <div className="flex flex-col items-center gap-2 hover:text-[#62BA9B] transition-colors">
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => handleAddFileField(type)}
+                  className="p-5 bg-white rounded-full border border-gray-200 hover:border-[#62BA9B]"
+                >
+                  <Icon className="w-6 h-5=6" />
+                </button>
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
