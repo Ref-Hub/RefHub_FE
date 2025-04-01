@@ -88,31 +88,34 @@ const ReferenceCard: React.FC<
   }, [calculateVisibleTags]);
 
   useEffect(() => {
-    if (previewData.length > 0) {
-      previewData.map((link) => {
-        if (typeof link === "string") {
+    // 이미지 배열 초기화하여 중복 방지
+    setImgs([]);
+
+    if (previewData && previewData.length > 0) {
+      // 이미지 URL이 중복되지 않도록 Set 사용
+      const uniqueLinks = new Set<string>();
+
+      previewData.forEach((link) => {
+        if (typeof link === "string" && !uniqueLinks.has(link)) {
+          uniqueLinks.add(link);
           handleImg(link);
         }
       });
     }
-  }, []);
+  }, [previewData]);
 
   // src/components/reference/ReferenceCard.tsx
-  // handleImg 함수 수정
   const handleImg = async (link: string) => {
     try {
-      // S3 버킷 URL을 감지하여 특별 처리
-      if (
-        link.includes("s3.ap-northeast-2.amazonaws.com") ||
-        link.includes("refhub-bucket")
-      ) {
-        const data = await collectionService.getImage(link);
-        setImgs((prev) => [...prev, data]);
-        return;
-      }
-
       const data = await collectionService.getImage(link);
-      setImgs((prev) => [...prev, data]);
+      // 중복 이미지 추가 방지
+      setImgs((prev) => {
+        // 이미 같은 URL이 있는지 확인
+        if (prev.includes(data)) {
+          return prev;
+        }
+        return [...prev, data];
+      });
     } catch (error) {
       if (error instanceof Error) {
         showToast(error.message, "error");
