@@ -1,7 +1,6 @@
 import Modal from "@/components/common/Modal";
 import { Download, FileText, Image as ImageIcon } from "lucide-react";
 import { useState } from "react";
-import { authUtils } from "@/store/auth";
 import { useToast } from "@/contexts/useToast";
 import api from "@/utils/api";
 
