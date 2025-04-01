@@ -32,6 +32,8 @@ export default function ReferenceDetailPage() {
     downloadUrl?: string;
   } | null>(null);
 
+  // src/pages/reference/ReferenceDetailPage.tsx
+  // useEffect 내부 파일 변환 부분 수정
   useEffect(() => {
     const fetchReference = async () => {
       if (!referenceId) return;
@@ -40,7 +42,7 @@ export default function ReferenceDetailPage() {
         setIsLoading(true);
         const data = await referenceService.getReference(referenceId);
 
-        // ✅ previewURL들을 transformUrl 처리
+        // 파일의 모든 URL을 transformUrl로 처리
         const transformedFiles = await Promise.all(
           data.files.map(async (file) => {
             if (file.type === "image" && file.previewURLs) {
@@ -55,6 +57,9 @@ export default function ReferenceDetailPage() {
                 file.previewURL
               );
               return { ...file, previewURL };
+            } else if (file.type === "file" && file.path) {
+              const path = await referenceService["transformUrl"](file.path);
+              return { ...file, path };
             } else {
               return file;
             }

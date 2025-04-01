@@ -97,8 +97,20 @@ const ReferenceCard: React.FC<
     }
   }, []);
 
+  // src/components/reference/ReferenceCard.tsx
+  // handleImg 함수 수정
   const handleImg = async (link: string) => {
     try {
+      // S3 버킷 URL을 감지하여 특별 처리
+      if (
+        link.includes("s3.ap-northeast-2.amazonaws.com") ||
+        link.includes("refhub-bucket")
+      ) {
+        const data = await collectionService.getImage(link);
+        setImgs((prev) => [...prev, data]);
+        return;
+      }
+
       const data = await collectionService.getImage(link);
       setImgs((prev) => [...prev, data]);
     } catch (error) {
