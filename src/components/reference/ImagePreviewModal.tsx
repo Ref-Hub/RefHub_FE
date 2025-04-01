@@ -1,9 +1,8 @@
-// src/components/reference/ImagePreviewModal.tsx
 import Modal from "@/components/common/Modal";
-import { Download } from "lucide-react";
+import { Download, FileText, Image as ImageIcon } from "lucide-react";
 import { useState } from "react";
-import { authUtils } from "@/store/auth";
 import { useToast } from "@/contexts/useToast";
+import api from "@/utils/api";
 
 interface ImagePreviewModalProps {
   isOpen: boolean;
@@ -23,46 +22,42 @@ export default function ImagePreviewModal({
   const [isDownloading, setIsDownloading] = useState(false);
   const { showToast } = useToast();
 
+  const isPdf =
+    imageUrl.toLowerCase().includes("-preview.png") &&
+    downloadUrl?.toLowerCase().includes(".pdf");
+
   const handleDownload = async () => {
     if (!downloadUrl) return;
-    
+
     try {
       setIsDownloading(true);
-      
-      // 중요: 원본 이미지 URL로 변환
-      // 프리뷰 URL에서 원본 URL로 변환 (previews/ 경로 제거)
-      const originalUrl = downloadUrl.replace('/previews/', '/').replace('-preview.png', '');
-      
-      const token = authUtils.getToken();
-      
-      // 원본 이미지 직접 다운로드
-      const response = await fetch(originalUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+
+      // API 다운로드 엔드포인트 사용
+      const response = await api.get(`/api/references/download`, {
+        params: { fileUrl: downloadUrl },
+        responseType: "blob", // 중요: 바이너리 데이터를 blob으로 받음
       });
-      
-      if (!response.ok) {
-        throw new Error(`다운로드 실패: ${response.status}`);
+
+      // 파일 저장 처리
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+
+      // 파일명 설정
+      let fileName = imageName || (isPdf ? "document.pdf" : "image");
+      // 디코딩 및 불필요한 접미사 제거
+      if (fileName.includes("-preview.png")) {
+        fileName = fileName.replace("-preview.png", "");
       }
-      
-      const blob = await response.blob();
-      const downloadLink = document.createElement("a");
-      downloadLink.href = window.URL.createObjectURL(blob);
-      
-      // 파일명 설정 - 원본 파일명 사용
-      // '-preview.png' 접미사 제거하고 원래 확장자 유지
-      let fileName = imageName || "image";
-      if (fileName.includes('-preview.png')) {
-        fileName = fileName.replace('-preview.png', '');
-      }
-      
-      downloadLink.download = decodeURIComponent(fileName);
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-      window.URL.revokeObjectURL(downloadLink.href);
-      
+
+      link.setAttribute("download", decodeURIComponent(fileName));
+      document.body.appendChild(link);
+      link.click();
+
+      // 메모리 정리
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
       showToast("다운로드가 완료되었습니다.", "success");
     } catch (error) {
       console.error("Download failed:", error);
@@ -80,7 +75,12 @@ export default function ImagePreviewModal({
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-2 pr-8">
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            {isPdf ? (
+              <FileText className="w-5 h-5 text-red-500 flex-shrink-0" />
+            ) : (
+              <ImageIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />
+            )}
             {imageName && (
               <h3 className="text-lg font-semibold text-gray-900 truncate">
                 {imageName ? decodeURIComponent(imageName) : ""}
@@ -91,7 +91,7 @@ export default function ImagePreviewModal({
             <button
               onClick={handleDownload}
               disabled={isDownloading}
-              className={`flex items-center gap-1.5 px-3 py-1.5 ml-4 text-sm bg-white border border-gray-200 rounded-md hover:border-primary hover:text-primary transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 ml-4 text-sm bg-primary text-white rounded-md hover:bg-primary-dark transition-colors ${
                 isDownloading ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
@@ -100,13 +100,21 @@ export default function ImagePreviewModal({
             </button>
           )}
         </div>
-        <div className="relative w-full" style={{ paddingTop: "75%" }}>
+        <div
+          className="relative w-full bg-gray-100 rounded-lg"
+          style={{ paddingTop: "75%" }}
+        >
           <img
             src={imageUrl}
             alt={imageName || "Preview"}
-            className="absolute top-0 left-0 w-full h-full object-contain"
+            className="absolute top-0 left-0 w-full h-full object-contain p-2"
           />
         </div>
+        <p className="text-sm text-gray-500 text-center">
+          {isPdf
+            ? "PDF 미리보기입니다. 원본 파일을 보려면 다운로드하세요."
+            : "이미지 미리보기"}
+        </p>
       </div>
     </Modal>
   );

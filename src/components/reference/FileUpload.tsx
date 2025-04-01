@@ -275,7 +275,7 @@ export default function FileUpload({
           <FileText className="w-8 h-8 text-red-500" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {file.name || "PDF 문서"}
+              {file.name ? decodeURIComponent(file.name) : "PDF 문서"}
             </p>
             <p className="text-xs text-gray-500">PDF 파일</p>
           </div>
@@ -289,7 +289,7 @@ export default function FileUpload({
           <FileIcon className="w-8 h-8 text-blue-500" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {file.name || "첨부 파일"}
+              {file.name ? decodeURIComponent(file.name) : "첨부 파일"}
             </p>
             <p className="text-xs text-gray-500">파일</p>
           </div>

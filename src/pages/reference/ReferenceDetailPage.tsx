@@ -17,6 +17,7 @@ import {
 import ImagePreviewModal from "@/components/reference/ImagePreviewModal";
 import { Reference, ReferenceFile } from "@/types/reference";
 import { alertState } from "@/store/collection";
+import api from "@/utils/api";
 
 export default function ReferenceDetailPage() {
   const { referenceId } = useParams<{ referenceId: string }>();
@@ -119,6 +120,39 @@ export default function ReferenceDetailPage() {
     });
   };
 
+  const handleFileDownload = async (fileUrl: string, filename?: string) => {
+    try {
+      // API에서 지정한 파일 다운로드 엔드포인트 사용
+      const response = await api.get(`/api/references/download`, {
+        params: { fileUrl },
+        responseType: "blob", // 중요: 바이너리 데이터를 blob으로 받음
+      });
+
+      // 파일 저장 처리
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+
+      // 파일명 설정
+      const downloadFilename = filename
+        ? decodeURIComponent(filename)
+        : fileUrl.split("/").pop() || "download.pdf";
+
+      link.setAttribute("download", downloadFilename);
+      document.body.appendChild(link);
+      link.click();
+
+      // 메모리 정리
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      showToast("파일 다운로드가 완료되었습니다.", "success");
+    } catch (error) {
+      console.error("파일 다운로드 실패:", error);
+      showToast("파일 다운로드에 실패했습니다.", "error");
+    }
+  };
+
   const renderFilePreview = (file: ReferenceFile) => {
     switch (file.type) {
       case "link":
@@ -147,90 +181,168 @@ export default function ReferenceDetailPage() {
 
       case "image":
         return (
-          <div className="flex flex-col gap-2 bg-white rounded-lg p-4 border border-gray-100 shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)]">
-            <div className="flex items-center gap-2 text-gray-500 text-sm">
+          <div className="flex flex-col gap-2 bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
               <ImageIcon className="w-4 h-4" />
               <span>이미지</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-              {file.previewURLs?.map((url, index) => (
-                <div
-                  key={index}
-                  className="relative aspect-video cursor-pointer group"
-                  onClick={() =>
-                    setSelectedImage({
-                      url,
-                      name:
-                        file.filenames && file.filenames[index]
-                          ? decodeURIComponent(file.filenames[index])
-                          : `이미지 ${index + 1}`,
-                      // 여기가 중요! 원본 다운로드 URL을 전달
-                      downloadUrl: url, // 이미 previewURLs에서 가져온 URL
-                    })
-                  }
-                >
-                  <img
-                    src={url}
-                    alt={
-                      file.filenames && file.filenames[index]
-                        ? file.filenames[index]
-                        : `Preview ${index + 1}`
-                    }
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
-                </div>
-              ))}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              {file.previewURLs?.map((url, index) => {
+                const imageName =
+                  file.filenames && file.filenames[index]
+                    ? decodeURIComponent(file.filenames[index])
+                    : `이미지 ${index + 1}`;
+
+                // 원본 이미지 경로 (프리뷰가 아닌)
+                const originalUrl = file.path;
+
+                return (
+                  <div key={index} className="flex flex-col gap-1">
+                    {/* 이미지 프리뷰 */}
+                    <div
+                      className="relative aspect-square cursor-pointer group"
+                      onClick={() =>
+                        setSelectedImage({
+                          url,
+                          name: imageName,
+                          downloadUrl: originalUrl,
+                        })
+                      }
+                    >
+                      <img
+                        src={url}
+                        alt={imageName}
+                        className="w-full h-full object-cover rounded-lg border border-gray-200"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
+                    </div>
+
+                    {/* 파일명과 다운로드 버튼 */}
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-500 truncate max-w-[70%]">
+                        {imageName}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileDownload(
+                            originalUrl,
+                            file.filenames?.[index]
+                          );
+                        }}
+                        className="p-1 rounded-md hover:bg-gray-100"
+                        title="다운로드"
+                      >
+                        <Download className="w-4 h-4 text-gray-500" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
 
       case "pdf":
         return (
-          <div className="flex flex-col gap-2 bg-white rounded-lg p-4 border border-gray-100 shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)]">
-            <div className="flex items-center gap-2 text-gray-500 text-sm">
-              <FileText className="w-4 h-4" />
-              <span>PDF</span>
-            </div>
-            <a
-              href={file.previewURL}
-              download
-              className="flex items-center justify-between group px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                <span className="flex-1 truncate text-sm">
-                  {file.path.split("/").pop()}
-                </span>
+          <div className="flex flex-col gap-2 bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2 text-gray-500 text-sm">
+                <FileText className="w-4 h-4" />
+                <span>PDF</span>
               </div>
-              <Download className="w-5 h-5 text-gray-500 group-hover:text-primary" />
-            </a>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              {/* PDF 정보 및 미리보기 */}
+              <div className="flex gap-3 items-center">
+                {/* PDF 미리보기 이미지 */}
+                {file.previewURL && (
+                  <div
+                    className="cursor-pointer flex-shrink-0 w-20 h-20 border border-gray-200 rounded-md overflow-hidden"
+                    onClick={() =>
+                      setSelectedImage({
+                        url: file.previewURL || "",
+                        name: file.filename
+                          ? decodeURIComponent(file.filename)
+                          : "PDF 미리보기",
+                        downloadUrl: file.path,
+                      })
+                    }
+                  >
+                    <img
+                      src={file.previewURL}
+                      alt="PDF 미리보기"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* PDF 정보 및 다운로드 */}
+                <div className="flex-1 flex flex-col">
+                  <p className="text-sm font-medium truncate mb-1">
+                    {file.filename
+                      ? decodeURIComponent(file.filename)
+                      : file.path.split("/").pop()}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">
+                      {file.size || ""}
+                    </span>
+                    <button
+                      onClick={() =>
+                        handleFileDownload(file.path, file.filename)
+                      }
+                      className="ml-auto flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded-md hover:border-primary text-xs"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>다운로드</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         );
 
       case "file":
         return (
-          <div className="flex flex-col gap-2 bg-white rounded-lg p-4 border border-gray-100 shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)]">
-            <div className="flex items-center gap-2 text-gray-500 text-sm">
-              <File className="w-4 h-4" />
-              <span>파일</span>
-            </div>
-            <a
-              href={file.path}
-              download
-              className="flex items-center justify-between group px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <File className="w-5 h-5 text-primary" />
-                <span className="flex-1 truncate text-sm">
-                  {file.path.split("/").pop()}
-                </span>
+          <div className="flex flex-col gap-2 bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2 text-gray-500 text-sm">
+                <File className="w-4 h-4" />
+                <span>파일</span>
               </div>
-              <Download className="w-5 h-5 text-gray-500 group-hover:text-primary" />
-            </a>
+            </div>
+
+            {/* 파일 정보 및 다운로드 */}
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-12 h-12 bg-gray-50 rounded-md flex items-center justify-center">
+                <File className="w-6 h-6 text-primary" />
+              </div>
+
+              <div className="flex-1 flex flex-col">
+                <p className="text-sm font-medium truncate mb-1">
+                  {file.filename
+                    ? decodeURIComponent(file.filename)
+                    : file.path.split("/").pop()}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    {file.size || ""}
+                  </span>
+                  <button
+                    onClick={() => handleFileDownload(file.path, file.filename)}
+                    className="ml-auto flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded-md hover:border-primary text-xs"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>다운로드</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         );
-
       default:
         return null;
     }
