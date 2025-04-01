@@ -31,11 +31,15 @@ class ReferenceService {
     }
   }
 
+  // src/services/reference.ts
   private async transformUrl(url?: string): Promise<string> {
     if (!url) return "";
 
-    // S3 URL 직접 접근 방지 → fetchWithAuth로 처리
-    if (url.includes("s3.ap-northeast-2.amazonaws.com")) {
+    // S3 URL을 항상 fetchWithAuth로 처리
+    if (
+      url.includes("s3.ap-northeast-2.amazonaws.com") ||
+      url.includes("refhub-bucket")
+    ) {
       return await this.fetchWithAuth(url);
     }
 

@@ -140,8 +140,17 @@ class CollectionService {
   }
 
   // 미리보기 이미지 조회
+  // src/services/collection.ts - getImage 함수 수정
   async getImage(url: string): Promise<string> {
     if (!url) return "";
+
+    // S3 URL을 항상 fetchWithAuth로 처리
+    if (
+      url.includes("s3.ap-northeast-2.amazonaws.com") ||
+      url.includes("refhub-bucket")
+    ) {
+      return await this.fetchWithAuth(url);
+    }
 
     if (!url.includes("://")) {
       const fullUrl = `${this.baseUrl}${url}`;
