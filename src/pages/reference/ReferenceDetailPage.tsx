@@ -77,9 +77,7 @@ export default function ReferenceDetailPage() {
           (i) => i._id === referenceId
         );
 
-        setReference((prev) =>
-          prev ? { ...prev, ...findReference } : null
-        );
+        setReference((prev) => (prev ? { ...prev, ...findReference } : null));
       } catch (error) {
         console.error("Error fetching reference:", error);
         showToast("레퍼런스를 불러오는데 실패했습니다.", "error");
@@ -100,7 +98,11 @@ export default function ReferenceDetailPage() {
     if (!reference) return;
 
     const text = reference.shared
-      ? `${reference.collectionTitle || "선택한"} 컬렉션의 다른 사용자와 공유 중인 ${reference.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
+      ? `${
+          reference.collectionTitle || "선택한"
+        } 컬렉션의 다른 사용자와 공유 중인 ${
+          reference.title
+        }를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`
       : `${reference.title}를 삭제하시겠습니까? \n삭제 후 복구할 수 없습니다.`;
 
     setAlert({
@@ -116,7 +118,7 @@ export default function ReferenceDetailPage() {
     switch (file.type) {
       case "link":
         return (
-          <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
+          <div className="flex flex-col gap-2 bg-white rounded-lg p-4 border border-gray-100 shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)]">
             <div className="flex items-center gap-2 text-gray-500 text-sm">
               <LinkIcon className="w-4 h-4" />
               <span>링크</span>
@@ -126,7 +128,7 @@ export default function ReferenceDetailPage() {
                 href={file.path}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between group px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-primary transition-colors"
+                className="flex items-center justify-between group px-4 py-3 bg-gray-100 rounded-lg hover:border hover:border-primary transition-colors"
               >
                 <span className="flex-1 truncate text-sm">{file.path}</span>
                 <span className="text-sm text-gray-500 group-hover:text-primary">
@@ -140,7 +142,7 @@ export default function ReferenceDetailPage() {
 
       case "image":
         return (
-          <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
+          <div className="flex flex-col gap-2 bg-white rounded-lg p-4 border border-gray-100 shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)]">
             <div className="flex items-center gap-2 text-gray-500 text-sm">
               <ImageIcon className="w-4 h-4" />
               <span>이미지</span>
@@ -179,7 +181,7 @@ export default function ReferenceDetailPage() {
 
       case "pdf":
         return (
-          <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
+          <div className="flex flex-col gap-2 bg-white rounded-lg p-4 border border-gray-100 shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)]">
             <div className="flex items-center gap-2 text-gray-500 text-sm">
               <FileText className="w-4 h-4" />
               <span>PDF</span>
@@ -202,7 +204,7 @@ export default function ReferenceDetailPage() {
 
       case "file":
         return (
-          <div className="flex flex-col gap-2 bg-gray-50 rounded-lg p-4">
+          <div className="flex flex-col gap-2 bg-white rounded-lg p-4 border border-gray-100 shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)]">
             <div className="flex items-center gap-2 text-gray-500 text-sm">
               <File className="w-4 h-4" />
               <span>파일</span>
@@ -241,7 +243,7 @@ export default function ReferenceDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       {alert.isVisible && <Alert message={alert.massage} />}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
@@ -263,7 +265,7 @@ export default function ReferenceDetailPage() {
               {!reference.viewer && (
                 <button
                   onClick={handleDelete}
-                  className="px-6 py-2 text-red-500 border border-red-500 bg-white rounded-full hover:bg-red-50 transition-colors"
+                  className="px-6 py-2 text-red-500 border border-gray-200 bg-white rounded-full hover:bg-red-50 transition-colors"
                 >
                   삭제
                 </button>
@@ -308,7 +310,7 @@ export default function ReferenceDetailPage() {
         {reference.memo && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">메모</h3>
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-white rounded-lg border border-gray-100">
               <p className="text-gray-700 whitespace-pre-wrap">
                 {reference.memo}
               </p>
