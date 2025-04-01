@@ -200,7 +200,9 @@ export default function ReferenceDetailPage() {
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-primary" />
                 <span className="flex-1 truncate text-sm">
-                  {file.path.split("/").pop()}
+                  {file.filename
+                    ? decodeURIComponent(file.filename)
+                    : file.path.split("/").pop()}
                 </span>
               </div>
               <Download className="w-5 h-5 text-gray-500 group-hover:text-primary" />
@@ -223,7 +225,9 @@ export default function ReferenceDetailPage() {
               <div className="flex items-center gap-2">
                 <File className="w-5 h-5 text-primary" />
                 <span className="flex-1 truncate text-sm">
-                  {file.path.split("/").pop()}
+                  {file.filename
+                    ? decodeURIComponent(file.filename)
+                    : file.path.split("/").pop()}
                 </span>
               </div>
               <Download className="w-5 h-5 text-gray-500 group-hover:text-primary" />
