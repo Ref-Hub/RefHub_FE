@@ -48,8 +48,12 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
 
   useEffect(() => {
     if (previewImages.length > 0) {
-      previewImages.map((link) => {
-        if (typeof link === "string") {
+      // 중복 링크를 방지하기 위해 Set 사용
+      const uniqueLinks = new Set<string>();
+
+      previewImages.forEach((link) => {
+        if (typeof link === "string" && !uniqueLinks.has(link)) {
+          uniqueLinks.add(link);
           handleImg(link);
         }
       });
@@ -59,7 +63,14 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   const handleImg = async (link: string) => {
     try {
       const data = await collectionService.getImage(link);
-      setImgs((prev) => [...prev, data]);
+      // 중복 이미지 추가 방지
+      setImgs((prev) => {
+        // 이미 같은 URL이 있는지 확인
+        if (prev.includes(data)) {
+          return prev;
+        }
+        return [...prev, data];
+      });
     } catch (error) {
       if (error instanceof Error) {
         showToast(error.message, "error");
