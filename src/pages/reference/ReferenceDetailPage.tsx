@@ -164,7 +164,8 @@ export default function ReferenceDetailPage() {
                         file.filenames && file.filenames[index]
                           ? decodeURIComponent(file.filenames[index])
                           : `이미지 ${index + 1}`,
-                      downloadUrl: url,
+                      // 여기가 중요! 원본 다운로드 URL을 전달
+                      downloadUrl: url, // 이미 previewURLs에서 가져온 URL
                     })
                   }
                 >

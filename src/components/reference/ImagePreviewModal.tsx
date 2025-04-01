@@ -1,6 +1,9 @@
 // src/components/reference/ImagePreviewModal.tsx
 import Modal from "@/components/common/Modal";
 import { Download } from "lucide-react";
+import { useState } from "react";
+import { authUtils } from "@/store/auth";
+import { useToast } from "@/contexts/useToast";
 
 interface ImagePreviewModalProps {
   isOpen: boolean;
@@ -17,28 +20,55 @@ export default function ImagePreviewModal({
   imageName,
   downloadUrl,
 }: ImagePreviewModalProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { showToast } = useToast();
+
   const handleDownload = async () => {
     if (!downloadUrl) return;
-
+    
     try {
-      // URL로부터 파일 다운로드
-      const response = await fetch(downloadUrl);
+      setIsDownloading(true);
+      
+      // 중요: 원본 이미지 URL로 변환
+      // 프리뷰 URL에서 원본 URL로 변환 (previews/ 경로 제거)
+      const originalUrl = downloadUrl.replace('/previews/', '/').replace('-preview.png', '');
+      
+      const token = authUtils.getToken();
+      
+      // 원본 이미지 직접 다운로드
+      const response = await fetch(originalUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`다운로드 실패: ${response.status}`);
+      }
+      
       const blob = await response.blob();
-
-      // 다운로드 링크 생성
       const downloadLink = document.createElement("a");
       downloadLink.href = window.URL.createObjectURL(blob);
-      downloadLink.download = imageName || "image"; // 파일명 지정
-
-      // 링크 클릭하여 다운로드 실행
+      
+      // 파일명 설정 - 원본 파일명 사용
+      // '-preview.png' 접미사 제거하고 원래 확장자 유지
+      let fileName = imageName || "image";
+      if (fileName.includes('-preview.png')) {
+        fileName = fileName.replace('-preview.png', '');
+      }
+      
+      downloadLink.download = decodeURIComponent(fileName);
       document.body.appendChild(downloadLink);
       downloadLink.click();
-
-      // 생성한 요소 정리
       document.body.removeChild(downloadLink);
       window.URL.revokeObjectURL(downloadLink.href);
+      
+      showToast("다운로드가 완료되었습니다.", "success");
     } catch (error) {
       console.error("Download failed:", error);
+      showToast("다운로드에 실패했습니다.", "error");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -60,10 +90,13 @@ export default function ImagePreviewModal({
           {downloadUrl && (
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1.5 px-3 py-1.5 ml-4 text-sm bg-white border border-gray-200 rounded-md hover:border-primary hover:text-primary transition-colors"
+              disabled={isDownloading}
+              className={`flex items-center gap-1.5 px-3 py-1.5 ml-4 text-sm bg-white border border-gray-200 rounded-md hover:border-primary hover:text-primary transition-colors ${
+                isDownloading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               <Download className="w-4 h-4" />
-              <span>다운로드</span>
+              <span>{isDownloading ? "다운로드 중..." : "다운로드"}</span>
             </button>
           )}
         </div>
