@@ -51,15 +51,32 @@ export default function MainHeader() {
   return (
     <header className="bg-white dark:bg-dark-bg shadow-sm rounded-bl-[48px] rounded-br-[48px] shadow-[0px_4px_10px_0px_rgba(181,184,181,0.10)] dark:shadow-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-start justify-between sm:h-16 h-24 mt-4">
-          <Link to="/" className="flex items-center" onClick={handleReset}>
-            <img
-              src="/images/icon_with_text.svg"
-              alt="RefHub"
-              className="h-8"
-            />
-          </Link>
-          <nav className="flex w-full justify-center space-x-8 absolute left-1/2 sm:top-5 top-[70px] transform -translate-x-1/2">
+        {/* 모바일: 수직 레이아웃, PC: 헤더 영역 */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between sm:h-16 sm:mt-4">
+          {/* 모바일: 로고와 버튼, PC: 왼쪽 로고 */}
+          <div className="flex justify-between items-center w-full sm:w-auto pt-4 sm:pt-0 z-10">
+            <Link to="/" className="flex items-center" onClick={handleReset}>
+              <img
+                src="/images/icon_with_text.svg"
+                alt="RefHub"
+                className="h-8"
+              />
+            </Link>
+            
+            {/* 모바일 전용: 우측 버튼 */}
+            <div className="flex sm:hidden items-center space-x-4">
+              <ThemeToggle />
+              <button
+                onClick={handleLogout}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
+          
+          {/* PC 전용: 중앙 네비게이션 */}
+          <nav className="hidden sm:flex absolute left-1/2 sm:top-5 transform -translate-x-1/2 justify-center space-x-8 z-10">
             <Link
               to="/collections"
               className={`text-xl ${
@@ -83,7 +100,9 @@ export default function MainHeader() {
               전체 레퍼런스
             </Link>
           </nav>
-          <div className="flex items-center space-x-4">
+          
+          {/* PC 전용: 우측 버튼 */}
+          <div className="hidden sm:flex items-center space-x-4 z-10">
             <ThemeToggle />
             <button
               onClick={handleLogout}
@@ -92,10 +111,37 @@ export default function MainHeader() {
               로그아웃
             </button>
           </div>
+          
+          {/* 모바일 전용: 하단 네비게이션 */}
+          <nav className="flex sm:hidden justify-center space-x-8 mt-4 mb-2">
+            <Link
+              to="/collections"
+              className={`text-xl ${
+                getCurrentType() === "collection"
+                  ? "text-primary dark:text-primary font-bold"
+                  : "text-gray-600 dark:text-gray-300 font-medium"
+              }`}
+              onClick={handleReset}
+            >
+              나의 컬렉션
+            </Link>
+            <Link
+              to="/references"
+              className={`text-xl ${
+                getCurrentType() === "reference"
+                  ? "text-primary dark:text-primary font-bold"
+                  : "text-gray-600 dark:text-gray-300 font-medium"
+              }`}
+              onClick={handleReset}
+            >
+              전체 레퍼런스
+            </Link>
+          </nav>
         </div>
-        <div>
-          {shouldShowSearchBar() && <SearchBar type={getCurrentType()} />}
-        </div>
+        
+        {shouldShowSearchBar() && <div className="mt-2 sm:mt-0">
+          <SearchBar type={getCurrentType()} />
+        </div>}
       </div>
     </header>
   );

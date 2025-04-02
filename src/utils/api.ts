@@ -1,4 +1,5 @@
-import axios from "axios";
+// src/utils/api.ts
+import axios, { AxiosHeaders } from "axios";
 import { authUtils } from "@/store/auth";
 import { handleApiError } from "./errorHandler";
 
@@ -48,7 +49,11 @@ api.interceptors.response.use(
             if (response.data.accessToken) {
               authUtils.setToken(response.data.accessToken);
               if (error.config) {
-                error.config.headers.Authorization = `Bearer ${response.data.accessToken}`;
+                // 헤더 처리 수정 - AxiosHeaders 사용
+                if (!error.config.headers) {
+                  error.config.headers = new AxiosHeaders();
+                }
+                error.config.headers.set('Authorization', `Bearer ${response.data.accessToken}`);
                 return axios(error.config);
               }
             }

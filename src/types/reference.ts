@@ -23,7 +23,7 @@ export interface GetReferenceParams {
   collection: string | string[];
   view: string;
   mode: string;
-  search?: string; 
+  search?: string;
   filterBy?: string;
 }
 
@@ -60,7 +60,7 @@ export interface CreateReferenceFile {
 // 레퍼런스 생성/수정 요청 페이로드
 export interface UpdateReferenceRequest {
   collectionId: string;
-  collectionTitle: string;
+  // collectionTitle 필드 제거
   title: string;
   keywords?: string[];
   memo?: string;

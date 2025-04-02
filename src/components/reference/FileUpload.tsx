@@ -124,6 +124,8 @@ export default function FileUpload({
     handleFileUpload(droppedFiles, index);
   };
 
+  // src/components/reference/FileUpload.tsx - handleFileUpload 함수 수정
+  // src/components/reference/FileUpload.tsx 수정
   const handleFileUpload = async (uploadedFiles: FileList, index: number) => {
     try {
       const fileType = files[index].type;
@@ -138,9 +140,28 @@ export default function FileUpload({
 
       if (contents.length > 0) {
         if (fileType === "image") {
-          const existingImages = files[index].content
-            ? (JSON.parse(files[index].content) as FileContent[])
-            : [];
+          // 명시적으로 FileContent[] 타입 지정
+          let existingImages: FileContent[] = [];
+
+          // 기존 이미지가 있는지 확인
+          if (files[index].content) {
+            try {
+              existingImages = JSON.parse(
+                files[index].content
+              ) as FileContent[];
+              // 이미지 URL이 base64인지 검증
+              existingImages = existingImages.filter(
+                (img) =>
+                  img.url &&
+                  (img.url.startsWith("data:") ||
+                    img.url.startsWith("http://") ||
+                    img.url.startsWith("https://"))
+              );
+            } catch (e) {
+              console.error("JSON 파싱 실패", e);
+              existingImages = [];
+            }
+          }
 
           const totalCount = existingImages.length + contents.length;
           if (totalCount > 5) {
