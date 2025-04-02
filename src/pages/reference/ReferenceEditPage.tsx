@@ -48,6 +48,7 @@ export default function ReferenceEditPage() {
   });
 
   // 레퍼런스 데이터 로딩
+  // src/pages/reference/ReferenceEditPage.tsx 파일 수정
   useEffect(() => {
     const fetchData = async () => {
       if (!referenceId) {
@@ -61,7 +62,6 @@ export default function ReferenceEditPage() {
         const reference = await referenceService.getReference(referenceId);
 
         // 파일 데이터 변환
-        // ReferenceEditPage.tsx의 fetchData 함수 내부 파일 변환 로직 수정
         const convertedFiles: CreateReferenceFile[] = await Promise.all(
           reference.files.map(async (file) => {
             const baseFile = {
@@ -78,7 +78,7 @@ export default function ReferenceEditPage() {
             } else if (file.type === "image" && file.previewURLs) {
               // 이미지 배열을 적절한 형식으로 변환
               const imageContent = file.previewURLs.map((url, index) => ({
-                url,
+                url, // 서버에서 받은 URL을 그대로 사용
                 name: file.filenames?.[index] || `image_${index + 1}.jpg`,
               }));
               return {
@@ -88,15 +88,15 @@ export default function ReferenceEditPage() {
             } else {
               return {
                 ...baseFile,
-                content: file.previewURL || "",
+                content: file.previewURL || file.path || "", // 서버에서 받은 URL을 그대로 사용
               };
             }
           })
         );
 
-        // 폼 데이터 설정
+        // 폼 데이터 설정 - collectionId를 올바르게 설정
         setFormData({
-          collection: reference.collectionTitle || "",
+          collection: reference.collectionId, // collectionId로 변경
           title: reference.title,
           keywords: reference.keywords || [],
           memo: reference.memo || "",
@@ -145,6 +145,8 @@ export default function ReferenceEditPage() {
     fetchCollections();
   }, [showToast]);
 
+  // src/pages/reference/ReferenceEditPage.tsx
+  // src/pages/reference/ReferenceEditPage.tsx - handleSubmit 함수 수정
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -194,21 +196,25 @@ export default function ReferenceEditPage() {
         formData.files
       );
 
-      // API 호출
+      // API 호출 - collectionTitle 대신 collectionId 사용
       const updateData: UpdateReferenceRequest = {
-        collectionId: formData.collection,
-        collectionTitle:
-          collections.find((i) => i._id === formData.collection)?.title || "",
+        collectionId: formData.collection, // 컬렉션 ID
+        // collectionTitle 필드 제거
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,
         files: filesFormData,
       };
 
-      await referenceService.updateReference(referenceId, updateData);
+      const response = await referenceService.updateReference(
+        referenceId,
+        updateData
+      );
 
-      showToast("레퍼런스가 수정되었습니다.", "success");
-      navigate(`/references/${referenceId}`);
+      if (response) {
+        showToast("레퍼런스가 수정되었습니다.", "success");
+        navigate(`/references/${referenceId}`);
+      }
     } catch (error) {
       console.error("Error updating reference:", error);
       showToast("레퍼런스 수정에 실패했습니다.", "error");

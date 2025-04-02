@@ -70,7 +70,6 @@ export function useReferenceCreate() {
       // Create reference
       const response = await referenceService.createReference({
         collectionId: formData.collectionId,
-        collectionTitle: formData.collectionTitle,
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,

@@ -58,8 +58,8 @@ export function useReferenceEdit() {
 
       // 레퍼런스 수정 API 호출
       const response = await referenceService.updateReference(referenceId, {
-        collectionId: formData.collectionId,
-        collectionTitle: formData.collectionTitle,
+        collectionId: formData.collectionId, // collectionTitle 대신 collectionId 사용
+        // collectionTitle 필드 제거
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,

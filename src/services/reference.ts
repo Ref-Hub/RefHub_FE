@@ -187,13 +187,14 @@ class ReferenceService {
   }
 
   // 레퍼런스 수정
+  // src/services/reference.ts - updateReference 함수 수정
   async updateReference(
     id: string,
-    { collectionTitle, title, keywords, memo, files }: UpdateReferenceRequest
+    { collectionId, title, keywords, memo, files }: UpdateReferenceRequest
   ): Promise<ReferenceResponse> {
     try {
       const formData = new FormData();
-      formData.append("collectionTitle", collectionTitle);
+      formData.append("collectionId", collectionId); // collectionTitle 대신 collectionId 사용
       formData.append("title", title);
 
       if (keywords?.length) {
@@ -247,6 +248,7 @@ class ReferenceService {
 
   // 파일 데이터 준비
 
+  // src/services/reference.ts
   prepareFilesFormData(files: CreateReferenceFile[]): FormData {
     const formData = new FormData();
     let imageCount = 1;
@@ -261,6 +263,28 @@ class ReferenceService {
       return `${encodeURIComponent(nameWithoutExt)}.${ext}`;
     };
 
+    console.log("Files before processing:", files);
+
+    // 백엔드 분석: 실제 원본 파일 경로 추출 필요
+    // 이미지 미리보기 URL에서 원본 파일 경로 추출
+    const extractOriginalPath = (previewUrl: string): string => {
+      // 프리뷰 이미지 URL -> 원본 이미지 URL 변환
+      // 예: /previews/x-y-z-image.jpeg-preview.png -> /x-y-z-image.jpeg
+      if (previewUrl.includes("-preview.png")) {
+        const baseUrl =
+          "https://refhub-bucket.s3.ap-northeast-2.amazonaws.com/";
+        const fileName = previewUrl.split("/").pop();
+        if (fileName) {
+          const originalFileName = fileName.replace("-preview.png", "");
+          return baseUrl + originalFileName;
+        }
+      }
+      return previewUrl;
+    };
+
+    // 기존 파일 경로를 저장할 배열
+    const existingFilePaths: string[] = [];
+
     files.forEach((file) => {
       if (file.type === "link") {
         formData.append("links", file.content);
@@ -268,30 +292,89 @@ class ReferenceService {
         try {
           const images = JSON.parse(file.content);
           if (Array.isArray(images)) {
-            images.forEach((image: { url: string; name?: string }) => {
-              const blobData = this.base64ToBlob(image.url);
-              const originalName = image.name || `image${imageCount}.png`;
-              const encodedFileName = normalizeAndEncodeFileName(originalName);
+            // 기존 이미지와 새 이미지 분리
+            const existingImages = images.filter(
+              (img) =>
+                img.url &&
+                (img.url.startsWith("http://") ||
+                  img.url.startsWith("https://"))
+            );
+            const newImages = images.filter(
+              (img) => img.url && img.url.startsWith("data:")
+            );
 
-              formData.append(`images${imageCount}`, blobData, encodedFileName);
+            // 기존 이미지 처리 - 원본 파일 경로 추출하여 existingFilePaths에 추가
+            existingImages.forEach((image) => {
+              const originalPath = extractOriginalPath(image.url);
+              existingFilePaths.push(originalPath);
             });
-            imageCount++;
+
+            // 새 이미지 처리
+            if (newImages.length > 0) {
+              newImages.forEach((image: { url: string; name?: string }) => {
+                try {
+                  const blobData = this.base64ToBlob(image.url);
+                  const originalName = image.name || `image${imageCount}.png`;
+                  const encodedFileName =
+                    normalizeAndEncodeFileName(originalName);
+
+                  formData.append(
+                    `images${imageCount}`,
+                    blobData,
+                    encodedFileName
+                  );
+                } catch (error) {
+                  console.error("이미지 처리 오류:", error);
+                }
+              });
+              imageCount++;
+            }
           }
         } catch (error) {
           console.error("이미지 데이터 파싱 실패:", error);
         }
       } else if (file.type === "pdf") {
-        const blobData = this.base64ToBlob(file.content);
-        const fileName = file.name || "document.pdf";
-        const encodedFileName = normalizeAndEncodeFileName(fileName);
-        formData.append("files", blobData, encodedFileName);
+        if (file.content.startsWith("data:")) {
+          // 새 PDF 파일
+          const blobData = this.base64ToBlob(file.content);
+          const fileName = file.name || "document.pdf";
+          const encodedFileName = normalizeAndEncodeFileName(fileName);
+          formData.append("files", blobData, encodedFileName);
+        } else if (
+          file.content.startsWith("http://") ||
+          file.content.startsWith("https://")
+        ) {
+          // 기존 PDF 파일
+          const originalPath = extractOriginalPath(file.content);
+          existingFilePaths.push(originalPath);
+        }
       } else {
-        const blobData = this.base64ToBlob(file.content);
-        const fileName = file.name || "file";
-        const encodedFileName = normalizeAndEncodeFileName(fileName);
-        formData.append("otherFiles", blobData, encodedFileName);
+        // 일반 파일
+        if (file.content.startsWith("data:")) {
+          const blobData = this.base64ToBlob(file.content);
+          const fileName = file.name || "file";
+          const encodedFileName = normalizeAndEncodeFileName(fileName);
+          formData.append("otherFiles", blobData, encodedFileName);
+        } else if (
+          file.content.startsWith("http://") ||
+          file.content.startsWith("https://")
+        ) {
+          // 기존 일반 파일
+          const originalPath = extractOriginalPath(file.content);
+          existingFilePaths.push(originalPath);
+        }
       }
     });
+
+    // 백엔드가 기대하는 형식으로 기존 파일 정보 추가
+    if (existingFilePaths.length > 0) {
+      // existingFilePaths를 JSON 문자열로 변환하여 FormData에 추가
+      formData.append("existingFiles", JSON.stringify(existingFilePaths));
+      console.log("Existing files:", existingFilePaths);
+    }
+
+    // FormData에 들어간 모든 키 출력
+    console.log("FormData keys:", [...formData.keys()]);
 
     return formData;
   }
