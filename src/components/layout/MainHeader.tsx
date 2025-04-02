@@ -51,7 +51,8 @@ export default function MainHeader() {
   return (
     <header className="bg-white dark:bg-dark-bg shadow-sm rounded-bl-[48px] rounded-br-[48px] shadow-[0px_4px_10px_0px_rgba(181,184,181,0.10)] dark:shadow-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-start justify-between sm:h-16 h-24 mt-4">
+        {/* PC 버전 헤더 레이아웃 */}
+        <div className="hidden sm:flex sm:items-center sm:justify-between sm:h-16 sm:mt-4">
           <Link to="/" className="flex items-center z-10" onClick={handleReset}>
             <img
               src="/images/icon_with_text.svg"
@@ -59,32 +60,32 @@ export default function MainHeader() {
               className="h-8"
             />
           </Link>
-          <div className="flex flex-col items-center sm:flex-row absolute left-1/2 transform -translate-x-1/2 sm:static sm:transform-none">
-            <nav className="flex justify-center space-x-8 sm:mt-0 mt-[60px]">
-              <Link
-                to="/collections"
-                className={`text-xl ${
-                  getCurrentType() === "collection"
-                    ? "text-primary dark:text-primary font-bold"
-                    : "text-gray-600 dark:text-gray-300 font-medium"
-                }`}
-                onClick={handleReset}
-              >
-                나의 컬렉션
-              </Link>
-              <Link
-                to="/references"
-                className={`text-xl ${
-                  getCurrentType() === "reference"
-                    ? "text-primary dark:text-primary font-bold"
-                    : "text-gray-600 dark:text-gray-300 font-medium"
-                }`}
-                onClick={handleReset}
-              >
-                전체 레퍼런스
-              </Link>
-            </nav>
-          </div>
+          
+          <nav className="flex space-x-8 absolute left-1/2 transform -translate-x-1/2">
+            <Link
+              to="/collections"
+              className={`text-xl ${
+                getCurrentType() === "collection"
+                  ? "text-primary dark:text-primary font-bold"
+                  : "text-gray-600 dark:text-gray-300 font-medium"
+              }`}
+              onClick={handleReset}
+            >
+              나의 컬렉션
+            </Link>
+            <Link
+              to="/references"
+              className={`text-xl ${
+                getCurrentType() === "reference"
+                  ? "text-primary dark:text-primary font-bold"
+                  : "text-gray-600 dark:text-gray-300 font-medium"
+              }`}
+              onClick={handleReset}
+            >
+              전체 레퍼런스
+            </Link>
+          </nav>
+          
           <div className="flex items-center space-x-4 z-10">
             <ThemeToggle />
             <button
@@ -95,9 +96,59 @@ export default function MainHeader() {
             </button>
           </div>
         </div>
-        <div>
-          {shouldShowSearchBar() && <SearchBar type={getCurrentType()} />}
+        
+        {/* 모바일 버전 헤더 레이아웃 */}
+        <div className="flex flex-col sm:hidden pt-4 pb-2">
+          {/* 상단 로우 (로고 + 로그아웃/테마) */}
+          <div className="flex w-full justify-between items-center">
+            <Link to="/" className="flex items-center z-10" onClick={handleReset}>
+              <img
+                src="/images/icon_with_text.svg"
+                alt="RefHub"
+                className="h-8"
+              />
+            </Link>
+            <div className="flex items-center space-x-4 z-10">
+              <ThemeToggle />
+              <button
+                onClick={handleLogout}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
+          
+          {/* 하단 로우 (네비게이션) */}
+          <nav className="flex justify-center space-x-8 mt-4 mx-auto">
+            <Link
+              to="/collections"
+              className={`text-xl ${
+                getCurrentType() === "collection"
+                  ? "text-primary dark:text-primary font-bold"
+                  : "text-gray-600 dark:text-gray-300 font-medium"
+              }`}
+              onClick={handleReset}
+            >
+              나의 컬렉션
+            </Link>
+            <Link
+              to="/references"
+              className={`text-xl ${
+                getCurrentType() === "reference"
+                  ? "text-primary dark:text-primary font-bold"
+                  : "text-gray-600 dark:text-gray-300 font-medium"
+              }`}
+              onClick={handleReset}
+            >
+              전체 레퍼런스
+            </Link>
+          </nav>
         </div>
+        
+        {shouldShowSearchBar() && <div className="my-2 sm:my-0">
+          <SearchBar type={getCurrentType()} />
+        </div>}
       </div>
     </header>
   );
