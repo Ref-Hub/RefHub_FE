@@ -195,8 +195,8 @@ export default function CollectionDetailPage() {
       {alert.isVisible && <Alert message={alert.massage} />}
       {referenceData.length > 0 && (
         <FloatingButton
-          type="collectionDetail"
-          data={referenceData}
+          type="collectionDetail" // 여기서 type이 "collectionDetail"으로 제대로 설정되어 있는지 확인
+          data={referenceData} // 여기서 data로 무엇이 전달되는지 확인
           isOpen={isFloatOpen}
           setIsOpen={setIsFloatOpen}
         />
@@ -268,7 +268,9 @@ export default function CollectionDetailPage() {
             </p>
             {sort.searchWord.length === 0 && !collectionData?.viewer && (
               <button
-                onClick={() => navigate("/references/new")}
+                onClick={() =>
+                  navigate(`/references/new?collectionId=${collectionId}`)
+                }
                 className="flex w-fit px-12 py-4 gap-3 rounded-full bg-primary hover:bg-primary-dark"
               >
                 <FilePlus className="w-10 h-10 stroke-white" />

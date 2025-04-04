@@ -1,6 +1,6 @@
 //src/components/common/FloatingButton.tsx
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useToast } from "@/contexts/useToast";
 import { useRecoilState, useSetRecoilState } from "recoil";
@@ -35,6 +35,7 @@ const FloatingButton: React.FC<FABProps> = ({
   setIsOpen,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation(); // 현재 경로 정보 가져오기
   const { showToast } = useToast();
   //const [isOpen, setIsOpen] = useState(false);
   const setModalOpen = useSetRecoilState(modalState);
@@ -125,6 +126,13 @@ const FloatingButton: React.FC<FABProps> = ({
     }
   };
 
+  // URL에서 collectionId 추출 함수
+  const extractCollectionIdFromURL = () => {
+    // URL 패턴이 /collections/:collectionId 인 경우
+    const match = location.pathname.match(/\/collections\/([^/]+)/);
+    return match ? match[1] : null;
+  };
+
   const iconStyles =
     "w-16 h-16 p-4 rounded-full shadow-[0px_0px_10px_0px_rgba(0,0,0,0.08)] overflow-visible";
 
@@ -154,8 +162,17 @@ const FloatingButton: React.FC<FABProps> = ({
             }
             label="레퍼런스"
             time={0.9}
-            onClick={() => navigate("/references/new")}
-            disabled={type === "collectionDetail" ? data[0].viewer : undefined}
+            onClick={() => {
+              // 컬렉션 상세 페이지인 경우, URL에서 직접 컬렉션 ID를 추출하여 사용
+              const collectionId = extractCollectionIdFromURL();
+              if (type === "collectionDetail" && collectionId) {
+                navigate(`/references/new?collectionId=${collectionId}`);
+              } else {
+                navigate("/references/new");
+              }
+              setIsOpen(false);
+            }}
+            disabled={type === "collectionDetail" ? data[0]?.viewer : undefined}
           />
           {type === "collectionDetail" && (
             <ActionButton
@@ -184,7 +201,9 @@ const FloatingButton: React.FC<FABProps> = ({
               time={0.6}
               onClick={handleMove}
               disabled={
-                type === "collectionDetail" ? data[0].viewer : data.length === 0
+                type === "collectionDetail"
+                  ? data[0]?.viewer
+                  : data.length === 0
               }
             />
           )}
@@ -202,7 +221,7 @@ const FloatingButton: React.FC<FABProps> = ({
             time={0.4}
             onClick={handleDelete}
             disabled={
-              type === "collectionDetail" ? data[0].viewer : data.length === 0
+              type === "collectionDetail" ? data[0]?.viewer : data.length === 0
             }
           />
         </div>

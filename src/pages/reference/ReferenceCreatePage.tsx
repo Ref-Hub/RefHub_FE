@@ -1,5 +1,6 @@
 // src/pages/reference/ReferenceCreatePage.tsx
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import KeywordInput from "@/components/reference/KeywordInput";
 import FileUpload from "@/components/reference/FileUpload";
@@ -29,6 +30,8 @@ export default function ReferenceCreatePage() {
   const { createReference, isLoading: isSubmitting } = useReferenceCreate();
   const [isLoadingCollections, setIsLoadingCollections] = useState(false);
   const [collections, setCollections] = useState<CollectionCard[]>([]);
+  const [searchParams] = useSearchParams();
+  const collectionIdFromURL = searchParams.get('collectionId');
 
   const [formData, setFormData] = useState<FormData>({
     collection: "",
@@ -68,6 +71,21 @@ export default function ReferenceCreatePage() {
           });
 
           setCollections(sortedCollections);
+          
+          // URL에서 collectionId가 있으면 자동으로 선택
+          if (collectionIdFromURL && sortedCollections.length > 0) {
+            // 전달받은 collectionId와 일치하는 컬렉션이 있는지 확인
+            const foundCollection = sortedCollections.find(
+              (collection) => collection._id === collectionIdFromURL
+            );
+            
+            if (foundCollection) {
+              setFormData(prev => ({
+                ...prev,
+                collection: foundCollection._id
+              }));
+            }
+          }
         } else {
           setCollections([]);
         }
@@ -79,7 +97,7 @@ export default function ReferenceCreatePage() {
     };
 
     fetchCollections();
-  }, [showToast]);
+  }, [showToast, collectionIdFromURL]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
