@@ -268,7 +268,9 @@ export default function CollectionDetailPage() {
             </p>
             {sort.searchWord.length === 0 && !collectionData?.viewer && (
               <button
-                onClick={() => navigate("/references/new")}
+                onClick={() =>
+                  navigate(`/references/new?collectionId=${collectionId}`)
+                }
                 className="flex w-fit px-12 py-4 gap-3 rounded-full bg-primary hover:bg-primary-dark"
               >
                 <FilePlus className="w-10 h-10 stroke-white" />

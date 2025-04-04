@@ -154,7 +154,15 @@ const FloatingButton: React.FC<FABProps> = ({
             }
             label="레퍼런스"
             time={0.9}
-            onClick={() => navigate("/references/new")}
+            onClick={() => {
+              // 컬렉션 상세 페이지에서는 해당 컬렉션 ID를 쿼리 파라미터로 전달
+              if (type === "collectionDetail" && data.length > 0) {
+                navigate(`/references/new?collectionId=${data[0]._id}`);
+              } else {
+                navigate("/references/new");
+              }
+              setIsOpen(false);
+            }}
             disabled={type === "collectionDetail" ? data[0].viewer : undefined}
           />
           {type === "collectionDetail" && (
