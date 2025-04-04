@@ -3,24 +3,21 @@ import { Link, useLocation } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import SearchBar from "../common/SearchBar";
 import { DropState } from "@/store/collection";
-// import { ThemeToggle } from "@/components/common/ThemeToggle";
+// import { ThemeToggle } from "@/components/common/ThemeToggle"; - 주석 처리된 상태 유지
 import { useAuth } from "@/hooks/useAuth";
 
 export default function MainHeader() {
-  const { logout } = useAuth(); // useAuth 훅에서 logout 함수 가져오기
+  const { logout } = useAuth();
   const location = useLocation();
   const [, setSort] = useRecoilState(DropState);
 
-  // URL 경로에 따라 현재 타입 결정
   const getCurrentType = () => {
     if (location.pathname.includes("/collections")) return "collection";
     if (location.pathname.includes("/references")) return "reference";
     return "collection";
   };
 
-  // SearchBar를 표시할지 결정하는 함수
   const shouldShowSearchBar = () => {
-    // SearchBar를 숨길 경로 패턴들
     const hideSearchBarPatterns = [
       /\/collections\/[^/]+$/, // /collections/:id
       /\/references\/[^/]+$/, // /references/:id
@@ -28,14 +25,12 @@ export default function MainHeader() {
       /\/references\/new$/, // /references/new
     ];
 
-    // 현재 경로가 위의 패턴들 중 하나와 일치하면 SearchBar를 숨김
     return !hideSearchBarPatterns.some((pattern) =>
       pattern.test(location.pathname)
     );
   };
 
   const handleLogout = async () => {
-    // 수정된 코드: useAuth의 logout 함수 호출
     await logout();
   };
 
@@ -51,10 +46,10 @@ export default function MainHeader() {
   return (
     <header className="bg-white dark:bg-dark-bg shadow-sm rounded-bl-[48px] rounded-br-[48px] shadow-[0px_4px_10px_0px_rgba(181,184,181,0.10)] dark:shadow-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 모바일: 수직 레이아웃, PC: 헤더 영역 */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between sm:h-16 sm:mt-4">
-          {/* 모바일: 로고와 버튼, PC: 왼쪽 로고 */}
-          <div className="flex justify-between items-center w-full sm:w-auto pt-4 sm:pt-0 z-10">
+        {/* PC 버전 헤더 - flexbox를 사용하여 3등분 레이아웃 구성 */}
+        <div className="hidden sm:flex items-center h-16 mt-4">
+          {/* 왼쪽 영역: 로고 */}
+          <div className="flex-1">
             <Link to="/" className="flex items-center" onClick={handleReset}>
               <img
                 src="/images/icon_with_text.svg"
@@ -62,21 +57,10 @@ export default function MainHeader() {
                 className="h-8"
               />
             </Link>
-
-            {/* 모바일 전용: 우측 버튼 */}
-            <div className="flex sm:hidden items-center space-x-4">
-              {/* <ThemeToggle /> */}
-              <button
-                onClick={handleLogout}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                로그아웃
-              </button>
-            </div>
           </div>
-
-          {/* PC 전용: 중앙 네비게이션 */}
-          <nav className="hidden sm:flex absolute left-1/2 sm:top-5 transform -translate-x-1/2 justify-center space-x-8 z-10">
+          
+          {/* 중앙 영역: 네비게이션 */}
+          <div className="flex-1 flex justify-center space-x-8">
             <Link
               to="/collections"
               className={`text-xl ${
@@ -99,11 +83,11 @@ export default function MainHeader() {
             >
               전체 레퍼런스
             </Link>
-          </nav>
-
-          {/* PC 전용: 우측 버튼 */}
-          <div className="hidden sm:flex items-center space-x-4 z-10">
-            {/* <ThemeToggle /> */}
+          </div>
+          
+          {/* 오른쪽 영역: 로그아웃 버튼 */}
+          <div className="flex-1 flex justify-end">
+            {/* <ThemeToggle /> - 주석 처리된 상태 유지 */}
             <button
               onClick={handleLogout}
               className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
@@ -111,9 +95,34 @@ export default function MainHeader() {
               로그아웃
             </button>
           </div>
+        </div>
+
+        {/* 모바일 버전 레이아웃 - 기존 코드 유지 */}
+        <div className="flex flex-col sm:hidden">
+          {/* 모바일: 로고와 버튼 */}
+          <div className="flex justify-between items-center w-full pt-4">
+            <Link to="/" className="flex items-center" onClick={handleReset}>
+              <img
+                src="/images/icon_with_text.svg"
+                alt="RefHub"
+                className="h-8"
+              />
+            </Link>
+
+            {/* 모바일 전용: 우측 버튼 */}
+            <div className="flex items-center space-x-4">
+              {/* <ThemeToggle /> - 주석 처리된 상태 유지 */}
+              <button
+                onClick={handleLogout}
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
 
           {/* 모바일 전용: 하단 네비게이션 */}
-          <nav className="flex sm:hidden justify-center space-x-8 mt-4 mb-2">
+          <nav className="flex justify-center space-x-8 mt-4 mb-2">
             <Link
               to="/collections"
               className={`text-xl ${
@@ -139,6 +148,7 @@ export default function MainHeader() {
           </nav>
         </div>
 
+        {/* SearchBar 컴포넌트 - 변경 없음 */}
         {shouldShowSearchBar() && (
           <div className="mt-2 sm:mt-0">
             <SearchBar type={getCurrentType()} />

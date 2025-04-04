@@ -77,8 +77,9 @@ export default function FileUpload({
       return false;
     }
 
-    // 이미지 타입으로 지정된 경우만 이미지 형식 검사
+    // 이미지 타입으로 지정된 경우 이미지 형식 검사
     if (type === "image") {
+      const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
       const allowedImageTypes = [
         "image/jpeg",
         "image/png",
@@ -86,7 +87,15 @@ export default function FileUpload({
         "image/webp",
       ];
 
-      if (!allowedImageTypes.includes(file.type)) {
+      // 파일명에서 확장자 추출
+      const fileName = file.name.toLowerCase();
+      const fileExt = fileName.substring(fileName.lastIndexOf("."));
+
+      // 확장자나 MIME 타입 중 하나라도 일치하면 통과
+      if (
+        !allowedImageExtensions.includes(fileExt) &&
+        !allowedImageTypes.includes(file.type)
+      ) {
         showToast(
           "JPG, PNG, GIF, WEBP 형식의 이미지만 첨부 가능합니다.",
           "error"
@@ -95,18 +104,18 @@ export default function FileUpload({
       }
     }
 
-    // PDF 타입으로 지정된 경우만 PDF 형식 검사
-    if (type === "pdf" && file.type !== "application/pdf") {
-      showToast("PDF 형식의 파일만 첨부 가능합니다.", "error");
-      return false;
+    // PDF 타입으로 지정된 경우 PDF 형식 검사
+    if (type === "pdf") {
+      const fileExt = file.name
+        .toLowerCase()
+        .substring(file.name.lastIndexOf("."));
+      if (fileExt !== ".pdf" && file.type !== "application/pdf") {
+        showToast("PDF 형식의 파일만 첨부 가능합니다.", "error");
+        return false;
+      }
     }
 
-    // 파일 타입일 경우 모든 형식 허용 (이미지, PDF 포함)
-    if (type === "file") {
-      // 모든 파일 형식 허용 (제한 없음)
-      return true;
-    }
-
+    // 파일 타입일 경우 모든 형식 허용
     return true;
   };
 
@@ -235,12 +244,16 @@ export default function FileUpload({
   const getAcceptTypes = (type: FileItem["type"]) => {
     switch (type) {
       case "image":
-        return "image/jpeg,image/png,image/gif,image/webp";
+        // macOS의 파일 선택기에서 올바르게 동작하도록 확장자 명시적 지정
+        // 참고: 확장자에는 점(.)을 포함해야 함
+        return ".jpg,.jpeg,.png,.gif,.webp";
       case "pdf":
-        return "application/pdf";
+        // PDF 파일만 표시되도록 확장자 지정
+        return ".pdf";
       case "file":
-        // 이미지와 PDF를 제외한 모든 파일
-        return ".doc,.docx,.xls,.xlsx,.txt,.zip,.rar";
+        // 모든 파일 타입 허용 (이미지, PDF 포함)
+        // 일반적인 문서 파일과 미디어 파일 확장자 추가
+        return ".doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif,.webp,.pdf";
       default:
         return "";
     }
