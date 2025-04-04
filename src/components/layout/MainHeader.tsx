@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import SearchBar from "../common/SearchBar";
 import { DropState } from "@/store/collection";
-import { ThemeToggle } from "@/components/common/ThemeToggle";
+// import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function MainHeader() {
@@ -62,10 +62,10 @@ export default function MainHeader() {
                 className="h-8"
               />
             </Link>
-            
+
             {/* 모바일 전용: 우측 버튼 */}
             <div className="flex sm:hidden items-center space-x-4">
-              <ThemeToggle />
+              {/* <ThemeToggle /> */}
               <button
                 onClick={handleLogout}
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
@@ -74,7 +74,7 @@ export default function MainHeader() {
               </button>
             </div>
           </div>
-          
+
           {/* PC 전용: 중앙 네비게이션 */}
           <nav className="hidden sm:flex absolute left-1/2 sm:top-5 transform -translate-x-1/2 justify-center space-x-8 z-10">
             <Link
@@ -100,10 +100,10 @@ export default function MainHeader() {
               전체 레퍼런스
             </Link>
           </nav>
-          
+
           {/* PC 전용: 우측 버튼 */}
           <div className="hidden sm:flex items-center space-x-4 z-10">
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
             <button
               onClick={handleLogout}
               className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
@@ -111,7 +111,7 @@ export default function MainHeader() {
               로그아웃
             </button>
           </div>
-          
+
           {/* 모바일 전용: 하단 네비게이션 */}
           <nav className="flex sm:hidden justify-center space-x-8 mt-4 mb-2">
             <Link
@@ -138,10 +138,12 @@ export default function MainHeader() {
             </Link>
           </nav>
         </div>
-        
-        {shouldShowSearchBar() && <div className="mt-2 sm:mt-0">
-          <SearchBar type={getCurrentType()} />
-        </div>}
+
+        {shouldShowSearchBar() && (
+          <div className="mt-2 sm:mt-0">
+            <SearchBar type={getCurrentType()} />
+          </div>
+        )}
       </div>
     </header>
   );
