@@ -1,3 +1,4 @@
+// src/services/reference.ts
 import api from "@/utils/api";
 import { authUtils } from "@/store/auth";
 import { handleApiError } from "@/utils/errorHandler";
@@ -17,25 +18,71 @@ class ReferenceService {
 
   private async fetchWithAuth(url: string): Promise<string> {
     try {
+      // S3 URL인 경우, API 서버를 통해 이미지를 프록싱
+      if (
+        url.includes("s3.ap-northeast-2.amazonaws.com") ||
+        url.includes("refhub-bucket")
+      ) {
+        // API 서버의 프록시 엔드포인트 사용
+        const token = authUtils.getToken();
+        const proxyUrl = `${
+          this.baseUrl
+        }/api/references/download?fileUrl=${encodeURIComponent(url)}`;
+
+        const response = await fetch(proxyUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`이미지 로드 실패: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+      }
+
+      // S3가 아닌 다른 URL은 기존 방식대로 처리
       const token = authUtils.getToken();
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (!response.ok) {
+        throw new Error(`이미지 로드 실패: ${response.status}`);
+      }
+
       const blob = await response.blob();
       return URL.createObjectURL(blob);
     } catch (error) {
       console.error("Error fetching image:", error);
-      return url;
+      // 오류 발생 시 대체 이미지 반환 또는 원본 URL 유지
+      return "/images/placeholder.png"; // 로컬 플레이스홀더 이미지 사용
     }
   }
 
-  // src/services/reference.ts
-  private async transformUrl(url?: string): Promise<string> {
+  // URL 변환 함수 - 같은 방식으로 수정
+  async transformUrl(url?: string): Promise<string> {
     if (!url) return "";
 
-    // S3 URL을 항상 fetchWithAuth로 처리
+    // 로컬 개발 환경에서 S3 URL 처리
+    if (
+      window.location.hostname === "localhost" &&
+      (url.includes("s3.ap-northeast-2.amazonaws.com") ||
+        url.includes("refhub-bucket"))
+    ) {
+      try {
+        return await this.fetchWithAuth(url);
+      } catch (error) {
+        console.error("S3 이미지 로드 실패:", error);
+        return "/images/placeholder.png"; // 플레이스홀더 이미지 반환
+      }
+    }
+
+    // S3 URL 처리
     if (
       url.includes("s3.ap-northeast-2.amazonaws.com") ||
       url.includes("refhub-bucket")
@@ -84,7 +131,6 @@ class ReferenceService {
   }
 
   // 단일 레퍼런스 조회
-
   async getReference(id: string): Promise<Reference> {
     try {
       const response = await api.get<ReferenceDetailResponse>(
@@ -187,14 +233,13 @@ class ReferenceService {
   }
 
   // 레퍼런스 수정
-  // src/services/reference.ts - updateReference 함수 수정
   async updateReference(
     id: string,
     { collectionId, title, keywords, memo, files }: UpdateReferenceRequest
   ): Promise<ReferenceResponse> {
     try {
       const formData = new FormData();
-      formData.append("collectionId", collectionId); // collectionTitle 대신 collectionId 사용
+      formData.append("collectionId", collectionId);
       formData.append("title", title);
 
       if (keywords?.length) {
@@ -209,6 +254,13 @@ class ReferenceService {
       for (const [key, value] of files.entries()) {
         formData.append(key, value);
       }
+
+      console.log("Updating reference with data:", {
+        id,
+        collectionId,
+        title,
+        formDataKeys: [...files.keys()],
+      });
 
       const response = await api.patch<ReferenceResponse>(
         `/api/references/${id}`,
@@ -247,8 +299,6 @@ class ReferenceService {
   }
 
   // 파일 데이터 준비
-
-  // src/services/reference.ts
   prepareFilesFormData(files: CreateReferenceFile[]): FormData {
     const formData = new FormData();
     let imageCount = 1;
@@ -264,23 +314,6 @@ class ReferenceService {
     };
 
     console.log("Files before processing:", files);
-
-    // 백엔드 분석: 실제 원본 파일 경로 추출 필요
-    // 이미지 미리보기 URL에서 원본 파일 경로 추출
-    const extractOriginalPath = (previewUrl: string): string => {
-      // 프리뷰 이미지 URL -> 원본 이미지 URL 변환
-      // 예: /previews/x-y-z-image.jpeg-preview.png -> /x-y-z-image.jpeg
-      if (previewUrl.includes("-preview.png")) {
-        const baseUrl =
-          "https://refhub-bucket.s3.ap-northeast-2.amazonaws.com/";
-        const fileName = previewUrl.split("/").pop();
-        if (fileName) {
-          const originalFileName = fileName.replace("-preview.png", "");
-          return baseUrl + originalFileName;
-        }
-      }
-      return previewUrl;
-    };
 
     // 기존 파일 경로를 저장할 배열
     const existingFilePaths: string[] = [];
@@ -303,31 +336,40 @@ class ReferenceService {
               (img) => img.url && img.url.startsWith("data:")
             );
 
-            // 기존 이미지 처리 - 원본 파일 경로 추출하여 existingFilePaths에 추가
-            existingImages.forEach((image) => {
-              const originalPath = extractOriginalPath(image.url);
-              existingFilePaths.push(originalPath);
-            });
+            // 기존 이미지 처리 - 원본 파일 경로 사용
+            if (existingImages.length > 0 && file.originalPath) {
+              existingFilePaths.push(file.originalPath);
+            }
 
             // 새 이미지 처리
             if (newImages.length > 0) {
-              newImages.forEach((image: { url: string; name?: string }) => {
+              const imageFiles: File[] = [];
+
+              for (const image of newImages) {
                 try {
                   const blobData = this.base64ToBlob(image.url);
                   const originalName = image.name || `image${imageCount}.png`;
                   const encodedFileName =
                     normalizeAndEncodeFileName(originalName);
 
-                  formData.append(
-                    `images${imageCount}`,
-                    blobData,
-                    encodedFileName
-                  );
+                  // Blob에서 File 객체 생성
+                  const imageFile = new File([blobData], encodedFileName, {
+                    type: blobData.type,
+                  });
+
+                  imageFiles.push(imageFile);
                 } catch (error) {
                   console.error("이미지 처리 오류:", error);
                 }
-              });
-              imageCount++;
+              }
+
+              // 이미지 파일들을 FormData에 추가
+              if (imageFiles.length > 0) {
+                for (const imgFile of imageFiles) {
+                  formData.append(`images${imageCount}`, imgFile);
+                }
+                imageCount++;
+              }
             }
           }
         } catch (error) {
@@ -344,13 +386,16 @@ class ReferenceService {
           file.content.startsWith("http://") ||
           file.content.startsWith("https://")
         ) {
-          // 기존 PDF 파일
-          const originalPath = extractOriginalPath(file.content);
-          existingFilePaths.push(originalPath);
+          // 기존 PDF 파일 - 원본 경로 사용
+          if (file.originalPath) {
+            existingFilePaths.push(file.originalPath);
+          } else {
+            existingFilePaths.push(file.content);
+          }
         }
-      } else {
-        // 일반 파일
+      } else if (file.type === "file") {
         if (file.content.startsWith("data:")) {
+          // 새 일반 파일
           const blobData = this.base64ToBlob(file.content);
           const fileName = file.name || "file";
           const encodedFileName = normalizeAndEncodeFileName(fileName);
@@ -359,16 +404,18 @@ class ReferenceService {
           file.content.startsWith("http://") ||
           file.content.startsWith("https://")
         ) {
-          // 기존 일반 파일
-          const originalPath = extractOriginalPath(file.content);
-          existingFilePaths.push(originalPath);
+          // 기존 일반 파일 - 원본 경로 사용
+          if (file.originalPath) {
+            existingFilePaths.push(file.originalPath);
+          } else {
+            existingFilePaths.push(file.content);
+          }
         }
       }
     });
 
-    // 백엔드가 기대하는 형식으로 기존 파일 정보 추가
+    // 기존 파일 정보를 FormData에 추가
     if (existingFilePaths.length > 0) {
-      // existingFilePaths를 JSON 문자열로 변환하여 FormData에 추가
       formData.append("existingFiles", JSON.stringify(existingFilePaths));
       console.log("Existing files:", existingFilePaths);
     }

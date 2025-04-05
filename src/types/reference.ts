@@ -55,6 +55,7 @@ export interface CreateReferenceFile {
   type: "link" | "image" | "pdf" | "file";
   content: string;
   name?: string;
+  originalPath?: string; // 추가: 원본 파일 경로 저장
 }
 
 // 레퍼런스 생성/수정 요청 페이로드
