@@ -6,7 +6,8 @@ import {
 } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
-import { PublicRoute } from "@/components/layout/PublicRoute"; // 새로 추가
+import { PublicRoute } from "@/components/layout/PublicRoute";
+import NotFoundRedirect from "@/components/layout/NotFoundRedirect";
 
 // 페이지 컴포넌트 import
 import LoginPage from "@/pages/auth/LoginPage";
@@ -18,17 +19,6 @@ import ReferenceListPage from "@/pages/reference/ReferenceListPage";
 import ReferenceDetailPage from "@/pages/reference/ReferenceDetailPage";
 import ReferenceCreatePage from "@/pages/reference/ReferenceCreatePage";
 import ReferenceEditPage from "@/pages/reference/ReferenceEditPage";
-
-// 404 페이지 처리를 위한 컴포넌트
-const NotFoundRedirect = () => {
-  // 인증 여부 확인
-  const token = localStorage.getItem("accessToken");
-  return token ? (
-    <Navigate to="/collections" replace />
-  ) : (
-    <Navigate to="/auth/login" replace />
-  );
-};
 
 // 인증 관련 라우트
 const authRoutes: RouteObject[] = [
