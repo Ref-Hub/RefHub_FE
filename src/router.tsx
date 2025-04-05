@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { PublicRoute } from "@/components/layout/PublicRoute"; // 새로 추가
 
 // 페이지 컴포넌트 import
 import LoginPage from "@/pages/auth/LoginPage";
@@ -22,22 +23,38 @@ import ReferenceEditPage from "@/pages/reference/ReferenceEditPage";
 const NotFoundRedirect = () => {
   // 인증 여부 확인
   const token = localStorage.getItem("accessToken");
-  return token ? <Navigate to="/collections" replace /> : <Navigate to="/auth/login" replace />;
+  return token ? (
+    <Navigate to="/collections" replace />
+  ) : (
+    <Navigate to="/auth/login" replace />
+  );
 };
 
 // 인증 관련 라우트
 const authRoutes: RouteObject[] = [
   {
     path: "login",
-    element: <LoginPage />,
+    element: (
+      <PublicRoute>
+        <LoginPage />
+      </PublicRoute>
+    ), // PublicRoute로 감싸기
   },
   {
     path: "signup",
-    element: <SignupPage />,
+    element: (
+      <PublicRoute>
+        <SignupPage />
+      </PublicRoute>
+    ), // PublicRoute로 감싸기
   },
   {
     path: "reset-password",
-    element: <PasswordResetPage />,
+    element: (
+      <PublicRoute>
+        <PasswordResetPage />
+      </PublicRoute>
+    ), // PublicRoute로 감싸기
   },
 ];
 
@@ -117,8 +134,8 @@ export const router = createBrowserRouter([
       // 명시적인 와일드카드 경로 추가
       {
         path: "*",
-        element: <NotFoundRedirect />
-      }
+        element: <NotFoundRedirect />,
+      },
     ],
   },
 ]);
