@@ -33,8 +33,6 @@ export default function ReferenceDetailPage() {
     downloadUrl?: string;
   } | null>(null);
 
-  // src/pages/reference/ReferenceDetailPage.tsx
-  // useEffect 내부 파일 변환 부분 수정
   useEffect(() => {
     const fetchReference = async () => {
       if (!referenceId) return;
@@ -43,7 +41,7 @@ export default function ReferenceDetailPage() {
         setIsLoading(true);
         const data = await referenceService.getReference(referenceId);
 
-        // 파일의 모든 URL을 transformUrl로 처리
+        // 파일의 모든 URL을 transformUrl로 처리 (단, "file" 타입은 원본 URL 사용)
         const transformedFiles = await Promise.all(
           data.files.map(async (file) => {
             if (file.type === "image" && file.previewURLs) {
@@ -59,8 +57,8 @@ export default function ReferenceDetailPage() {
               );
               return { ...file, previewURL };
             } else if (file.type === "file" && file.path) {
-              const path = await referenceService["transformUrl"](file.path);
-              return { ...file, path };
+              // 파일 타입은 transformUrl 호출 없이 원본 URL 유지
+              return file;
             } else {
               return file;
             }
@@ -179,8 +177,6 @@ export default function ReferenceDetailPage() {
           </div>
         );
 
-      // src/pages/reference/ReferenceDetailPage.tsx - "image" case 부분만 수정
-
       case "image":
         return (
           <div className="flex flex-col gap-2 bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
@@ -190,23 +186,18 @@ export default function ReferenceDetailPage() {
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {file.previewURLs?.map((url, index) => {
-                // 동기 방식으로 변경 (async/await 제거)
                 const imageName =
                   file.filenames && file.filenames[index]
                     ? decodeURIComponent(file.filenames[index])
                     : `이미지 ${index + 1}`;
-
-                // 원본 이미지 경로 (프리뷰가 아닌)
                 const originalUrl =
                   typeof file.path === "string"
                     ? file.path
                     : Array.isArray(file.path)
                     ? file.path[index]
                     : "";
-
                 return (
                   <div key={index} className="flex flex-col gap-1">
-                    {/* 이미지 프리뷰 */}
                     <div
                       className="relative aspect-square cursor-pointer group"
                       onClick={() =>
@@ -228,8 +219,6 @@ export default function ReferenceDetailPage() {
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
                     </div>
-
-                    {/* 파일명과 다운로드 버튼 */}
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-gray-500 truncate max-w-[70%]">
                         {imageName}
@@ -264,11 +253,8 @@ export default function ReferenceDetailPage() {
                 <span>PDF</span>
               </div>
             </div>
-
             <div className="grid grid-cols-1 gap-2">
-              {/* PDF 정보 및 미리보기 */}
               <div className="flex gap-3 items-center">
-                {/* PDF 미리보기 이미지 */}
                 {file.previewURL && (
                   <div
                     className="cursor-pointer flex-shrink-0 w-20 h-20 border border-gray-200 rounded-md overflow-hidden"
@@ -289,8 +275,6 @@ export default function ReferenceDetailPage() {
                     />
                   </div>
                 )}
-
-                {/* PDF 정보 및 다운로드 */}
                 <div className="flex-1 flex flex-col">
                   <p className="text-sm font-medium truncate mb-1">
                     {file.filename
@@ -326,13 +310,10 @@ export default function ReferenceDetailPage() {
                 <span>파일</span>
               </div>
             </div>
-
-            {/* 파일 정보 및 다운로드 */}
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-12 h-12 bg-gray-50 rounded-md flex items-center justify-center">
                 <File className="w-6 h-6 text-primary" />
               </div>
-
               <div className="flex-1 flex flex-col">
                 <p className="text-sm font-medium truncate mb-1">
                   {file.filename
@@ -375,9 +356,7 @@ export default function ReferenceDetailPage() {
   return (
     <div className="min-h-screen">
       {alert.isVisible && <Alert message={alert.massage} />}
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
             <h2 className="flex items-center gap-2 text-base text-gray-500 mb-2">
@@ -421,9 +400,7 @@ export default function ReferenceDetailPage() {
             </p>
           </div>
         </div>
-
         <div className="h-px bg-gray-200 mb-4" />
-
         {reference.keywords && reference.keywords.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {reference.keywords.map((keyword, index) => (
@@ -436,7 +413,6 @@ export default function ReferenceDetailPage() {
             ))}
           </div>
         )}
-
         {reference.memo && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">메모</h3>
@@ -447,7 +423,6 @@ export default function ReferenceDetailPage() {
             </div>
           </div>
         )}
-
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">첨부 자료</h3>
           <div className="space-y-4">
@@ -457,7 +432,6 @@ export default function ReferenceDetailPage() {
           </div>
         </div>
       </div>
-
       <ImagePreviewModal
         isOpen={!!selectedImage}
         onClose={() => setSelectedImage(null)}
