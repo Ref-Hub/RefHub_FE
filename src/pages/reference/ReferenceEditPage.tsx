@@ -67,8 +67,10 @@ export default function ReferenceEditPage() {
             const baseFile = {
               id: file._id,
               type: file.type,
-              name: file.path.split("/").pop() || "",
-              originalPath: file.path, // 추가: 원본 파일 경로 저장
+              name: file.filename
+                ? file.filename
+                : file.path.split("/").pop() || "",
+              originalPath: file.path,
             };
 
             if (file.type === "link") {

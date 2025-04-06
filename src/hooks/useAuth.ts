@@ -154,12 +154,6 @@ export const useAuth = () => {
     const token = authUtils.getToken();
     const storedUser = authUtils.getStoredUser();
 
-    console.log("Auth Status Check:", {
-      hasToken: !!token,
-      hasStoredUser: !!storedUser,
-      hasRecoilUser: !!user,
-    });
-
     if (token && storedUser && !user) {
       setUser(storedUser);
       return true;
