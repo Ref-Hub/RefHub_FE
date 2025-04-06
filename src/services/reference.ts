@@ -65,8 +65,17 @@ class ReferenceService {
   }
 
   // URL 변환 함수 - 같은 방식으로 수정
+  // src/services/reference.ts - transformUrl 함수 전체 업데이트
+
   async transformUrl(url?: string): Promise<string> {
     if (!url) return "";
+
+    // blob URL인 경우, 올바른 도메인을 사용하도록 함
+    if (url.startsWith("blob:")) {
+      // blob ID를 추출하고 현재 도메인으로 새 blob URL 생성
+      const blobId = url.split("/").pop();
+      return `blob:${window.location.origin}/${blobId}`;
+    }
 
     // 로컬 개발 환경에서 S3 URL 처리
     if (
@@ -90,6 +99,7 @@ class ReferenceService {
       return await this.fetchWithAuth(url);
     }
 
+    // 상대 경로 처리
     if (!url.includes("://")) {
       const fullUrl = `${this.baseUrl}${url}`;
       if (url.includes("/api/references/file/")) {
@@ -98,6 +108,7 @@ class ReferenceService {
       return fullUrl;
     }
 
+    // API 도메인 URL 처리
     if (url.includes("api.refhub.site")) {
       if (url.includes("/api/references/file/")) {
         return await this.fetchWithAuth(url);
@@ -105,6 +116,7 @@ class ReferenceService {
       return url;
     }
 
+    // 도메인 변환 처리
     if (url.includes("refhub.my")) {
       const newUrl = url.replace("refhub.my", "api.refhub.site");
       if (newUrl.includes("/api/references/file/")) {
@@ -113,6 +125,7 @@ class ReferenceService {
       return newUrl;
     }
 
+    // 기타 URL은 그대로 반환
     return url;
   }
 
