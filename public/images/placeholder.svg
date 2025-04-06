@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- 배경 -->
+  <rect width="400" height="300" fill="#f0f0f0"/>
+  
+  <!-- 이미지 아이콘 -->
+  <path d="M150 100 L250 100 L250 200 L150 200 Z" fill="#e0e0e0" stroke="#cccccc" stroke-width="4"/>
+  <path d="M170 140 A15 15 0 1 1 170.1 140" fill="#cccccc"/>
+  <path d="M150 170 L180 150 L210 170 L240 140 L250 150 L250 200 L150 200 Z" fill="#d0d0d0"/>
+  
+  <!-- 텍스트 -->
+  <text x="200" y="240" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#999999">이미지를 불러올 수 없습니다</text>
+</svg>

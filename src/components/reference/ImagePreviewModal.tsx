@@ -1,8 +1,10 @@
+// src/components/reference/ImagePreviewModal.tsx
+import { useEffect, useState } from "react";
 import Modal from "@/components/common/Modal";
 import { Download, FileText, Image as ImageIcon } from "lucide-react";
-import { useState } from "react";
 import { useToast } from "@/contexts/useToast";
 import api from "@/utils/api";
+import { referenceService } from "@/services/reference"; // 서비스 임포트
 
 interface ImagePreviewModalProps {
   isOpen: boolean;
@@ -20,7 +22,25 @@ export default function ImagePreviewModal({
   downloadUrl,
 }: ImagePreviewModalProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [transformedUrl, setTransformedUrl] = useState(""); // 상태 추가
   const { showToast } = useToast();
+
+  // URL을 변환하는 효과 추가
+  useEffect(() => {
+    const transformUrl = async () => {
+      if (imageUrl) {
+        try {
+          const url = await referenceService.transformUrl(imageUrl);
+          setTransformedUrl(url);
+        } catch (error) {
+          console.error("이미지 URL 변환 실패:", error);
+          setTransformedUrl("/images/placeholder.png");
+        }
+      }
+    };
+
+    transformUrl();
+  }, [imageUrl]);
 
   const isPdf =
     imageUrl.toLowerCase().includes("-preview.png") &&
@@ -105,7 +125,7 @@ export default function ImagePreviewModal({
           style={{ paddingTop: "75%" }}
         >
           <img
-            src={imageUrl}
+            src={transformedUrl || "/images/placeholder.png"} // 여기서 transformedUrl 사용
             alt={imageName || "Preview"}
             className="absolute top-0 left-0 w-full h-full object-contain p-2"
           />

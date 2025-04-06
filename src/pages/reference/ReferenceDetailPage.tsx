@@ -179,6 +179,8 @@ export default function ReferenceDetailPage() {
           </div>
         );
 
+      // src/pages/reference/ReferenceDetailPage.tsx - "image" case 부분만 수정
+
       case "image":
         return (
           <div className="flex flex-col gap-2 bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
@@ -188,13 +190,19 @@ export default function ReferenceDetailPage() {
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {file.previewURLs?.map((url, index) => {
+                // 동기 방식으로 변경 (async/await 제거)
                 const imageName =
                   file.filenames && file.filenames[index]
                     ? decodeURIComponent(file.filenames[index])
                     : `이미지 ${index + 1}`;
 
                 // 원본 이미지 경로 (프리뷰가 아닌)
-                const originalUrl = file.path;
+                const originalUrl =
+                  typeof file.path === "string"
+                    ? file.path
+                    : Array.isArray(file.path)
+                    ? file.path[index]
+                    : "";
 
                 return (
                   <div key={index} className="flex flex-col gap-1">
@@ -213,6 +221,10 @@ export default function ReferenceDetailPage() {
                         src={url}
                         alt={imageName}
                         className="w-full h-full object-cover rounded-lg border border-gray-200"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "/images/placeholder.png";
+                        }}
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />
                     </div>
