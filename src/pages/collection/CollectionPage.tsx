@@ -25,6 +25,7 @@ const CollectionPage: React.FC = () => {
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isShareCollection, setIsShareCollection] = useState(false);
   const sort = useRecoilValue(DropState);
   const [modal, setModal] = useRecoilState(modalState);
   const [modeValue] = useRecoilState(floatingModeState);
@@ -144,25 +145,55 @@ const CollectionPage: React.FC = () => {
       <div className="flex flex-col max-w-7xl w-full px-4 sm:px-6 lg:px-8 mx-auto">
         <div className="flex items-center justify-between mt-10 mb-6">
           <Dropdown type="array" />
+          <div
+            className="flex items-center gap-1.5 cursor-pointer text-gray-500 hover:text-primary transition-colors"
+            onClick={() => setIsShareCollection(!isShareCollection)}
+          >
+            <div
+              className={`w-5 h-5 border-2 border-primary text-white flex items-center justify-center rounded cursor-pointer ${
+                isShareCollection ? "bg-primary" : "bg-white"
+              }`}
+            >
+              {isShareCollection && "✔"}
+            </div>
+            <p className="sm:text-base text-sm mb-1">공유 중인 컬렉션만 보기</p>
+          </div>
         </div>
 
         {collectionData?.data?.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              {collectionData.data.map((collection) => (
-                <CollectionCard
-                  key={collection._id}
-                  _id={collection._id}
-                  title={collection.title}
-                  isFavorite={collection.isFavorite}
-                  isShared={collection.isShared}
-                  refCount={collection.refCount}
-                  previewImages={collection.previewImages}
-                  creator={collection.creator}
-                  editor={collection.editor}
-                  viewer={collection.viewer}
-                />
-              ))}
+              {collectionData.data.map((collection) =>
+                isShareCollection ? (
+                  collection.isShared && (
+                    <CollectionCard
+                      key={collection._id}
+                      _id={collection._id}
+                      title={collection.title}
+                      isFavorite={collection.isFavorite}
+                      isShared={collection.isShared}
+                      refCount={collection.refCount}
+                      previewImages={collection.previewImages}
+                      creator={collection.creator}
+                      editor={collection.editor}
+                      viewer={collection.viewer}
+                    />
+                  )
+                ) : (
+                  <CollectionCard
+                    key={collection._id}
+                    _id={collection._id}
+                    title={collection.title}
+                    isFavorite={collection.isFavorite}
+                    isShared={collection.isShared}
+                    refCount={collection.refCount}
+                    previewImages={collection.previewImages}
+                    creator={collection.creator}
+                    editor={collection.editor}
+                    viewer={collection.viewer}
+                  />
+                )
+              )}
             </div>
 
             {collectionData.totalPages > 1 && (
