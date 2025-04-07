@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Reference } from "../../types/reference";
-import {
-  EllipsisVertical,
-  Users,
-  PencilLine,
-  Trash2,
-  Image,
-} from "lucide-react";
+import { EllipsisVertical, Users, PencilLine, Trash2 } from "lucide-react";
 import {
   floatingModeState,
   collectionState,
@@ -17,6 +11,7 @@ import {
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { collectionService } from "@/services/collection";
 import { useToast } from "@/contexts/useToast";
+import ImageGrid from "../common/ImageGrid";
 
 const ReferenceCard: React.FC<
   Pick<
@@ -226,7 +221,9 @@ const ReferenceCard: React.FC<
   return (
     <div
       data-testid="reference-card"
-      className="relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer"
+      className={`relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer ${
+        (modeValue.isMove || modeValue.isDelete) && viewer ? "opacity-50" : ""
+      }`}
       onClick={(e) => handleReferenceClick(e)}
     >
       {!viewer &&
@@ -309,29 +306,7 @@ const ReferenceCard: React.FC<
       </div>
 
       <div className="mb-2 min-h-[152px]">
-        {imgs.length === 1 && (
-          <img
-            src={imgs[0]}
-            className="w-full h-[152px] object-contain rounded-lg"
-          />
-        )}
-        {(imgs ?? []).length > 1 && (
-          <div className="grid grid-cols-2 gap-2">
-            {imgs.slice(0, 4).map((image, index) => (
-              <img
-                key={`${image}-${index}`}
-                src={image}
-                alt={`Preview ${index + 1}`}
-                className="object-contain w-[113px] h-[69.83px] rounded-lg"
-              />
-            ))}
-          </div>
-        )}
-        {imgs.length === 0 && (
-          <div className="bg-gray-100 w-full h-[152px] py-4 flex justify-center rounded-lg flex-col items-center gap-5">
-            <Image className="w-[80px] h-[80px] stroke-primary" />
-          </div>
-        )}
+        <ImageGrid imgs={imgs} type="reference" />
       </div>
 
       <p className="text-right text-gray-500 text-xs font-normal mb-2">

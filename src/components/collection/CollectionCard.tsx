@@ -13,7 +13,6 @@ import {
 import { collectionService } from "@/services/collection";
 import { useToast } from "@/contexts/useToast";
 import { useNavigate } from "react-router-dom";
-import folder from "@/assets/images/folder.svg";
 import {
   Star,
   Share2,
@@ -22,6 +21,7 @@ import {
   PencilLine,
   Trash2,
 } from "lucide-react";
+import ImageGrid from "../common/ImageGrid";
 
 const CollectionCard: React.FC<CollectionCardProps> = ({
   _id,
@@ -180,7 +180,9 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   return (
     <div
       data-testid="collection-card"
-      className="relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer"
+      className={`relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer ${
+        (modeValue.isMove || modeValue.isDelete) && viewer ? "opacity-50" : ""
+      }`}
       onClick={(e) => handleDetail(e)}
     >
       {/* 체크박스 or 더보기 */}
@@ -283,31 +285,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
 
       {/* 이미지 */}
       <div className="mb-2 py-5">
-        {imgs.length === 1 && (
-          <img
-            src={imgs[0]}
-            className="w-full h-[152px] object-contain rounded-lg"
-          />
-        )}
-        {imgs.length > 1 && (
-          <div className="grid grid-cols-2 gap-2">
-            {imgs.slice(0, 4).map((image, index) => (
-              <img
-                key={index}
-                src={image}
-                className="object-contain w-[113px] h-[69.83px] rounded-lg"
-              />
-            ))}
-          </div>
-        )}
-        {imgs.length === 0 && (
-          <div className="bg-gray-100 w-full py-4 flex justify-center rounded-lg flex-col items-center gap-5">
-            <img src={folder} className="w-[54%]" />
-            <p className="text-gray-700 text-sm font-normal px-2">
-              아직 레퍼런스가 없어요.
-            </p>
-          </div>
-        )}
+        <ImageGrid imgs={imgs} type="collection" />
       </div>
     </div>
   );

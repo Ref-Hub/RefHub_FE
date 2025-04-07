@@ -107,17 +107,20 @@ const Modal: React.FC<ModalProps> = ({ type }) => {
             </div>
             {dropOpen.open && (
               <ul className="flex flex-col absolute w-full max-h-60 overflow-y-auto bg-white p-4 gap-4 border border-gray-200 rounded-lg shadow-[0px_0px_10px_0px_rgba(181,184,181,0.20)] z-10">
-                {collectiondata.data.map((option, index) => (
-                  <li
-                    key={index}
-                    className="flex items-center gap-2 text-gray-700 text-base font-nomal cursor-pointer hover:text-primary hover:font-semibold"
-                    onClick={() =>
-                      setdropOpen({ open: false, value: option.title })
-                    }
-                  >
-                    {option.title}
-                  </li>
-                ))}
+                {collectiondata.data.map(
+                  (option, index) =>
+                    !option.viewer && (
+                      <li
+                        key={index}
+                        className="flex items-center gap-2 text-gray-700 text-base font-nomal cursor-pointer hover:text-primary hover:font-semibold"
+                        onClick={() =>
+                          setdropOpen({ open: false, value: option.title })
+                        }
+                      >
+                        {option.title}
+                      </li>
+                    )
+                )}
               </ul>
             )}
           </div>
