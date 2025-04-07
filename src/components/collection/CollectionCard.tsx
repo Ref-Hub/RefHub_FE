@@ -180,7 +180,9 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   return (
     <div
       data-testid="collection-card"
-      className="relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer"
+      className={`relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer ${
+        (modeValue.isMove || modeValue.isDelete) && viewer ? "opacity-50" : ""
+      }`}
       onClick={(e) => handleDetail(e)}
     >
       {/* 체크박스 or 더보기 */}

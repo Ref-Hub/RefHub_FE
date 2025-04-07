@@ -242,7 +242,11 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
             <tr
               key={index}
               onClick={(e) => handleRowClick(item._id, e, index)}
-              className="text-center text-black text-base font-normal border-b border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors duration-200"
+              className={`text-center text-black text-base font-normal border-b border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors duration-200 ${
+                (modeValue.isMove || modeValue.isDelete) && item.viewer
+                  ? "opacity-40"
+                  : ""
+              }`}
             >
               {(modeValue.isMove || modeValue.isDelete) && (
                 <td className="pl-3">

@@ -221,7 +221,9 @@ const ReferenceCard: React.FC<
   return (
     <div
       data-testid="reference-card"
-      className="relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer"
+      className={`relative border border-gray-200 rounded-lg bg-white px-5 hover:cursor-pointer ${
+        (modeValue.isMove || modeValue.isDelete) && viewer ? "opacity-50" : ""
+      }`}
       onClick={(e) => handleReferenceClick(e)}
     >
       {!viewer &&
