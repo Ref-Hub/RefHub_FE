@@ -22,35 +22,54 @@ export default function ImagePreviewModal({
   downloadUrl,
 }: ImagePreviewModalProps) {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [transformedUrl, setTransformedUrl] = useState("");
+  const [displayUrl, setDisplayUrl] = useState("");
   const [imageError, setImageError] = useState(false);
 
   const { showToast } = useToast();
 
-  // URL을 변환하는 효과 추가
+  // URL handling logic
   useEffect(() => {
-    const transformUrl = async () => {
-      if (imageUrl) {
-        try {
-          const url = await referenceService.transformUrl(imageUrl);
-          setTransformedUrl(url);
-          setImageError(false); // 성공 시 에러 상태 초기화
-        } catch (error) {
-          console.error("이미지 URL 변환 실패:", error);
-          setImageError(true); // 실패 시 에러 상태 설정
+    const handleImageUrl = async () => {
+      if (!imageUrl) {
+        setDisplayUrl("");
+        return;
+      }
+
+      try {
+        // Handle data URLs (client-side files) directly
+        if (imageUrl.startsWith("data:")) {
+          setDisplayUrl(imageUrl);
+          setImageError(false);
+          return;
         }
+
+        // Handle blob URLs (client-side files) directly
+        if (imageUrl.startsWith("blob:")) {
+          setDisplayUrl(imageUrl);
+          setImageError(false);
+          return;
+        }
+
+        // For remote URLs, use the transformation service
+        const url = await referenceService.transformUrl(imageUrl);
+        setDisplayUrl(url);
+        setImageError(false);
+      } catch (error) {
+        console.error("이미지 URL 처리 실패:", error);
+        setImageError(true);
+        setDisplayUrl("/images/placeholder.svg");
       }
     };
 
     if (isOpen && imageUrl) {
-      transformUrl();
+      handleImageUrl();
     }
   }, [imageUrl, isOpen]);
 
-  // 모달이 닫힐 때 상태 초기화
+  // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setTransformedUrl("");
+      setDisplayUrl("");
       setImageError(false);
     }
   }, [isOpen]);
@@ -65,56 +84,59 @@ export default function ImagePreviewModal({
     try {
       setIsDownloading(true);
 
-      // 쉼표가 포함된 경우, 첫 번째 URL만 사용 (이미지 리스트의 경우)
+      // If it's a blob/data URL (client-side file), create a download from it directly
+      if (downloadUrl.startsWith("blob:") || downloadUrl.startsWith("data:")) {
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.setAttribute("download", imageName || "image");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showToast("다운로드가 완료되었습니다.", "success");
+        setIsDownloading(false);
+        return;
+      }
+
+      // Handle remote URLs
+      // Split comma-separated URLs and use the first one
       let urlToDownload = downloadUrl;
       if (downloadUrl.includes(",")) {
-        // 이미지 URL이 쉼표로 구분된 경우, 현재 보고 있는 이미지의 URL을 추출
         const urls = downloadUrl.split(",").map((url) => url.trim());
 
-        // 현재 보여지는 이미지와 가장 유사한 URL 찾기
-        // 미리보기 URL에서 파일명 부분 추출
+        // Try to find a matching URL based on preview filename
         const previewFileName = imageUrl
           .split("/")
           .pop()
           ?.replace("-preview.png", "");
 
-        // 가장 비슷한 URL 선택
         if (previewFileName) {
           const matchingUrl = urls.find((url) =>
             url.includes(previewFileName.split("-").pop() || "")
           );
-          if (matchingUrl) {
-            urlToDownload = matchingUrl;
-          } else {
-            // 매칭이 안 되면 첫 번째 URL 사용
-            urlToDownload = urls[0];
-          }
+          urlToDownload = matchingUrl || urls[0];
         } else {
           urlToDownload = urls[0];
         }
       }
 
-      console.log("Downloading URL:", urlToDownload);
-
-      // API 다운로드 엔드포인트 사용
+      // API download endpoint for remote files
       const response = await api.get(`/api/references/download`, {
         params: { fileUrl: urlToDownload },
-        responseType: "blob", // 중요: 바이너리 데이터를 blob으로 받음
+        responseType: "blob",
       });
 
-      // 파일 저장 처리
+      // Create a download from the response
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
 
-      // 파일명 설정 - 서버에서 이미 디코딩된 파일명 사용
+      // Set filename from metadata or derive from URL
       let fileName = imageName || (isPdf ? "document.pdf" : "image");
-      // 디코딩 및 불필요한 접미사 제거
       if (fileName.includes("-preview.png")) {
         fileName = fileName.replace("-preview.png", "");
       }
 
-      // 파일명이 URL 인코딩되어 있으면 디코딩
+      // Decode URL-encoded filenames
       try {
         if (fileName.includes("%")) {
           fileName = decodeURIComponent(fileName);
@@ -127,13 +149,13 @@ export default function ImagePreviewModal({
       document.body.appendChild(link);
       link.click();
 
-      // 메모리 정리
+      // Cleanup
       link.remove();
       window.URL.revokeObjectURL(url);
 
       showToast("다운로드가 완료되었습니다.", "success");
     } catch (error) {
-      console.error("Download failed:", error);
+      console.error("다운로드 실패:", error);
       showToast("다운로드에 실패했습니다.", "error");
     } finally {
       setIsDownloading(false);
@@ -185,14 +207,14 @@ export default function ImagePreviewModal({
             </div>
           ) : (
             <img
-              src={transformedUrl || "/images/placeholder.svg"} // transformedUrl 사용
+              src={displayUrl || "/images/placeholder.svg"}
               alt={
                 imageName?.includes("%")
                   ? decodeURIComponent(imageName)
                   : imageName || "Preview"
               }
               className="absolute top-0 left-0 w-full h-full object-contain p-2"
-              onError={() => setImageError(true)} // 이미지 로드 실패 시 에러 상태 설정
+              onError={() => setImageError(true)}
             />
           )}
         </div>

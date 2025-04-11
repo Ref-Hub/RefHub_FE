@@ -41,6 +41,7 @@ export default function FileUpload({
   const [previewImage, setPreviewImage] = useState<{
     url: string;
     name?: string;
+    downloadUrl?: string; 
   } | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -399,7 +400,13 @@ export default function FileUpload({
                     src={image.url}
                     alt={image.name || "Preview"}
                     className="w-full h-full object-cover rounded-lg cursor-pointer"
-                    onClick={() => setPreviewImage(image)}
+                    onClick={() =>
+                      setPreviewImage({
+                        url: image.url,
+                        name: image.name || `image_${imageIndex + 1}.jpg`,
+                        downloadUrl: image.url,
+                      })
+                    }
                   />
                   <button
                     type="button"
