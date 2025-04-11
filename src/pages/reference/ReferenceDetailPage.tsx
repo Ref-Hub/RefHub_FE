@@ -214,7 +214,7 @@ export default function ReferenceDetailPage() {
                         className="w-full h-full object-cover rounded-lg border border-gray-200"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src =
-                            "/images/placeholder.png";
+                            "/images/placeholder.svg";
                         }}
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity rounded-lg" />

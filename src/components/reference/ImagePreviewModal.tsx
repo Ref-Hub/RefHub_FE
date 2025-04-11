@@ -22,25 +22,39 @@ export default function ImagePreviewModal({
   downloadUrl,
 }: ImagePreviewModalProps) {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [transformedUrl, setTransformedUrl] = useState(""); // 상태 추가
+  const [transformedUrl, setTransformedUrl] = useState("");
+  const [imageError, setImageError] = useState(false); // 상태 변수 사용
+
   const { showToast } = useToast();
 
   // URL을 변환하는 효과 추가
+  // 이미지 URL 변환 로직 개선
   useEffect(() => {
     const transformUrl = async () => {
       if (imageUrl) {
         try {
           const url = await referenceService.transformUrl(imageUrl);
           setTransformedUrl(url);
+          setImageError(false); // 성공 시 에러 상태 초기화
         } catch (error) {
           console.error("이미지 URL 변환 실패:", error);
-          setTransformedUrl("/images/placeholder.png");
+          setImageError(true); // 실패 시 에러 상태 설정
         }
       }
     };
 
-    transformUrl();
-  }, [imageUrl]);
+    if (isOpen && imageUrl) {
+      transformUrl();
+    }
+  }, [imageUrl, isOpen]);
+
+  // 모달이 닫힐 때 상태 초기화
+  useEffect(() => {
+    if (!isOpen) {
+      setTransformedUrl("");
+      setImageError(false);
+    }
+  }, [isOpen]);
 
   const isPdf =
     imageUrl.toLowerCase().includes("-preview.png") &&
@@ -63,14 +77,23 @@ export default function ImagePreviewModal({
       const link = document.createElement("a");
       link.href = url;
 
-      // 파일명 설정
+      // 파일명 설정 - 서버에서 이미 디코딩된 파일명 사용
       let fileName = imageName || (isPdf ? "document.pdf" : "image");
       // 디코딩 및 불필요한 접미사 제거
       if (fileName.includes("-preview.png")) {
         fileName = fileName.replace("-preview.png", "");
       }
 
-      link.setAttribute("download", decodeURIComponent(fileName));
+      // 파일명이 URL 인코딩되어 있으면 디코딩
+      try {
+        if (fileName.includes("%")) {
+          fileName = decodeURIComponent(fileName);
+        }
+      } catch (e) {
+        console.error("파일명 디코딩 오류:", e);
+      }
+
+      link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
 
@@ -103,7 +126,9 @@ export default function ImagePreviewModal({
             )}
             {imageName && (
               <h3 className="text-lg font-semibold text-gray-900 truncate">
-                {imageName ? decodeURIComponent(imageName) : ""}
+                {imageName.includes("%")
+                  ? decodeURIComponent(imageName)
+                  : imageName}
               </h3>
             )}
           </div>
@@ -124,11 +149,22 @@ export default function ImagePreviewModal({
           className="relative w-full bg-gray-100 rounded-lg"
           style={{ paddingTop: "75%" }}
         >
-          <img
-            src={transformedUrl || "/images/placeholder.png"} // 여기서 transformedUrl 사용
-            alt={imageName || "Preview"}
-            className="absolute top-0 left-0 w-full h-full object-contain p-2"
-          />
+          {imageError ? (
+            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-500">
+              이미지를 로드하는 데 실패했습니다.
+            </div>
+          ) : (
+            <img
+              src={transformedUrl || "/images/placeholder.svg"} // transformedUrl 사용
+              alt={
+                imageName?.includes("%")
+                  ? decodeURIComponent(imageName)
+                  : imageName || "Preview"
+              }
+              className="absolute top-0 left-0 w-full h-full object-contain p-2"
+              onError={() => setImageError(true)} // 이미지 로드 실패 시 에러 상태 설정
+            />
+          )}
         </div>
         <p className="text-sm text-gray-500 text-center">
           {isPdf

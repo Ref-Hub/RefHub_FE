@@ -1,4 +1,3 @@
-// src/hooks/useReferenceEdit.ts
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
@@ -51,7 +50,7 @@ export function useReferenceEdit() {
         return;
       }
 
-      // 파일 데이터 준비
+      // 파일 데이터 준비 - 원본 경로 정보를 정확히 전달
       const filesFormData = referenceService.prepareFilesFormData(
         formData.files
       );
