@@ -1,3 +1,4 @@
+// src/pages/reference/ReferenceDetailPage.tsx
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
@@ -120,9 +121,15 @@ export default function ReferenceDetailPage() {
 
   const handleFileDownload = async (fileUrl: string, filename?: string) => {
     try {
+      // 쉼표로 구분된 URL인 경우 첫 번째 URL만 사용
+      let urlToDownload = fileUrl;
+      if (fileUrl.includes(",")) {
+        urlToDownload = fileUrl.split(",")[0].trim();
+      }
+
       // API에서 지정한 파일 다운로드 엔드포인트 사용
       const response = await api.get(`/api/references/download`, {
-        params: { fileUrl },
+        params: { fileUrl: urlToDownload },
         responseType: "blob", // 중요: 바이너리 데이터를 blob으로 받음
       });
 
@@ -134,7 +141,7 @@ export default function ReferenceDetailPage() {
       // 파일명 설정
       const downloadFilename = filename
         ? decodeURIComponent(filename)
-        : fileUrl.split("/").pop() || "download.pdf";
+        : urlToDownload.split("/").pop() || "download.pdf";
 
       link.setAttribute("download", downloadFilename);
       document.body.appendChild(link);
@@ -192,7 +199,7 @@ export default function ReferenceDetailPage() {
                     : `이미지 ${index + 1}`;
                 const originalUrl =
                   typeof file.path === "string"
-                    ? file.path
+                    ? file.path.split(",")[index]?.trim() || file.path // 여기를 수정 - 이미지 경로를 개별로 추출
                     : Array.isArray(file.path)
                     ? file.path[index]
                     : "";
@@ -204,7 +211,7 @@ export default function ReferenceDetailPage() {
                         setSelectedImage({
                           url,
                           name: imageName,
-                          downloadUrl: originalUrl,
+                          downloadUrl: originalUrl, // 개별 URL만 전달
                         })
                       }
                     >
@@ -227,7 +234,7 @@ export default function ReferenceDetailPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           handleFileDownload(
-                            originalUrl,
+                            originalUrl, // 개별 URL만 전달
                             file.filenames?.[index]
                           );
                         }}

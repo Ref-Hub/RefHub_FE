@@ -4,7 +4,7 @@ import Modal from "@/components/common/Modal";
 import { Download, FileText, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/contexts/useToast";
 import api from "@/utils/api";
-import { referenceService } from "@/services/reference"; // 서비스 임포트
+import { referenceService } from "@/services/reference";
 
 interface ImagePreviewModalProps {
   isOpen: boolean;
@@ -23,12 +23,11 @@ export default function ImagePreviewModal({
 }: ImagePreviewModalProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [transformedUrl, setTransformedUrl] = useState("");
-  const [imageError, setImageError] = useState(false); // 상태 변수 사용
+  const [imageError, setImageError] = useState(false);
 
   const { showToast } = useToast();
 
   // URL을 변환하는 효과 추가
-  // 이미지 URL 변환 로직 개선
   useEffect(() => {
     const transformUrl = async () => {
       if (imageUrl) {
@@ -66,9 +65,40 @@ export default function ImagePreviewModal({
     try {
       setIsDownloading(true);
 
+      // 쉼표가 포함된 경우, 첫 번째 URL만 사용 (이미지 리스트의 경우)
+      let urlToDownload = downloadUrl;
+      if (downloadUrl.includes(",")) {
+        // 이미지 URL이 쉼표로 구분된 경우, 현재 보고 있는 이미지의 URL을 추출
+        const urls = downloadUrl.split(",").map((url) => url.trim());
+
+        // 현재 보여지는 이미지와 가장 유사한 URL 찾기
+        // 미리보기 URL에서 파일명 부분 추출
+        const previewFileName = imageUrl
+          .split("/")
+          .pop()
+          ?.replace("-preview.png", "");
+
+        // 가장 비슷한 URL 선택
+        if (previewFileName) {
+          const matchingUrl = urls.find((url) =>
+            url.includes(previewFileName.split("-").pop() || "")
+          );
+          if (matchingUrl) {
+            urlToDownload = matchingUrl;
+          } else {
+            // 매칭이 안 되면 첫 번째 URL 사용
+            urlToDownload = urls[0];
+          }
+        } else {
+          urlToDownload = urls[0];
+        }
+      }
+
+      console.log("Downloading URL:", urlToDownload);
+
       // API 다운로드 엔드포인트 사용
       const response = await api.get(`/api/references/download`, {
-        params: { fileUrl: downloadUrl },
+        params: { fileUrl: urlToDownload },
         responseType: "blob", // 중요: 바이너리 데이터를 blob으로 받음
       });
 
