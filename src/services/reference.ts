@@ -60,73 +60,81 @@ class ReferenceService {
     } catch (error) {
       console.error("Error fetching image:", error);
       // 오류 발생 시 대체 이미지 반환 또는 원본 URL 유지
-      return "/images/placeholder.png"; // 로컬 플레이스홀더 이미지 사용
+      return "/images/placeholder.svg"; // 로컬 플레이스홀더 이미지 사용
     }
   }
-
-  // URL 변환 함수 - 같은 방식으로 수정
-  // src/services/reference.ts - transformUrl 함수 전체 업데이트
 
   async transformUrl(url?: string): Promise<string> {
     if (!url) return "";
 
-    // blob URL인 경우, 올바른 도메인을 사용하도록 함
-    if (url.startsWith("blob:")) {
-      // blob ID를 추출하고 현재 도메인으로 새 blob URL 생성
-      const blobId = url.split("/").pop();
-      return `blob:${window.location.origin}/${blobId}`;
-    }
-
-    // 로컬 개발 환경에서 S3 URL 처리
-    if (
-      window.location.hostname === "localhost" &&
-      (url.includes("s3.ap-northeast-2.amazonaws.com") ||
-        url.includes("refhub-bucket"))
-    ) {
-      try {
-        return await this.fetchWithAuth(url);
-      } catch (error) {
-        console.error("S3 이미지 로드 실패:", error);
-        return "/images/placeholder.png"; // 플레이스홀더 이미지 반환
+    try {
+      // 전체 함수를 try-catch로 감싸서 오류 처리 개선
+      // blob URL인 경우, 올바른 도메인을 사용하도록 함
+      if (url.startsWith("blob:")) {
+        // blob ID를 추출하고 현재 도메인으로 새 blob URL 생성
+        const blobId = url.split("/").pop();
+        return `blob:${window.location.origin}/${blobId}`;
       }
-    }
 
-    // S3 URL 처리
-    if (
-      url.includes("s3.ap-northeast-2.amazonaws.com") ||
-      url.includes("refhub-bucket")
-    ) {
-      return await this.fetchWithAuth(url);
-    }
-
-    // 상대 경로 처리
-    if (!url.includes("://")) {
-      const fullUrl = `${this.baseUrl}${url}`;
-      if (url.includes("/api/references/file/")) {
-        return await this.fetchWithAuth(fullUrl);
+      // 로컬 개발 환경에서 S3 URL 처리
+      if (
+        window.location.hostname === "localhost" &&
+        (url.includes("s3.ap-northeast-2.amazonaws.com") ||
+          url.includes("refhub-bucket"))
+      ) {
+        try {
+          return await this.fetchWithAuth(url);
+        } catch (error) {
+          console.error("S3 이미지 로드 실패:", error);
+          return "/images/placeholder.svg"; // .svg로 변경
+        }
       }
-      return fullUrl;
-    }
 
-    // API 도메인 URL 처리
-    if (url.includes("api.refhub.site")) {
-      if (url.includes("/api/references/file/")) {
+      // S3 URL 처리
+      if (
+        url.includes("s3.ap-northeast-2.amazonaws.com") ||
+        url.includes("refhub-bucket")
+      ) {
         return await this.fetchWithAuth(url);
       }
+
+      // 상대 경로 처리
+      if (!url.includes("://")) {
+        const fullUrl = `${this.baseUrl}${url}`;
+        if (url.includes("/api/references/file/")) {
+          return await this.fetchWithAuth(fullUrl);
+        }
+        return fullUrl;
+      }
+
+      // API 도메인 URL 처리
+      if (url.includes("api.refhub.site")) {
+        if (url.includes("/api/references/file/")) {
+          return await this.fetchWithAuth(url);
+        }
+        return url;
+      }
+
+      // 도메인 변환 처리
+      if (url.includes("refhub.my")) {
+        const newUrl = url.replace("refhub.my", "api.refhub.site");
+        if (newUrl.includes("/api/references/file/")) {
+          return await this.fetchWithAuth(newUrl);
+        }
+        return newUrl;
+      }
+
+      // 기타 URL은 그대로 반환
       return url;
-    }
-
-    // 도메인 변환 처리
-    if (url.includes("refhub.my")) {
-      const newUrl = url.replace("refhub.my", "api.refhub.site");
-      if (newUrl.includes("/api/references/file/")) {
-        return await this.fetchWithAuth(newUrl);
+    } catch (error) {
+      console.error("URL 변환 오류:", error);
+      // 무한 루프 방지: placeholder를 이미 요청 중인지 확인
+      if (url.includes("placeholder")) {
+        // 무한 루프 방지를 위해 빈 문자열 반환
+        return "";
       }
-      return newUrl;
+      return "/images/placeholder.svg"; // .svg로 변경
     }
-
-    // 기타 URL은 그대로 반환
-    return url;
   }
 
   // 레퍼런스 목록 조회
@@ -312,6 +320,7 @@ class ReferenceService {
   }
 
   // 파일 데이터 준비
+  // 파일 데이터 준비
   prepareFilesFormData(files: CreateReferenceFile[]): FormData {
     const formData = new FormData();
     let imageCount = 1;
@@ -332,6 +341,14 @@ class ReferenceService {
     const existingFilePaths: string[] = [];
 
     files.forEach((file) => {
+      console.log("Processing file:", {
+        type: file.type,
+        originalPath: file.originalPath,
+        content:
+          file.content.substring(0, 50) +
+          (file.content.length > 50 ? "..." : ""),
+      });
+
       if (file.type === "link") {
         formData.append("links", file.content);
       } else if (file.type === "image") {
@@ -352,6 +369,7 @@ class ReferenceService {
             // 기존 이미지 처리 - 원본 파일 경로 사용
             if (existingImages.length > 0 && file.originalPath) {
               existingFilePaths.push(file.originalPath);
+              console.log("Added existing image path:", file.originalPath);
             }
 
             // 새 이미지 처리
@@ -386,7 +404,11 @@ class ReferenceService {
             }
           }
         } catch (error) {
-          console.error("이미지 데이터 파싱 실패:", error);
+          console.error(
+            "이미지 데이터 파싱 실패:",
+            error,
+            file.content ? file.content.substring(0, 100) : "empty content"
+          );
         }
       } else if (file.type === "pdf") {
         if (file.content.startsWith("data:")) {
@@ -400,10 +422,10 @@ class ReferenceService {
           file.content.startsWith("https://")
         ) {
           // 기존 PDF 파일 - 원본 경로 사용
-          if (file.originalPath) {
-            existingFilePaths.push(file.originalPath);
-          } else {
-            existingFilePaths.push(file.content);
+          const pathToUse = file.originalPath || file.content;
+          if (pathToUse) {
+            existingFilePaths.push(pathToUse);
+            console.log("Added existing PDF path:", pathToUse);
           }
         }
       } else if (file.type === "file") {
@@ -418,10 +440,10 @@ class ReferenceService {
           file.content.startsWith("https://")
         ) {
           // 기존 일반 파일 - 원본 경로 사용
-          if (file.originalPath) {
-            existingFilePaths.push(file.originalPath);
-          } else {
-            existingFilePaths.push(file.content);
+          const pathToUse = file.originalPath || file.content;
+          if (pathToUse) {
+            existingFilePaths.push(pathToUse);
+            console.log("Added existing file path:", pathToUse);
           }
         }
       }
@@ -430,11 +452,32 @@ class ReferenceService {
     // 기존 파일 정보를 FormData에 추가
     if (existingFilePaths.length > 0) {
       formData.append("existingFiles", JSON.stringify(existingFilePaths));
-      console.log("Existing files:", existingFilePaths);
+      console.log("Existing files to keep:", existingFilePaths);
+    } else {
+      console.warn("No existing files found to preserve!");
     }
 
     // FormData에 들어간 모든 키 출력
     console.log("FormData keys:", [...formData.keys()]);
+
+    // FormData 내용 로깅 (파일 객체는 '[File Object]'로 표시)
+    const formDataDebug = Object.fromEntries(
+      [...formData.entries()].map(([key, value]) => [
+        key,
+        // Blob 체크 로직 수정
+        typeof value === "object" &&
+        value !== null &&
+        ((typeof File !== "undefined" && value instanceof File) ||
+          (typeof Blob !== "undefined" && "size" in value && "type" in value))
+          ? `[${
+              typeof File !== "undefined" && value instanceof File
+                ? "File"
+                : "Blob"
+            } Object]`
+          : value,
+      ])
+    );
+    console.log("FormData content:", formDataDebug);
 
     return formData;
   }
