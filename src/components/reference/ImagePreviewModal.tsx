@@ -23,7 +23,7 @@ export default function ImagePreviewModal({
 }: ImagePreviewModalProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [transformedUrl, setTransformedUrl] = useState("");
-  const [imageError, setImageError] = useState(false);
+  const [imageError, setImageError] = useState(false); // 상태 변수 사용
 
   const { showToast } = useToast();
 
@@ -35,10 +35,10 @@ export default function ImagePreviewModal({
         try {
           const url = await referenceService.transformUrl(imageUrl);
           setTransformedUrl(url);
-          setImageError(false);
+          setImageError(false); // 성공 시 에러 상태 초기화
         } catch (error) {
           console.error("이미지 URL 변환 실패:", error);
-          setImageError(true);
+          setImageError(true); // 실패 시 에러 상태 설정
         }
       }
     };
@@ -149,16 +149,22 @@ export default function ImagePreviewModal({
           className="relative w-full bg-gray-100 rounded-lg"
           style={{ paddingTop: "75%" }}
         >
-          <img
-            src={transformedUrl || "/images/placeholder.svg"} // transformedUrl 사용
-            alt={
-              imageName?.includes("%")
-                ? decodeURIComponent(imageName)
-                : imageName || "Preview"
-            }
-            className="absolute top-0 left-0 w-full h-full object-contain p-2"
-            onError={() => setImageError(true)} // 이미지 로드 실패 시 에러 상태 설정
-          />
+          {imageError ? (
+            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-gray-500">
+              이미지를 로드하는 데 실패했습니다.
+            </div>
+          ) : (
+            <img
+              src={transformedUrl || "/images/placeholder.svg"} // transformedUrl 사용
+              alt={
+                imageName?.includes("%")
+                  ? decodeURIComponent(imageName)
+                  : imageName || "Preview"
+              }
+              className="absolute top-0 left-0 w-full h-full object-contain p-2"
+              onError={() => setImageError(true)} // 이미지 로드 실패 시 에러 상태 설정
+            />
+          )}
         </div>
         <p className="text-sm text-gray-500 text-center">
           {isPdf
