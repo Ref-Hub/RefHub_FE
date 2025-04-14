@@ -1,5 +1,3 @@
-// src/pages/reference/ReferenceEditPage.tsx - Improvements for file handling
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
@@ -10,10 +8,7 @@ import { referenceService } from "@/services/reference";
 import { Loader } from "lucide-react";
 import type { CollectionCard } from "@/types/collection";
 import CollectionDropdown from "@/components/common/CollectionDropdown";
-import type {
-  CreateReferenceFile,
-  UpdateReferenceRequest,
-} from "@/types/reference";
+import type { CreateReferenceFile } from "@/types/reference";
 import { useReferenceEdit } from "@/hooks/useReferenceEdit";
 
 interface FormData {
@@ -240,9 +235,14 @@ export default function ReferenceEditPage() {
         return file;
       });
 
+      // 컬렉션 제목 가져오기
+      const collectionTitle =
+        collections.find((c) => c._id === formData.collection)?.title || "";
+
       // API 호출
       await updateReference(referenceId, {
         collectionId: formData.collection,
+        collectionTitle: collectionTitle, // 여기에 컬렉션 제목 추가
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,
