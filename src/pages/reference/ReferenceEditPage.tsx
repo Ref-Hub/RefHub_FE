@@ -1,4 +1,4 @@
-// src/pages/reference/ReferenceEditPage.tsx
+// src/pages/reference/ReferenceEditPage.tsx - Improvements for file handling
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -14,6 +14,7 @@ import type {
   CreateReferenceFile,
   UpdateReferenceRequest,
 } from "@/types/reference";
+import { useReferenceEdit } from "@/hooks/useReferenceEdit";
 
 interface FormData {
   collection: string;
@@ -27,7 +28,7 @@ export default function ReferenceEditPage() {
   const { referenceId } = useParams<{ referenceId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const { updateReference, isLoading: isSubmitting } = useReferenceEdit();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isLoadingCollections, setIsLoadingCollections] =
     useState<boolean>(false);
@@ -88,7 +89,9 @@ export default function ReferenceEditPage() {
               // 이미지 배열을 적절한 형식으로 변환
               const imageContent = file.previewURLs.map((url, index) => ({
                 url, // 서버에서 받은 URL을 그대로 사용
-                name: file.filenames?.[index] || `image_${index + 1}.jpg`,
+                name: file.filenames?.[index]
+                  ? decodeURIComponent(file.filenames[index])
+                  : `image_${index + 1}.jpg`,
               }));
 
               return {
@@ -167,8 +170,6 @@ export default function ReferenceEditPage() {
     e.preventDefault();
 
     try {
-      setIsSubmitting(true);
-
       // Validation
       if (!formData.collection) {
         showToast("컬렉션을 선택해 주세요.", "error");
@@ -207,45 +208,49 @@ export default function ReferenceEditPage() {
         return;
       }
 
-      // 파일 데이터 준비
-      const filesFormData = referenceService.prepareFilesFormData(
-        formData.files
-      );
-
-      // 디버깅 로그 추가
-      console.log("Files being sent:", formData.files);
+      // 각 파일의 원본 경로 확인 로그
       console.log(
-        "FormData entries:",
-        [...filesFormData.entries()].map(([key, value]) =>
-          typeof value === "string"
-            ? { key, value }
-            : { key, type: "File/Blob" }
-        )
+        "Files being submitted:",
+        formData.files.map((file) => ({
+          type: file.type,
+          originalPath: file.originalPath,
+          content:
+            typeof file.content === "string"
+              ? file.content.length > 30
+                ? file.content.substring(0, 30) + "..."
+                : file.content
+              : "non-string content",
+        }))
       );
 
-      // API 호출 - collectionTitle 대신 collectionId 사용
-      const updateData: UpdateReferenceRequest = {
-        collectionId: formData.collection, // 컬렉션 ID
+      // API 호출 준비 - 파일 정보 점검
+      // 원본 경로가 중요한 이슈가 있으므로 originalPath 확인
+      const filesWithPathCheck = formData.files.map((file) => {
+        // 링크와 이미지를 제외한 파일 타입에 대해 원본 경로가 없다면 경고
+        if (
+          !file.originalPath &&
+          file.type !== "link" &&
+          !file.content.startsWith("data:")
+        ) {
+          console.warn(
+            `File of type ${file.type} is missing originalPath:`,
+            file
+          );
+        }
+        return file;
+      });
+
+      // API 호출
+      await updateReference(referenceId, {
+        collectionId: formData.collection,
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,
-        files: filesFormData,
-      };
-
-      const response = await referenceService.updateReference(
-        referenceId,
-        updateData
-      );
-
-      if (response) {
-        showToast("레퍼런스가 수정되었습니다.", "success");
-        navigate(`/references/${referenceId}`);
-      }
+        files: filesWithPathCheck,
+      });
     } catch (error) {
       console.error("Error updating reference:", error);
       showToast("레퍼런스 수정에 실패했습니다.", "error");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
