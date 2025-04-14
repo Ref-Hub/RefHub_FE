@@ -41,7 +41,7 @@ export default function FileUpload({
   const [previewImage, setPreviewImage] = useState<{
     url: string;
     name?: string;
-    downloadUrl?: string; 
+    downloadUrl?: string;
   } | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -262,21 +262,37 @@ export default function FileUpload({
 
   const handleRemoveFile = (index: number, imageIndex?: number) => {
     try {
-      if (typeof imageIndex === "number") {
+      if (typeof imageIndex === "number" && files[index].type === "image") {
         // Remove specific image from multiple images
         const updatedFiles = [...files];
-        const images = JSON.parse(updatedFiles[index].content) as FileContent[];
-        images.splice(imageIndex, 1);
-        updatedFiles[index] = {
-          ...updatedFiles[index],
-          content: JSON.stringify(images),
-        };
-        onChange(updatedFiles);
+        try {
+          const images = JSON.parse(
+            updatedFiles[index].content
+          ) as FileContent[];
+          images.splice(imageIndex, 1);
+
+          // 만약 이미지가 모두 삭제되었다면, 빈 이미지 리스트로 처리하지 않고
+          // 해당 파일 항목 자체를 삭제
+          if (images.length === 0) {
+            onChange(files.filter((_, i) => i !== index));
+            return;
+          }
+
+          updatedFiles[index] = {
+            ...updatedFiles[index],
+            content: JSON.stringify(images),
+          };
+          onChange(updatedFiles);
+        } catch (e) {
+          console.error("이미지 삭제 중 오류:", e);
+          showToast("이미지 삭제에 실패했습니다.", "error");
+        }
       } else {
         // Remove entire file item
         onChange(files.filter((_, i) => i !== index));
       }
-    } catch {
+    } catch (error) {
+      console.error("파일 삭제 중 오류:", error);
       showToast("파일 삭제에 실패했습니다.", "error");
     }
   };
