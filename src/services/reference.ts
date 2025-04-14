@@ -319,7 +319,8 @@ class ReferenceService {
     }
   }
 
-  // 파일 데이터 준비
+  // src/services/reference.ts - prepareFilesFormData method improvement
+
   // 파일 데이터 준비
   prepareFilesFormData(files: CreateReferenceFile[]): FormData {
     const formData = new FormData();
@@ -337,24 +338,52 @@ class ReferenceService {
 
     console.log("Files before processing:", files);
 
-    // 기존 파일 경로를 저장할 배열
+    // 기존 파일 경로를 저장할 배열 - 각 파일 타입 별 처리를 위해 구조 개선
     const existingFilePaths: string[] = [];
+
+    // 먼저 모든 기존 파일 경로들을 수집
+    files.forEach((file) => {
+      if (
+        file.originalPath &&
+        (file.content.startsWith("http://") ||
+          file.content.startsWith("https://") ||
+          file.type === "link")
+      ) {
+        existingFilePaths.push(file.originalPath);
+      }
+    });
 
     files.forEach((file) => {
       console.log("Processing file:", {
         type: file.type,
         originalPath: file.originalPath,
         content:
-          file.content.substring(0, 50) +
-          (file.content.length > 50 ? "..." : ""),
+          typeof file.content === "string"
+            ? file.content.substring(0, 50) +
+              (file.content.length > 50 ? "..." : "")
+            : "non-string content",
       });
 
       if (file.type === "link") {
-        formData.append("links", file.content);
+        // 링크는 새로운 링크면 추가, 원본 경로가 있는 기존 링크라면 이미 existingFilePaths에 추가됨
+        if (
+          file.content &&
+          (!file.originalPath || file.content !== file.originalPath)
+        ) {
+          formData.append("links", file.content);
+        }
       } else if (file.type === "image") {
         try {
-          const images = JSON.parse(file.content);
-          if (Array.isArray(images)) {
+          // 이미지 배열인지 확인
+          let images;
+          try {
+            images = JSON.parse(file.content);
+          } catch {
+            // 문자열이 아닌 경우 빈 배열로 처리
+            images = [];
+          }
+
+          if (Array.isArray(images) && images.length > 0) {
             // 기존 이미지와 새 이미지 분리
             const existingImages = images.filter(
               (img) =>
@@ -366,10 +395,10 @@ class ReferenceService {
               (img) => img.url && img.url.startsWith("data:")
             );
 
-            // 기존 이미지 처리 - 원본 파일 경로 사용
+            // 기존 이미지 처리 - 원본 파일 경로가 있으면 유지
             if (existingImages.length > 0 && file.originalPath) {
-              existingFilePaths.push(file.originalPath);
-              console.log("Added existing image path:", file.originalPath);
+              // 이미 existingFilePaths에 추가되어 있음
+              console.log("Found existing image with path:", file.originalPath);
             }
 
             // 새 이미지 처리
@@ -407,7 +436,11 @@ class ReferenceService {
           console.error(
             "이미지 데이터 파싱 실패:",
             error,
-            file.content ? file.content.substring(0, 100) : "empty content"
+            file.content
+              ? typeof file.content === "string"
+                ? file.content.substring(0, 100)
+                : "non-string content"
+              : "empty content"
           );
         }
       } else if (file.type === "pdf") {
@@ -417,17 +450,8 @@ class ReferenceService {
           const fileName = file.name || "document.pdf";
           const encodedFileName = normalizeAndEncodeFileName(fileName);
           formData.append("files", blobData, encodedFileName);
-        } else if (
-          file.content.startsWith("http://") ||
-          file.content.startsWith("https://")
-        ) {
-          // 기존 PDF 파일 - 원본 경로 사용
-          const pathToUse = file.originalPath || file.content;
-          if (pathToUse) {
-            existingFilePaths.push(pathToUse);
-            console.log("Added existing PDF path:", pathToUse);
-          }
         }
+        // 기존 PDF 파일은 originalPath가 이미 existingFilePaths에 추가됨
       } else if (file.type === "file") {
         if (file.content.startsWith("data:")) {
           // 새 일반 파일
@@ -435,26 +459,20 @@ class ReferenceService {
           const fileName = file.name || "file";
           const encodedFileName = normalizeAndEncodeFileName(fileName);
           formData.append("otherFiles", blobData, encodedFileName);
-        } else if (
-          file.content.startsWith("http://") ||
-          file.content.startsWith("https://")
-        ) {
-          // 기존 일반 파일 - 원본 경로 사용
-          const pathToUse = file.originalPath || file.content;
-          if (pathToUse) {
-            existingFilePaths.push(pathToUse);
-            console.log("Added existing file path:", pathToUse);
-          }
         }
+        // 기존 일반 파일은 originalPath가 이미 existingFilePaths에 추가됨
       }
     });
 
-    // 기존 파일 정보를 FormData에 추가
+    // 기존 파일 정보를 FormData에 추가 - 중복 제거
     if (existingFilePaths.length > 0) {
-      formData.append("existingFiles", JSON.stringify(existingFilePaths));
-      console.log("Existing files to keep:", existingFilePaths);
+      const uniquePaths = [...new Set(existingFilePaths)];
+      formData.append("existingFiles", JSON.stringify(uniquePaths));
+      console.log("Existing files to keep:", uniquePaths);
     } else {
       console.warn("No existing files found to preserve!");
+      // 빈 배열을 전송하여 모든 파일이 삭제되도록 함
+      formData.append("existingFiles", JSON.stringify([]));
     }
 
     // FormData에 들어간 모든 키 출력

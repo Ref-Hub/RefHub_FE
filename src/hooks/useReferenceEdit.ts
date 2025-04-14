@@ -1,8 +1,10 @@
+// src/hooks/useReferenceEdit.ts - improved updateReference method
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import { referenceService } from "@/services/reference";
-import type { ReferenceFormData, CreateReferenceFile } from "@/types/reference"; // CreateReferenceFile도 임포트
+import type { ReferenceFormData, CreateReferenceFile } from "@/types/reference";
 
 export function useReferenceEdit() {
   const navigate = useNavigate();
@@ -17,7 +19,7 @@ export function useReferenceEdit() {
       setIsLoading(true);
 
       // 필수 필드 검증
-      if (!formData.collectionTitle) {
+      if (!formData.collectionId) {
         showToast("컬렉션을 선택해 주세요.", "error");
         return;
       }
@@ -45,10 +47,21 @@ export function useReferenceEdit() {
         return;
       }
 
+      // 파일 검증 - 빈 파일 체크 및 타입별 검증
       if (formData.files.some((file: CreateReferenceFile) => !file.content)) {
         showToast("모든 자료를 입력해 주세요.", "error");
         return;
       }
+
+      // 디버깅 정보 기록 - 원본 경로 정보 확인
+      console.log(
+        "Files being prepared for update:",
+        formData.files.map((file) => ({
+          type: file.type,
+          originalPath: file.originalPath,
+          content: file.content.substring(0, 30) + "...",
+        }))
+      );
 
       // 파일 데이터 준비 - 원본 경로 정보를 정확히 전달
       const filesFormData = referenceService.prepareFilesFormData(
@@ -57,8 +70,7 @@ export function useReferenceEdit() {
 
       // 레퍼런스 수정 API 호출
       const response = await referenceService.updateReference(referenceId, {
-        collectionId: formData.collectionId, // collectionTitle 대신 collectionId 사용
-        // collectionTitle 필드 제거
+        collectionId: formData.collectionId,
         title: formData.title,
         keywords: formData.keywords,
         memo: formData.memo,
@@ -69,6 +81,8 @@ export function useReferenceEdit() {
       navigate(`/references/${referenceId}`);
       return response;
     } catch (error: any) {
+      console.error("레퍼런스 수정 실패:", error);
+
       if (error.response?.status === 404) {
         showToast("해당 레퍼런스를 찾을 수 없습니다.", "error");
       } else if (error.response?.status === 413) {
@@ -76,6 +90,8 @@ export function useReferenceEdit() {
           "파일 크기가 너무 큽니다. 파일당 20MB 이하로 업로드해주세요.",
           "error"
         );
+      } else if (error.message) {
+        showToast(error.message, "error");
       } else {
         showToast("레퍼런스 수정에 실패했습니다.", "error");
       }
