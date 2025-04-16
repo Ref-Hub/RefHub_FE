@@ -4,7 +4,7 @@ import {
   Link,
   Image as ImageIcon,
   FileText,
-  File as FileIcon, // 이미 이렇게 수정되어 있음
+  File as FileIcon,
   X,
   Plus,
   GripVertical,
@@ -17,6 +17,7 @@ interface FileItem {
   type: "link" | "image" | "pdf" | "file";
   content: string;
   name?: string;
+  originalPath?: string; // 원본 파일 경로 저장 속성
 }
 
 interface FileContent {
@@ -28,20 +29,21 @@ interface FileUploadProps {
   files: FileItem[];
   onChange: (files: FileItem[]) => void;
   maxFiles?: number;
-  disabled?: boolean; // 추가
+  disabled?: boolean;
 }
 
 export default function FileUpload({
   files,
   onChange,
   maxFiles = 5,
+  disabled = false,
 }: FileUploadProps) {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<{
     url: string;
     name?: string;
-    downloadUrl?: string; 
+    downloadUrl?: string;
   } | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -50,7 +52,7 @@ export default function FileUpload({
     [key: string]: string;
   }>({});
 
-  // 링크 유효성 검사 함수 추가
+  // 링크 유효성 검사 함수
   const validateLink = (url: string): boolean => {
     if (!url) return true; // 빈 링크는 다른 곳에서 검증
     return url.startsWith("http://") || url.startsWith("https://");
@@ -65,20 +67,17 @@ export default function FileUpload({
     onChange([...files, { id: Date.now().toString(), type, content: "" }]);
   };
 
-  // src/components/reference/FileUpload.tsx
-  // 수정된 validateFile 함수:
-
   const validateFile = (
     file: File,
     type: "image" | "pdf" | "file"
   ): boolean => {
-    // 파일 크기 제한만 유지 (20MB)
+    // 파일 크기 제한 (20MB)
     if (file.size > 20 * 1024 * 1024) {
       showToast("20MB 이하 파일만 첨부 가능합니다.", "error");
       return false;
     }
 
-    // 이미지 타입으로 지정된 경우 이미지 형식 검사
+    // 이미지 타입 검사
     if (type === "image") {
       const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
       const allowedImageTypes = [
@@ -88,11 +87,9 @@ export default function FileUpload({
         "image/webp",
       ];
 
-      // 파일명에서 확장자 추출
       const fileName = file.name.toLowerCase();
       const fileExt = fileName.substring(fileName.lastIndexOf("."));
 
-      // 확장자나 MIME 타입 중 하나라도 일치하면 통과
       if (
         !allowedImageExtensions.includes(fileExt) &&
         !allowedImageTypes.includes(file.type)
@@ -105,7 +102,7 @@ export default function FileUpload({
       }
     }
 
-    // PDF 타입으로 지정된 경우 PDF 형식 검사
+    // PDF 타입 검사
     if (type === "pdf") {
       const fileExt = file.name
         .toLowerCase()
@@ -116,7 +113,6 @@ export default function FileUpload({
       }
     }
 
-    // 파일 타입일 경우 모든 형식 허용
     return true;
   };
 
@@ -134,8 +130,6 @@ export default function FileUpload({
     handleFileUpload(droppedFiles, index);
   };
 
-  // src/components/reference/FileUpload.tsx - handleFileUpload 함수 수정
-  // src/components/reference/FileUpload.tsx 수정
   const handleFileUpload = async (uploadedFiles: FileList, index: number) => {
     try {
       const fileType = files[index].type;
@@ -145,21 +139,20 @@ export default function FileUpload({
         if (!validateFile(file, fileType as "image" | "pdf" | "file")) continue;
 
         const content = await readFileAsDataURL(file);
-        contents.push(content); // 이제 url과 name을 모두 포함
+        contents.push(content);
       }
 
       if (contents.length > 0) {
         if (fileType === "image") {
-          // 명시적으로 FileContent[] 타입 지정
           let existingImages: FileContent[] = [];
 
-          // 기존 이미지가 있는지 확인
+          // 기존 이미지 데이터 파싱
           if (files[index].content) {
             try {
               existingImages = JSON.parse(
                 files[index].content
               ) as FileContent[];
-              // 이미지 URL이 base64인지 검증
+
               existingImages = existingImages.filter(
                 (img) =>
                   img.url &&
@@ -186,7 +179,7 @@ export default function FileUpload({
           };
           onChange(updatedFiles);
         } else {
-          // For non-image files, just use the first file
+          // 비이미지 파일은 첫 번째 파일만 사용
           const updatedFiles = [...files];
           updatedFiles[index] = {
             ...files[index],
@@ -197,6 +190,7 @@ export default function FileUpload({
         }
       }
     } catch (error) {
+      console.error("파일 업로드 오류:", error);
       showToast("파일 업로드에 실패했습니다.", "error");
     }
   };
@@ -209,7 +203,7 @@ export default function FileUpload({
       reader.onload = () =>
         resolve({
           url: reader.result as string,
-          name: file.name, // 원본 파일명 저장
+          name: file.name,
         });
       reader.onerror = reject;
       reader.readAsDataURL(file);
@@ -245,38 +239,68 @@ export default function FileUpload({
   const getAcceptTypes = (type: FileItem["type"]) => {
     switch (type) {
       case "image":
-        // macOS의 파일 선택기에서 올바르게 동작하도록 확장자 명시적 지정
-        // 참고: 확장자에는 점(.)을 포함해야 함
         return ".jpg,.jpeg,.png,.gif,.webp";
       case "pdf":
-        // PDF 파일만 표시되도록 확장자 지정
         return ".pdf";
       case "file":
-        // 모든 파일 타입 허용 (이미지, PDF 포함)
-        // 일반적인 문서 파일과 미디어 파일 확장자 추가
         return ".doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.jpg,.jpeg,.png,.gif,.webp,.pdf";
       default:
         return "";
     }
   };
 
+  // 수정: 파일 삭제 함수 개선
   const handleRemoveFile = (index: number, imageIndex?: number) => {
     try {
-      if (typeof imageIndex === "number") {
-        // Remove specific image from multiple images
+      if (typeof imageIndex === "number" && files[index].type === "image") {
+        // 특정 이미지 삭제 (이미지 리스트에서)
         const updatedFiles = [...files];
-        const images = JSON.parse(updatedFiles[index].content) as FileContent[];
-        images.splice(imageIndex, 1);
-        updatedFiles[index] = {
-          ...updatedFiles[index],
-          content: JSON.stringify(images),
-        };
-        onChange(updatedFiles);
+        try {
+          // 원본 경로 보존
+          const originalPath = updatedFiles[index].originalPath;
+
+          // 이미지 파싱 시도
+          const images = JSON.parse(
+            updatedFiles[index].content
+          ) as FileContent[];
+          console.log(
+            "Removing image from list - Before:",
+            images.length,
+            "images"
+          );
+
+          // 특정 이미지 제거
+          images.splice(imageIndex, 1);
+          console.log("After removal:", images.length, "images remain");
+
+          if (images.length === 0) {
+            // 모든 이미지가 삭제된 경우 전체 파일 항목 삭제
+            console.log("All images removed, removing entire file item");
+            onChange(files.filter((_, i) => i !== index));
+          } else {
+            // 이미지가 남아있는 경우 업데이트, 원본 경로 유지
+            updatedFiles[index] = {
+              ...updatedFiles[index],
+              content: JSON.stringify(images),
+              originalPath, // 원본 경로 명시적 유지
+            };
+            console.log(
+              "Updating with remaining images, keeping originalPath:",
+              originalPath
+            );
+            onChange(updatedFiles);
+          }
+        } catch (error) {
+          console.error("이미지 데이터 파싱 오류:", error);
+          showToast("이미지 삭제에 실패했습니다.", "error");
+        }
       } else {
-        // Remove entire file item
+        // 전체 파일 항목 삭제
+        console.log("Removing entire file item at index:", index);
         onChange(files.filter((_, i) => i !== index));
       }
-    } catch {
+    } catch (error) {
+      console.error("파일 삭제 실패:", error);
       showToast("파일 삭제에 실패했습니다.", "error");
     }
   };
@@ -374,6 +398,7 @@ export default function FileUpload({
                 ? "focus:border-red-500"
                 : "focus:border-[#62BA9B]"
             }`}
+            disabled={disabled}
           />
 
           {/* 오류 메시지가 있을 때만 공간 추가 */}
@@ -391,6 +416,12 @@ export default function FileUpload({
     if (file.type === "image" && file.content) {
       try {
         const images = JSON.parse(file.content) as FileContent[];
+        console.log(
+          `Rendering image list for index ${index}, images:`,
+          images.length,
+          "originalPath:",
+          file.originalPath
+        );
         return (
           <div className="space-y-2">
             <div className="flex flex-wrap gap-2">
@@ -408,16 +439,24 @@ export default function FileUpload({
                       })
                     }
                   />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveFile(index, imageIndex)}
-                    className="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-4 h-4 text-gray-600" />
-                  </button>
+                  {!disabled && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation(); // 이벤트 버블링 방지
+                        console.log(
+                          `Removing image at index ${imageIndex} from file at index ${index}`
+                        );
+                        handleRemoveFile(index, imageIndex);
+                      }}
+                      className="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    >
+                      <X className="w-4 h-4 text-gray-600" />
+                    </button>
+                  )}
                 </div>
               ))}
-              {images.length < 5 && (
+              {images.length < 5 && !disabled && (
                 <label
                   className="w-20 h-20 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors cursor-pointer"
                   onDragOver={(e) => e.preventDefault()}
@@ -429,6 +468,7 @@ export default function FileUpload({
                     multiple={file.type === "image"}
                     className="hidden"
                     onChange={(e) => handleFileChange(e, index)}
+                    disabled={disabled}
                   />
                   <Plus className="w-6 h-6 text-gray-400" />
                 </label>
@@ -439,31 +479,61 @@ export default function FileUpload({
             </p>
           </div>
         );
-      } catch {
-        return null;
+      } catch (error) {
+        console.error("이미지 렌더링 에러:", error, file.content);
+        // 렌더링 오류 시에도 빈 이미지 리스트 표시하여 추가 가능하도록
+        return (
+          <div className="space-y-2">
+            <p className="text-sm text-red-500">
+              이미지 데이터 로드 오류, 다시 시도해주세요.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <label
+                className="w-20 h-20 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors cursor-pointer"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => handleDrop(e, index)}
+              >
+                <input
+                  type="file"
+                  accept={getAcceptTypes(file.type)}
+                  multiple={file.type === "image"}
+                  className="hidden"
+                  onChange={(e) => handleFileChange(e, index)}
+                  disabled={disabled}
+                />
+                <Plus className="w-6 h-6 text-gray-400" />
+              </label>
+            </div>
+          </div>
+        );
       }
     }
 
     return file.content ? (
       <div className="flex items-start gap-4">
         {renderFilePreview(file)}
-        <label
-          className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors cursor-pointer text-sm text-gray-600"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => handleDrop(e, index)}
-        >
-          <input
-            type="file"
-            accept={file.type === "pdf" ? ".pdf" : undefined}
-            className="hidden"
-            onChange={(e) => handleFileChange(e, index)}
-          />
-          파일 변경
-        </label>
+        {!disabled && (
+          <label
+            className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors cursor-pointer text-sm text-gray-600"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleDrop(e, index)}
+          >
+            <input
+              type="file"
+              accept={file.type === "pdf" ? ".pdf" : undefined}
+              className="hidden"
+              onChange={(e) => handleFileChange(e, index)}
+              disabled={disabled}
+            />
+            파일 변경
+          </label>
+        )}
       </div>
     ) : (
       <label
-        className="flex-1 flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors cursor-pointer"
+        className={`flex-1 flex items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#62BA9B] transition-colors ${
+          !disabled ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+        }`}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => handleDrop(e, index)}
       >
@@ -472,6 +542,7 @@ export default function FileUpload({
           accept={file.type === "pdf" ? ".pdf" : undefined}
           className="hidden"
           onChange={(e) => handleFileChange(e, index)}
+          disabled={disabled}
         />
         <div className="flex flex-col items-center gap-2 text-gray-500">
           <Plus className="w-6 h-6" />
@@ -489,18 +560,24 @@ export default function FileUpload({
         {files.map((file, index) => (
           <div
             key={file.id}
-            draggable
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragOver={(e) => handleDragOver(e, index)}
+            draggable={!disabled}
+            onDragStart={(e) => !disabled && handleDragStart(e, index)}
+            onDragOver={(e) => !disabled && handleDragOver(e, index)}
             onDragEnd={handleDragEnd}
             className={`flex items-start gap-4 p-4 bg-white border border-gray-100 shadow-[0px_0px_10px_0px_rgba(0,0,0,0.05)] rounded-lg hover:border-[#62BA9B] transition-colors ${
               draggedIndex === index ? "opacity-50" : ""
-            }`}
+            } ${disabled ? "opacity-75" : ""}`}
+            data-file-type={file.type}
+            data-file-index={index}
           >
             {/* 드래그 핸들 + 타입 선택기를 감싸는 컨테이너 */}
             <div className="flex flex-col">
               <div className="flex gap-4 items-center">
-                <GripVertical className="cursor-move text-gray-400 hover:text-gray-600" />
+                <GripVertical
+                  className={`cursor-move text-gray-400 hover:text-gray-600 ${
+                    disabled ? "opacity-50" : ""
+                  }`}
+                />
 
                 {/* File Type Selector */}
                 <div className="relative w-32">
@@ -512,7 +589,10 @@ export default function FileUpload({
                         e.target.value as FileItem["type"]
                       )
                     }
-                    className="w-full h-[50px] appearance-none bg-white text-gray-700 border border-gray-200 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:border-[#62BA9B]"
+                    className={`w-full h-[50px] appearance-none bg-white text-gray-700 border border-gray-200 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:border-[#62BA9B] ${
+                      disabled ? "opacity-75 cursor-not-allowed" : ""
+                    }`}
+                    disabled={disabled}
                   >
                     <option value="link">링크</option>
                     <option value="image">이미지</option>
@@ -546,12 +626,16 @@ export default function FileUpload({
             {/* File Content */}
             <div className="flex-1">{renderUploadField(file, index)}</div>
 
-            {/* Remove Button */}
+            {/* Remove Button - 수정: 클릭 이벤트 버블링 방지를 위해 stopPropagation 추가 */}
             <button
               type="button"
-              onClick={() => handleRemoveFile(index)}
-              disabled={files.length === 1}
-              className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:hover:text-gray-400"
+              onClick={(e) => {
+                e.stopPropagation(); // 이벤트 버블링 방지
+                handleRemoveFile(index);
+              }}
+              disabled={files.length === 1 || disabled}
+              className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:hover:text-gray-400 z-10"
+              data-testid={`remove-file-${index}`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -560,7 +644,7 @@ export default function FileUpload({
       </div>
 
       {/* Add File Buttons */}
-      {files.length < maxFiles && (
+      {files.length < maxFiles && !disabled && (
         <div className="flex flex-col items-center gap-3">
           <p>자료 추가</p>
           <div className="flex gap-4 justify-center">
@@ -570,12 +654,18 @@ export default function FileUpload({
               { type: "pdf" as const, icon: FileText, label: "PDF" },
               { type: "file" as const, icon: FileIcon, label: "파일" },
             ].map(({ type, icon: Icon, label }) => (
-              <div className="flex flex-col items-center gap-2 hover:text-[#62BA9B] transition-colors">
+              <div
+                key={type}
+                className="flex flex-col items-center gap-2 hover:text-[#62BA9B] transition-colors"
+              >
                 <button
-                  key={type}
                   type="button"
-                  onClick={() => handleAddFileField(type)}
+                  onClick={(e) => {
+                    e.preventDefault(); // 이벤트 기본 동작 방지
+                    handleAddFileField(type);
+                  }}
                   className="p-5 bg-white rounded-full border border-gray-200 hover:border-[#62BA9B]"
+                  disabled={disabled}
                 >
                   <Icon className="w-6 h-5=6" />
                 </button>

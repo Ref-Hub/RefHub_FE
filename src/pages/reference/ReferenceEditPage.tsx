@@ -32,6 +32,7 @@ export default function ReferenceEditPage() {
   const [isLoadingCollections, setIsLoadingCollections] =
     useState<boolean>(false);
   const [collections, setCollections] = useState<CollectionCard[]>([]);
+  const [originalFiles, setOriginalFiles] = useState<any[]>([]); // 원본 파일 상태 저장용
 
   const [formData, setFormData] = useState<FormData>({
     collection: "",
@@ -60,7 +61,11 @@ export default function ReferenceEditPage() {
         setIsLoading(true);
         const reference = await referenceService.getReference(referenceId);
 
-        console.log("Original reference data:", reference);
+        console.log(
+          "==================== Original reference data ===================="
+        );
+        console.log(JSON.stringify(reference, null, 2));
+        setOriginalFiles(reference.files); // 원본 파일 정보 저장
 
         // 파일 데이터 변환
         const convertedFiles: CreateReferenceFile[] = await Promise.all(
@@ -78,6 +83,7 @@ export default function ReferenceEditPage() {
             console.log(
               `Converting file type ${file.type} with path: ${file.path}`
             );
+            console.log(`File details: ${JSON.stringify(file, null, 2)}`);
 
             if (file.type === "link") {
               return {
@@ -110,7 +116,10 @@ export default function ReferenceEditPage() {
           })
         );
 
-        console.log("Converted files with originalPaths:", convertedFiles);
+        console.log(
+          "==================== Converted files ===================="
+        );
+        console.log(JSON.stringify(convertedFiles, null, 2));
 
         // 폼 데이터 설정
         setFormData({
@@ -163,11 +172,35 @@ export default function ReferenceEditPage() {
     fetchCollections();
   }, [showToast]);
 
+  // 각 상태 변화시 디버깅 로깅
+  useEffect(() => {
+    console.log("==================== Form Data Updated ====================");
+    console.log("Collection:", formData.collection);
+    console.log("Title:", formData.title);
+    console.log("Keywords:", formData.keywords);
+    console.log("Files count:", formData.files.length);
+    console.log(
+      "Files:",
+      formData.files.map((file) => ({
+        id: file.id,
+        type: file.type,
+        originalPath: file.originalPath,
+        contentPreview:
+          file.content.substring(0, 50) +
+          (file.content.length > 50 ? "..." : ""),
+      }))
+    );
+  }, [formData]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
       setIsSubmitting(true);
+      console.log(
+        "==================== Form Submission Started ===================="
+      );
+      console.log("Form data at submission:", formData);
 
       // Validation
       if (!formData.collection) {
@@ -207,13 +240,34 @@ export default function ReferenceEditPage() {
         return;
       }
 
+      // 기존 파일과 새 파일의 비교 로깅
+      console.log(
+        "==================== Original vs Current Files ===================="
+      );
+      console.log("Original files:", originalFiles);
+      console.log("Current files:", formData.files);
+
+      // 유지된 파일과 삭제된 파일 계산
+      const originalPaths = originalFiles.map((file) => file.path);
+      const keptPaths = formData.files
+        .filter((file) => file.originalPath)
+        .map((file) => file.originalPath);
+
+      console.log("Original paths:", originalPaths);
+      console.log("Kept paths:", keptPaths);
+      console.log(
+        "Removed paths:",
+        originalPaths.filter((path) => !keptPaths.includes(path))
+      );
+
       // 파일 데이터 준비
       const filesFormData = referenceService.prepareFilesFormData(
         formData.files
       );
 
       // 디버깅 로그 추가
-      console.log("Files being sent:", formData.files);
+      console.log("==================== Files being sent ====================");
+      console.log("Files for API request:", formData.files);
       console.log(
         "FormData entries:",
         [...filesFormData.entries()].map(([key, value]) =>
@@ -237,11 +291,15 @@ export default function ReferenceEditPage() {
         updateData
       );
 
+      console.log("==================== API Response ====================");
+      console.log("Update response:", response);
+
       if (response) {
         showToast("레퍼런스가 수정되었습니다.", "success");
         navigate(`/references/${referenceId}`);
       }
     } catch (error) {
+      console.error("==================== Update Error ====================");
       console.error("Error updating reference:", error);
       showToast("레퍼런스 수정에 실패했습니다.", "error");
     } finally {
@@ -387,7 +445,22 @@ export default function ReferenceEditPage() {
             <div>
               <FileUpload
                 files={formData.files}
-                onChange={(files) => setFormData({ ...formData, files })}
+                // FileUpload.tsx의 onChange 핸들러에 추가
+                onChange={(files) => {
+                  console.log(
+                    "FileUpload onChange triggered with:",
+                    files.length,
+                    "files"
+                  );
+                  console.log(
+                    "Files with originalPaths:",
+                    files.map((f) => ({
+                      type: f.type,
+                      originalPath: f.originalPath,
+                    }))
+                  );
+                  setFormData({ ...formData, files });
+                }}
                 maxFiles={5}
                 disabled={isSubmitting}
               />
