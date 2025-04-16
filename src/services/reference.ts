@@ -129,7 +129,7 @@ class ReferenceService {
     } catch (error) {
       console.error("URL 변환 오류:", error);
       // 무한 루프 방지: placeholder를 이미 요청 중인지 확인
-      if (url.includes("placeholder")) {
+      if (url?.includes("placeholder")) {
         // 무한 루프 방지를 위해 빈 문자열 반환
         return "";
       }
@@ -142,11 +142,14 @@ class ReferenceService {
     params: GetReferenceParams
   ): Promise<ReferenceListResponse> {
     try {
+      console.log("Getting reference list with params:", params);
       const response = await api.get<ReferenceListResponse>("/api/references", {
         params,
       });
+      console.log("Reference list response:", response.data);
       return response.data;
     } catch (error) {
+      console.error("Failed to get reference list:", error);
       throw handleApiError(error);
     }
   }
@@ -154,10 +157,12 @@ class ReferenceService {
   // 단일 레퍼런스 조회
   async getReference(id: string): Promise<Reference> {
     try {
+      console.log("Getting reference details for ID:", id);
       const response = await api.get<ReferenceDetailResponse>(
         `/api/references/${id}`
       );
       const { referenceDetail } = response.data;
+      console.log("Reference details response:", referenceDetail);
 
       return {
         _id: id,
@@ -193,7 +198,7 @@ class ReferenceService {
         ),
       };
     } catch (error) {
-      console.error("getReference API Error:", error);
+      console.error("Failed to get reference details:", error);
       throw handleApiError(error);
     }
   }
@@ -201,12 +206,15 @@ class ReferenceService {
   // 레퍼런스 이동
   async moveReference(ids: string[], title: string): Promise<void> {
     try {
+      console.log("Moving references:", { ids, newCollection: title });
       const response = await api.patch(`/api/references`, {
         referenceIds: ids,
         newCollection: title,
       });
+      console.log("Move reference response:", response.data);
       return response.data;
     } catch (error) {
+      console.error("Failed to move references:", error);
       throw handleApiError(error);
     }
   }
@@ -220,6 +228,21 @@ class ReferenceService {
     files,
   }: UpdateReferenceRequest): Promise<CreateReferenceResponse> {
     try {
+      console.log("Creating reference:", {
+        collectionId,
+        title,
+        keywords,
+        memo,
+      });
+      console.log(
+        "Files FormData entries:",
+        [...files.entries()].map(([key, value]) =>
+          typeof value === "string"
+            ? { key, value }
+            : { key, type: "File/Blob" }
+        )
+      );
+
       const formData = new FormData();
       formData.append("collectionId", collectionId);
       formData.append("title", title);
@@ -247,8 +270,10 @@ class ReferenceService {
         }
       );
 
+      console.log("Create reference response:", response.data);
       return response.data;
     } catch (error) {
+      console.error("Failed to create reference:", error);
       throw handleApiError(error);
     }
   }
@@ -259,6 +284,14 @@ class ReferenceService {
     { collectionId, title, keywords, memo, files }: UpdateReferenceRequest
   ): Promise<ReferenceResponse> {
     try {
+      console.log("Updating reference:", {
+        id,
+        collectionId,
+        title,
+        keywords,
+        memo,
+      });
+
       const formData = new FormData();
       formData.append("collectionId", collectionId);
       formData.append("title", title);
@@ -276,12 +309,24 @@ class ReferenceService {
         formData.append(key, value);
       }
 
-      console.log("Updating reference with data:", {
-        id,
-        collectionId,
-        title,
-        formDataKeys: [...files.keys()],
-      });
+      // FormData 내용 디버깅 (파일은 [File Object]로 표시)
+      console.log("Update FormData keys:", [...formData.keys()]);
+      const formDataDebug = Object.fromEntries(
+        [...formData.entries()].map(([key, value]) => [
+          key,
+          typeof value === "object" &&
+          value !== null &&
+          ((typeof File !== "undefined" && value instanceof File) ||
+            (typeof Blob !== "undefined" && "size" in value && "type" in value))
+            ? `[${
+                typeof File !== "undefined" && value instanceof File
+                  ? "File"
+                  : "Blob"
+              } Object]`
+            : value,
+        ])
+      );
+      console.log("Update FormData content:", formDataDebug);
 
       const response = await api.patch<ReferenceResponse>(
         `/api/references/${id}`,
@@ -293,8 +338,10 @@ class ReferenceService {
         }
       );
 
+      console.log("Update reference response:", response.data);
       return response.data;
     } catch (error) {
+      console.error("Failed to update reference:", error);
       throw handleApiError(error);
     }
   }
@@ -302,8 +349,11 @@ class ReferenceService {
   // 레퍼런스 삭제
   async deleteReference(id: string): Promise<void> {
     try {
+      console.log("Deleting reference:", id);
       await api.delete(`/api/references/${id}`);
+      console.log("Reference deleted successfully");
     } catch (error) {
+      console.error("Failed to delete reference:", error);
       throw handleApiError(error);
     }
   }
@@ -311,18 +361,20 @@ class ReferenceService {
   // 레퍼런스 여러개 삭제
   async deleteReferences(ids: string[]): Promise<void> {
     try {
+      console.log("Deleting multiple references:", ids);
       await api.delete("/api/references", {
         data: { referenceIds: ids },
       });
+      console.log("Multiple references deleted successfully");
     } catch (error) {
+      console.error("Failed to delete multiple references:", error);
       throw handleApiError(error);
     }
   }
 
-  // src/services/reference.ts - prepareFilesFormData method improvement
-
-  // 파일 데이터 준비
+  // 파일 데이터 준비 - 수정된 함수
   prepareFilesFormData(files: CreateReferenceFile[]): FormData {
+    console.log("Preparing files FormData from:", files);
     const formData = new FormData();
     let imageCount = 1;
 
@@ -336,112 +388,110 @@ class ReferenceService {
       return `${encodeURIComponent(nameWithoutExt)}.${ext}`;
     };
 
-    console.log("Files before processing:", files);
-
-    // 기존 파일 경로를 저장할 배열 - 각 파일 타입 별 처리를 위해 구조 개선
+    // 기존 파일 경로를 저장할 배열
     const existingFilePaths: string[] = [];
 
-    // 먼저 모든 기존 파일 경로들을 수집
-    files.forEach((file) => {
-      if (
-        file.originalPath &&
-        (file.content.startsWith("http://") ||
-          file.content.startsWith("https://") ||
-          file.type === "link")
-      ) {
-        existingFilePaths.push(file.originalPath);
-      }
-    });
-
-    files.forEach((file) => {
-      console.log("Processing file:", {
+    // 파일별 처리
+    files.forEach((file, index) => {
+      console.log(`Processing file ${index}:`, {
+        id: file.id,
         type: file.type,
         originalPath: file.originalPath,
-        content:
-          typeof file.content === "string"
-            ? file.content.substring(0, 50) +
-              (file.content.length > 50 ? "..." : "")
-            : "non-string content",
+        contentLength: file.content ? file.content.length : 0,
       });
 
       if (file.type === "link") {
-        // 링크는 새로운 링크면 추가, 원본 경로가 있는 기존 링크라면 이미 existingFilePaths에 추가됨
-        if (
-          file.content &&
-          (!file.originalPath || file.content !== file.originalPath)
-        ) {
-          formData.append("links", file.content);
-        }
+        // 링크는 그대로 추가
+        formData.append("links", file.content);
+        console.log("Added link:", file.content);
       } else if (file.type === "image") {
         try {
-          // 이미지 배열인지 확인
-          let images;
-          try {
-            images = JSON.parse(file.content);
-          } catch {
-            // 문자열이 아닌 경우 빈 배열로 처리
-            images = [];
+          // 이미지 파일이고 originalPath가 있는 경우, 무조건 기존 파일 경로에 추가
+          if (file.originalPath) {
+            existingFilePaths.push(file.originalPath);
+            console.log("Added existing image path:", file.originalPath);
           }
 
-          if (Array.isArray(images) && images.length > 0) {
-            // 기존 이미지와 새 이미지 분리
-            const existingImages = images.filter(
-              (img) =>
-                img.url &&
-                (img.url.startsWith("http://") ||
-                  img.url.startsWith("https://"))
-            );
-            const newImages = images.filter(
-              (img) => img.url && img.url.startsWith("data:")
-            );
+          // 이후 내용 파싱은 새로운 이미지가 있는지 확인하는 용도로만 사용
+          if (file.content) {
+            try {
+              const images = JSON.parse(file.content);
+              if (Array.isArray(images)) {
+                // blob: URL도 유효한 기존 이미지로 인식하도록 조건 수정
+                const existingImages = images.filter(
+                  (img) =>
+                    img.url &&
+                    (img.url.startsWith("http://") ||
+                      img.url.startsWith("https://") ||
+                      img.url.startsWith("blob:"))
+                );
+                // 새 이미지만 필터링 (data: 시작하는 것만)
+                const newImages = images.filter(
+                  (img) => img.url && img.url.startsWith("data:")
+                );
 
-            // 기존 이미지 처리 - 원본 파일 경로가 있으면 유지
-            if (existingImages.length > 0 && file.originalPath) {
-              // 이미 existingFilePaths에 추가되어 있음
-              console.log("Found existing image with path:", file.originalPath);
-            }
+                console.log("Image processing:", {
+                  keepingOriginalPath: !!file.originalPath,
+                  existingCount: existingImages.length,
+                  newCount: newImages.length,
+                });
 
-            // 새 이미지 처리
-            if (newImages.length > 0) {
-              const imageFiles: File[] = [];
+                // 새 이미지 처리
+                if (newImages.length > 0) {
+                  const imageFiles: File[] = [];
 
-              for (const image of newImages) {
-                try {
-                  const blobData = this.base64ToBlob(image.url);
-                  const originalName = image.name || `image${imageCount}.png`;
-                  const encodedFileName =
-                    normalizeAndEncodeFileName(originalName);
+                  for (const image of newImages) {
+                    try {
+                      const blobData = this.base64ToBlob(image.url);
+                      const originalName =
+                        image.name || `image${imageCount}.png`;
+                      const encodedFileName =
+                        normalizeAndEncodeFileName(originalName);
 
-                  // Blob에서 File 객체 생성
-                  const imageFile = new File([blobData], encodedFileName, {
-                    type: blobData.type,
-                  });
+                      // Blob에서 File 객체 생성
+                      const imageFile = new File([blobData], encodedFileName, {
+                        type: blobData.type,
+                      });
 
-                  imageFiles.push(imageFile);
-                } catch (error) {
-                  console.error("이미지 처리 오류:", error);
+                      imageFiles.push(imageFile);
+                      console.log("Created new image file:", encodedFileName);
+                    } catch (error) {
+                      console.error("이미지 처리 오류:", error);
+                    }
+                  }
+
+                  // 이미지 파일들을 FormData에 추가
+                  if (imageFiles.length > 0) {
+                    for (const imgFile of imageFiles) {
+                      formData.append(`images${imageCount}`, imgFile);
+                      console.log(
+                        `Added new image to FormData as images${imageCount}:`,
+                        imgFile.name
+                      );
+                    }
+                    imageCount++;
+                  }
                 }
               }
-
-              // 이미지 파일들을 FormData에 추가
-              if (imageFiles.length > 0) {
-                for (const imgFile of imageFiles) {
-                  formData.append(`images${imageCount}`, imgFile);
-                }
-                imageCount++;
-              }
+            } catch (error) {
+              console.error(
+                "이미지 데이터 파싱 실패, 원본 경로는 유지됩니다:",
+                error,
+                file.content ? file.content.substring(0, 100) : "empty content"
+              );
+              // 파싱에 실패하더라도 원본 경로는 유지
             }
           }
         } catch (error) {
-          console.error(
-            "이미지 데이터 파싱 실패:",
-            error,
-            file.content
-              ? typeof file.content === "string"
-                ? file.content.substring(0, 100)
-                : "non-string content"
-              : "empty content"
-          );
+          console.error("이미지 처리 중 오류:", error);
+          // 오류가 발생해도 원본 경로가 있으면 유지
+          if (file.originalPath) {
+            existingFilePaths.push(file.originalPath);
+            console.log(
+              "Error occurred but kept existing image path:",
+              file.originalPath
+            );
+          }
         }
       } else if (file.type === "pdf") {
         if (file.content.startsWith("data:")) {
@@ -450,8 +500,19 @@ class ReferenceService {
           const fileName = file.name || "document.pdf";
           const encodedFileName = normalizeAndEncodeFileName(fileName);
           formData.append("files", blobData, encodedFileName);
+          console.log("Added new PDF file:", encodedFileName);
+        } else if (
+          file.content.startsWith("http://") ||
+          file.content.startsWith("https://") ||
+          file.content.startsWith("blob:")
+        ) {
+          // 기존 PDF 파일 - 원본 경로 사용
+          const pathToUse = file.originalPath || file.content;
+          if (pathToUse) {
+            existingFilePaths.push(pathToUse);
+            console.log("Added existing PDF path:", pathToUse);
+          }
         }
-        // 기존 PDF 파일은 originalPath가 이미 existingFilePaths에 추가됨
       } else if (file.type === "file") {
         if (file.content.startsWith("data:")) {
           // 새 일반 파일
@@ -459,43 +520,39 @@ class ReferenceService {
           const fileName = file.name || "file";
           const encodedFileName = normalizeAndEncodeFileName(fileName);
           formData.append("otherFiles", blobData, encodedFileName);
+          console.log("Added new file:", encodedFileName);
+        } else if (
+          file.content.startsWith("http://") ||
+          file.content.startsWith("https://") ||
+          file.content.startsWith("blob:")
+        ) {
+          // 기존 일반 파일 - 원본 경로 사용
+          const pathToUse = file.originalPath || file.content;
+          if (pathToUse) {
+            existingFilePaths.push(pathToUse);
+            console.log("Added existing file path:", pathToUse);
+          }
         }
-        // 기존 일반 파일은 originalPath가 이미 existingFilePaths에 추가됨
       }
     });
 
-    // 기존 파일 정보를 FormData에 추가 - 중복 제거
+    // 기존 파일 정보를 FormData에 추가
     if (existingFilePaths.length > 0) {
-      const uniquePaths = [...new Set(existingFilePaths)];
-      formData.append("existingFiles", JSON.stringify(uniquePaths));
-      console.log("Existing files to keep:", uniquePaths);
+      console.log(
+        "Existing files to keep (before JSON.stringify):",
+        existingFilePaths
+      );
+      formData.append("existingFiles", JSON.stringify(existingFilePaths));
+      console.log(
+        "Added existingFiles to FormData:",
+        JSON.stringify(existingFilePaths)
+      );
     } else {
       console.warn("No existing files found to preserve!");
-      // 빈 배열을 전송하여 모든 파일이 삭제되도록 함
-      formData.append("existingFiles", JSON.stringify([]));
     }
 
     // FormData에 들어간 모든 키 출력
-    console.log("FormData keys:", [...formData.keys()]);
-
-    // FormData 내용 로깅 (파일 객체는 '[File Object]'로 표시)
-    const formDataDebug = Object.fromEntries(
-      [...formData.entries()].map(([key, value]) => [
-        key,
-        // Blob 체크 로직 수정
-        typeof value === "object" &&
-        value !== null &&
-        ((typeof File !== "undefined" && value instanceof File) ||
-          (typeof Blob !== "undefined" && "size" in value && "type" in value))
-          ? `[${
-              typeof File !== "undefined" && value instanceof File
-                ? "File"
-                : "Blob"
-            } Object]`
-          : value,
-      ])
-    );
-    console.log("FormData content:", formDataDebug);
+    console.log("Final FormData keys:", [...formData.keys()]);
 
     return formData;
   }
