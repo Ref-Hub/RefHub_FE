@@ -1,5 +1,5 @@
 // src/components/reference/FileUpload.tsx
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import {
   Link,
   Image as ImageIcon,
