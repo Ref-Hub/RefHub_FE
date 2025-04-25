@@ -5,8 +5,9 @@ import { VitePWA } from "vite-plugin-pwa";
 import { splitVendorChunkPlugin } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { visualizer } from "rollup-plugin-visualizer";
+import type { UserConfig } from "vite";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   plugins: [
     react(),
     splitVendorChunkPlugin(),
@@ -64,14 +65,31 @@ export default defineConfig(({ mode }) => ({
   build: {
     target: "esnext",
     minify: "terser",
-    sourcemap: mode === "development",
+    sourcemap: process.env.NODE_ENV === "development",
     assetsDir: "assets",
     rollupOptions: {
       output: {
-        manualChunks: {
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
-          "ui-vendor": ["@headlessui/react", "@heroicons/react"],
-          "utils-vendor": ["date-fns", "axios", "zustand"],
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (
+              id.includes("react") ||
+              id.includes("react-dom") ||
+              id.includes("react-router-dom")
+            ) {
+              return "react-vendor";
+            }
+            if (id.includes("@headlessui") || id.includes("@heroicons")) {
+              return "ui-vendor";
+            }
+            if (
+              id.includes("date-fns") ||
+              id.includes("axios") ||
+              id.includes("zustand")
+            ) {
+              return "utils-vendor";
+            }
+            return "vendor";
+          }
         },
         assetFileNames: (assetInfo) => {
           const info = assetInfo.name.split(".");
@@ -119,4 +137,4 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}));
+} as UserConfig);
