@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RecoilRoot } from "recoil";
 import { AuthProvider } from "@/components/layout/AuthProvider";
 import { ToastProvider } from "@/contexts/ToastProvider";
+import { LoadingProvider } from "@/components/LoadingProvider";
 import "./styles/globals.css";
 
 const queryClient = new QueryClient({
@@ -24,11 +25,13 @@ const App: React.FC = () => {
       <RecoilRoot>
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
-            <AuthProvider>
-              <BrowserRouter>
-                <AppRoutes />
-              </BrowserRouter>
-            </AuthProvider>
+            <LoadingProvider>
+              <AuthProvider>
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </AuthProvider>
+            </LoadingProvider>
           </ToastProvider>
         </QueryClientProvider>
       </RecoilRoot>
