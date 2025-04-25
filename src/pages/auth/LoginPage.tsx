@@ -1,7 +1,7 @@
 // src/pages/auth/LoginPage.tsx
-import { useState, useCallback, useEffect } from "react"; 
+import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom"; 
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import { Input } from "@/components/common/Input";
 import { authService } from "@/services/auth";
@@ -25,8 +25,6 @@ export default function LoginPage() {
     watch,
     formState: { errors },
   } = useForm<LoginForm>();
-
-
 
   const emailValue = watch("email");
   const passwordValue = watch("password");
@@ -154,6 +152,7 @@ export default function LoginPage() {
                   error={passwordError || errors.password?.message}
                   className="h-12 sm:h-14"
                   passwordOnly
+                  autoComplete="current-password"
                 />
               </div>
             </div>
