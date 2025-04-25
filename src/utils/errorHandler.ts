@@ -1,7 +1,4 @@
-// src/utils/errorHandler.ts
 import { AxiosError } from "axios";
-import type { ApiErrorResponse } from "@/types/auth";
-import type { ReferenceApiError } from "@/types/reference";
 
 export class AppError extends Error {
   constructor(
@@ -35,12 +32,6 @@ export const ERROR_MESSAGES = {
   },
 };
 
-// 오류 유형 확인 함수
-export const isAccountError = (message: string): boolean => {
-  const accountErrorMessages = Object.values(ERROR_MESSAGES.ACCOUNT);
-  return accountErrorMessages.some((errMsg) => message.includes(errMsg));
-};
-
 export const handleApiError = (error: unknown): AppError => {
   if (error instanceof AxiosError) {
     const statusCode = error.response?.status || 500;
@@ -63,14 +54,14 @@ export const isNetworkError = (error: unknown): boolean => {
 };
 
 export const isServerError = (error: unknown): boolean => {
-  return error instanceof AxiosError && error.response?.status >= 500;
+  return error instanceof AxiosError && (error.response?.status ?? 0) >= 500;
 };
 
 export const isClientError = (error: unknown): boolean => {
   return (
     error instanceof AxiosError &&
-    error.response?.status >= 400 &&
-    error.response?.status < 500
+    (error.response?.status ?? 0) >= 400 &&
+    (error.response?.status ?? 0) < 500
   );
 };
 
