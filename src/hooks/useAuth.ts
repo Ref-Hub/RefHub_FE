@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import { userState, authUtils } from "@/store/auth";
 import { authService } from "@/services/auth";
-import { ApiError } from "@/utils/errorHandler";
+import { AppError } from "@/utils/errorHandler";
 import { jwtDecode } from "jwt-decode";
 import type { LoginForm, SignupForm, User, TokenPayload } from "@/types/auth";
 
@@ -107,11 +107,7 @@ export const useAuth = () => {
       console.error("Login failed:", error);
       updateAuthState(null);
 
-      if (error instanceof ApiError) {
-        showToast(error.message, "error");
-      } else {
-        showToast("로그인에 실패했습니다.", "error");
-      }
+      handleError(error);
       throw error;
     }
   };
@@ -123,7 +119,7 @@ export const useAuth = () => {
       showToast("회원가입이 완료되었습니다. 로그인해주세요.", "success");
       navigate("/auth/login", { replace: true });
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (error instanceof AppError) {
         showToast(error.message, "error");
       } else {
         showToast("회원가입에 실패했습니다.", "error");
@@ -165,6 +161,16 @@ export const useAuth = () => {
     }
 
     return !!token && !!user;
+  };
+
+  const handleError = (error: unknown) => {
+    if (error instanceof AppError) {
+      showToast(error.message, "error");
+    } else if (error instanceof Error) {
+      showToast(error.message, "error");
+    } else {
+      showToast("An unexpected error occurred", "error");
+    }
   };
 
   return {

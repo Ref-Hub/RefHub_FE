@@ -12,7 +12,7 @@ import { collectionService } from "@/services/collection";
 import FloatingButton from "@/components/common/FloatingButton";
 import Dropdown from "@/components/common/Dropdown";
 import CollectionCard from "@/components/collection/CollectionCard";
-import { ApiError } from "@/utils/errorHandler";
+import { AppError } from "@/utils/errorHandler";
 import { FolderPlus } from "lucide-react";
 import { useToast } from "@/contexts/useToast";
 import Pagination from "@/components/collection/Pagination";
@@ -50,13 +50,7 @@ const CollectionPage: React.FC = () => {
       const response = await collectionService.getCollectionList(params);
       setCollectionData(response);
     } catch (error) {
-      if (error instanceof ApiError) {
-        showToast(error.message, "error");
-      } else if (error instanceof Error) {
-        showToast(error.message, "error");
-      } else {
-        showToast("컬렉션 가져오기를 실패했습니다.", "error");
-      }
+      handleError(error);
 
       // CollectionResponse 타입에 맞게 초기 상태 설정
       setCollectionData({
@@ -116,6 +110,16 @@ const CollectionPage: React.FC = () => {
     }
 
     setIsFloatOpen(false);
+  };
+
+  const handleError = (error: unknown) => {
+    if (error instanceof AppError) {
+      showToast(error.message, "error");
+    } else if (error instanceof Error) {
+      showToast(error.message, "error");
+    } else {
+      showToast("An unexpected error occurred", "error");
+    }
   };
 
   if (isLoading) {
