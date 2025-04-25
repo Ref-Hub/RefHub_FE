@@ -114,7 +114,14 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
         if (alert.ids.length === 1) {
           await referenceService.deleteReference(alert.ids[0]);
           showToast("삭제가 완료되었습니다.", "success");
-          navigate(-1);
+
+          // 상세 페이지에서 삭제한 경우 레퍼런스 목록으로 리디렉션
+          if (
+            window.location.pathname.includes(`/references/${alert.ids[0]}`)
+          ) {
+            navigate("/references");
+          }
+          // 그 외의 경우는 현재 페이지 유지 (리스트에서 삭제한 경우)
         } else {
           await referenceService.deleteReferences(alert.ids);
           showToast("삭제가 완료되었습니다.", "success");

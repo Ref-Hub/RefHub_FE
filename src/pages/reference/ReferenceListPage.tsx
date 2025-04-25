@@ -56,7 +56,7 @@ export default function ReferenceListPage() {
   const alertPrevIsOpen = useRef<boolean>(alert.isVisible);
   const modalPrevIsOpen = useRef<boolean>(modal.isOpen);
   const [isFloatOpen, setIsFloatOpen] = useState(false);
-  const [modeValue] = useRecoilState(floatingModeState);
+  const [modeValue, setModeValue] = useRecoilState(floatingModeState);
 
   // 컬렉션 데이터 로드
   useEffect(() => {
@@ -188,6 +188,17 @@ export default function ReferenceListPage() {
 
   useEffect(() => {
     if (alertPrevIsOpen.current === true && alert.isVisible === false) {
+      // 삭제 모드였던 경우 체크
+      if (modeValue.isDelete) {
+        // 삭제 작업 완료 후 모드 초기화
+        setModeValue((prev) => ({
+          ...prev,
+          isDelete: false,
+          checkItems: [],
+        }));
+      }
+
+      // 데이터 다시 로드 (삭제된 항목은 조회되지 않음)
       loadReferences();
     } else if (modalPrevIsOpen.current === true && modal.isOpen === false) {
       loadReferences();
@@ -195,7 +206,7 @@ export default function ReferenceListPage() {
 
     alertPrevIsOpen.current = alert.isVisible;
     modalPrevIsOpen.current = modal.isOpen;
-  }, [alert.isVisible, modal.isOpen]);
+  }, [alert.isVisible, modal.isOpen, modeValue.isDelete]);
 
   const handleFloating = (event: React.MouseEvent) => {
     if (!isFloatOpen) return;

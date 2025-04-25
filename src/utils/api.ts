@@ -53,14 +53,21 @@ api.interceptors.response.use(
                 if (!error.config.headers) {
                   error.config.headers = new AxiosHeaders();
                 }
-                error.config.headers.set('Authorization', `Bearer ${response.data.accessToken}`);
+                error.config.headers.set(
+                  "Authorization",
+                  `Bearer ${response.data.accessToken}`
+                );
                 return axios(error.config);
               }
             }
           }
         } catch (refreshError) {
           console.error("Token refresh failed:", refreshError);
-          // 수정된 부분: 토스트 메시지 표시 후 리디렉션
+
+          // 토큰 관련 데이터 정리
+          authUtils.clearAll();
+
+          // 토스트 메시지 표시를 위한 이벤트 발생
           const event = new CustomEvent("auth-error", {
             detail: {
               message: "유효하지 않은 토큰입니다. 다시 로그인해주세요.",
@@ -68,11 +75,9 @@ api.interceptors.response.use(
           });
           window.dispatchEvent(event);
 
-          authUtils.clearAll();
-          // 짧은 지연 후 리디렉션 실행
-          setTimeout(() => {
-            window.location.href = "/auth/login";
-          }, 100);
+          // 즉시 로그인 페이지로 리디렉션 (setTimeout 제거)
+          window.location.href = "/auth/login";
+
           return Promise.reject(refreshError);
         }
       }
