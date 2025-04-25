@@ -3,15 +3,14 @@ import { AxiosError } from "axios";
 import type { ApiErrorResponse } from "@/types/auth";
 import type { ReferenceApiError } from "@/types/reference";
 
-export class ApiError extends Error {
-  status: number;
-  code?: string;
-
-  constructor(message: string, status: number, code?: string) {
+export class AppError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public errorCode?: string
+  ) {
     super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.code = code;
+    this.name = "AppError";
   }
 }
 
@@ -42,66 +41,45 @@ export const isAccountError = (message: string): boolean => {
   return accountErrorMessages.some((errMsg) => message.includes(errMsg));
 };
 
-export const handleApiError = (error: unknown): never => {
-  console.error("API Error:", error);
-
+export const handleApiError = (error: unknown): AppError => {
   if (error instanceof AxiosError) {
-    const status = error.response?.status || 500;
-    const errorData = error.response?.data as
-      | ApiErrorResponse
-      | ReferenceApiError;
-    let message: string;
-
-    // API에서 반환하는 실제 에러 메시지를 우선적으로 사용
-    if (errorData) {
-      if (typeof errorData === "string") {
-        message = errorData;
-      } else if ("error" in errorData) {
-        message = errorData.error;
-      } else {
-        // 상태 코드별 기본 에러 메시지
-        switch (status) {
-          case 400:
-            // 계정 관련 오류 메시지 일관성 유지
-            message = ERROR_MESSAGES.ACCOUNT.INVALID_CREDENTIALS;
-            break;
-          case 401:
-            message = ERROR_MESSAGES.TECHNICAL.UNAUTHORIZED;
-            break;
-          case 403:
-            message = ERROR_MESSAGES.TECHNICAL.FORBIDDEN;
-            break;
-          case 404:
-            // 계정 관련 404 처리
-            if (error.config?.url?.includes("/api/users")) {
-              message = ERROR_MESSAGES.ACCOUNT.NOT_FOUND;
-            } else {
-              message = ERROR_MESSAGES.TECHNICAL.NOT_FOUND;
-            }
-            break;
-          case 413:
-            message = ERROR_MESSAGES.TECHNICAL.FILE_SIZE_EXCEEDED;
-            break;
-          case 415:
-            message = ERROR_MESSAGES.TECHNICAL.INVALID_FILE_TYPE;
-            break;
-          case 422:
-            message = ERROR_MESSAGES.TECHNICAL.VALIDATION_ERROR;
-            break;
-          case 500:
-            message = ERROR_MESSAGES.TECHNICAL.SERVER_ERROR;
-            break;
-          default:
-            message = error.message || ERROR_MESSAGES.TECHNICAL.DEFAULT;
-        }
-      }
-      throw new ApiError(message, status, error.code);
-    }
+    const statusCode = error.response?.status || 500;
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      "An unexpected error occurred";
+    return new AppError(message, statusCode, error.response?.data?.code);
   }
 
+  if (error instanceof AppError) {
+    return error;
+  }
+
+  return new AppError("An unexpected error occurred", 500);
+};
+
+export const isNetworkError = (error: unknown): boolean => {
+  return error instanceof AxiosError && !error.response;
+};
+
+export const isServerError = (error: unknown): boolean => {
+  return error instanceof AxiosError && error.response?.status >= 500;
+};
+
+export const isClientError = (error: unknown): boolean => {
+  return (
+    error instanceof AxiosError &&
+    error.response?.status >= 400 &&
+    error.response?.status < 500
+  );
+};
+
+export const getErrorMessage = (error: unknown): string => {
+  if (error instanceof AppError) {
+    return error.message;
+  }
   if (error instanceof Error) {
-    throw new ApiError(error.message, 500);
+    return error.message;
   }
-
-  throw new ApiError(ERROR_MESSAGES.TECHNICAL.DEFAULT, 500);
+  return "An unexpected error occurred";
 };
