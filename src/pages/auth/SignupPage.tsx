@@ -17,7 +17,9 @@ export default function SignupPage() {
   const [countdown, setCountdown] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   // Add new state for verification error
-  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(
+    null
+  );
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -54,7 +56,9 @@ export default function SignupPage() {
 
   const isEmailValid = email && !errors.email;
   const isVerificationComplete =
-    verificationCode?.length === 6 && !errors.verificationCode && !verificationError;
+    verificationCode?.length === 6 &&
+    !errors.verificationCode &&
+    !verificationError;
   const isPasswordValid =
     password && passwordConfirm && !errors.password && !errors.passwordConfirm;
 
@@ -270,6 +274,7 @@ export default function SignupPage() {
                   placeholder="비밀번호를 입력하세요"
                   className="w-full h-[56px]"
                   passwordOnly
+                  autoComplete="new-password"
                   {...register("password", {
                     required: "비밀번호를 입력해주세요",
                     validate: validatePassword,
@@ -283,7 +288,8 @@ export default function SignupPage() {
                   type="password"
                   placeholder="비밀번호를 다시 입력하세요"
                   className="w-full h-[56px]"
-                  passwordOnly // 이 속성 추가
+                  passwordOnly
+                  autoComplete="new-password"
                   {...register("passwordConfirm", {
                     required: "비밀번호 확인을 입력해주세요",
                     validate: (value) =>
