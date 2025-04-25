@@ -15,19 +15,19 @@ export const createStateUpdater = <T>(atom: any) => {
 };
 
 // 상태 선택자 유틸리티
-export const createStateSelector = <T>(atom: any) => {
+export const createStateSelector = (atom: any) => {
   return () => useRecoilValue(atom);
 };
 
 // 메모이제이션된 상태 선택자
-export const createMemoizedSelector = <T>(
+export const createMemoizedSelector = <T, R>(
   atom: any,
-  transform: (value: T) => any
+  transform: (value: T) => R
 ) => {
   return selector({
     key: `${atom.key}-memoized`,
     get: ({ get }) => {
-      const value = get(atom);
+      const value = get(atom) as T;
       return transform(value);
     },
   });
@@ -43,13 +43,13 @@ export const createStateInitializer = <T>(atom: any, defaultValue: T) => {
   };
 };
 
-// 상태 구독 유틼리티
+// 상태 구독 유틸리티
 export const createStateSubscriber = <T>(
   atom: any,
   callback: (value: T) => void
 ) => {
   return () => {
-    const value = useRecoilValue(atom);
+    const value = useRecoilValue(atom) as T;
     return useCallback(() => {
       callback(value);
     }, [value]);

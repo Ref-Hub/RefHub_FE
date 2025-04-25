@@ -1,8 +1,8 @@
 // src/App.tsx
 import React from "react";
-import { BrowserRouter } from "react-router-dom";
+import { RouterProvider } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import AppRoutes from "@/router";
+import { router } from "@/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RecoilRoot } from "recoil";
 import { AuthProvider } from "@/components/layout/AuthProvider";
@@ -27,9 +27,7 @@ const App: React.FC = () => {
           <ToastProvider>
             <LoadingProvider>
               <AuthProvider>
-                <BrowserRouter>
-                  <AppRoutes />
-                </BrowserRouter>
+                <RouterProvider router={router} />
               </AuthProvider>
             </LoadingProvider>
           </ToastProvider>
