@@ -55,7 +55,7 @@ export function useReferenceEdit() {
 
       // 디버깅 정보 기록 - 원본 경로 정보 확인
       console.log(
-        "Files being prepared for update:",
+        "업데이트 준비 중인 파일:",
         formData.files.map((file) => ({
           type: file.type,
           originalPath: file.originalPath,
@@ -63,7 +63,7 @@ export function useReferenceEdit() {
         }))
       );
 
-      // 파일 데이터 준비 - 원본 경로 정보를 정확히 전달
+      // 파일 데이터 준비 (원본 경로 정보 명시적 전달)
       const filesFormData = referenceService.prepareFilesFormData(
         formData.files
       );
