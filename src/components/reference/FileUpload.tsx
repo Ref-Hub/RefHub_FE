@@ -253,41 +253,33 @@ export default function FileUpload({
   const handleRemoveFile = (index: number, imageIndex?: number) => {
     try {
       if (typeof imageIndex === "number" && files[index].type === "image") {
-        // 특정 이미지 삭제 (이미지 리스트에서)
+        // 이미지 리스트에서 특정 이미지 삭제
         const updatedFiles = [...files];
         try {
           // 원본 경로 보존
           const originalPath = updatedFiles[index].originalPath;
 
-          // 이미지 파싱 시도
+          // 이미지 파싱
           const images = JSON.parse(
             updatedFiles[index].content
           ) as FileContent[];
-          console.log(
-            "Removing image from list - Before:",
-            images.length,
-            "images"
-          );
+          console.log(`이미지 목록에서 삭제 - 이전:`, images.length);
 
-          // 특정 이미지 제거
+          // 이미지 제거
           images.splice(imageIndex, 1);
-          console.log("After removal:", images.length, "images remain");
+          console.log(`삭제 후 남은 이미지:`, images.length);
 
           if (images.length === 0) {
             // 모든 이미지가 삭제된 경우 전체 파일 항목 삭제
-            console.log("All images removed, removing entire file item");
+            console.log(`모든 이미지 삭제됨. 파일 항목 제거`);
             onChange(files.filter((_, i) => i !== index));
           } else {
-            // 이미지가 남아있는 경우 업데이트, 원본 경로 유지
+            // 이미지가 남아있는 경우 업데이트
             updatedFiles[index] = {
               ...updatedFiles[index],
               content: JSON.stringify(images),
-              originalPath, // 원본 경로 명시적 유지
+              originalPath, // 원본 경로 유지
             };
-            console.log(
-              "Updating with remaining images, keeping originalPath:",
-              originalPath
-            );
             onChange(updatedFiles);
           }
         } catch (error) {
@@ -295,8 +287,8 @@ export default function FileUpload({
           showToast("이미지 삭제에 실패했습니다.", "error");
         }
       } else {
-        // 전체 파일 항목 삭제
-        console.log("Removing entire file item at index:", index);
+        // 전체 파일 항목 삭제 - stopPropagation 확인
+        console.log(`파일 항목 삭제. 인덱스:`, index);
         onChange(files.filter((_, i) => i !== index));
       }
     } catch (error) {
