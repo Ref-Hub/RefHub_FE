@@ -374,9 +374,14 @@ class ReferenceService {
 
   // 파일 데이터 준비 - 수정된 함수
   prepareFilesFormData(files: CreateReferenceFile[]): FormData {
-    console.log("Preparing files FormData from:", files);
+    console.log("파일 FormData 준비 시작:", files);
     const formData = new FormData();
     let imageCount = 1;
+
+    // 기존 파일 경로 추적용 배열
+    const existingFilePaths: string[] = [];
+    // 새로 추가된 링크만 저장할 배열
+    const newLinks: string[] = [];
 
     const normalizeAndEncodeFileName = (name: string): string => {
       const normalized = name.normalize("NFC"); // 한글 정규화 (중요!)
@@ -388,28 +393,36 @@ class ReferenceService {
       return `${encodeURIComponent(nameWithoutExt)}.${ext}`;
     };
 
-    // 기존 파일 경로를 저장할 배열
-    const existingFilePaths: string[] = [];
-
-    // 파일별 처리
+    // 파일별 처리 - 로깅 강화
     files.forEach((file, index) => {
-      console.log(`Processing file ${index}:`, {
+      console.log(`파일 ${index} 처리:`, {
         id: file.id,
         type: file.type,
         originalPath: file.originalPath,
         contentLength: file.content ? file.content.length : 0,
       });
 
+      // 파일 타입별 처리
       if (file.type === "link") {
-        // 링크는 그대로 추가
-        formData.append("links", file.content);
-        console.log("Added link:", file.content);
+        // 링크 처리 수정: 기존 링크는 existingFiles에만 추가, 새 링크만 links에 추가
+        if (file.originalPath) {
+          // 기존 링크는 existingFiles 배열에만 추가
+          existingFilePaths.push(file.originalPath);
+          console.log(
+            `기존 링크 유지 (links에 추가하지 않음):`,
+            file.originalPath
+          );
+        } else {
+          // 새 링크만 links 매개변수로 추가
+          newLinks.push(file.content);
+          console.log(`새 링크 추가:`, file.content);
+        }
       } else if (file.type === "image") {
         try {
           // 이미지 파일이고 originalPath가 있는 경우, 무조건 기존 파일 경로에 추가
           if (file.originalPath) {
             existingFilePaths.push(file.originalPath);
-            console.log("Added existing image path:", file.originalPath);
+            console.log("기존 이미지 경로 유지:", file.originalPath);
           }
 
           // 이후 내용 파싱은 새로운 이미지가 있는지 확인하는 용도로만 사용
@@ -430,10 +443,10 @@ class ReferenceService {
                   (img) => img.url && img.url.startsWith("data:")
                 );
 
-                console.log("Image processing:", {
-                  keepingOriginalPath: !!file.originalPath,
-                  existingCount: existingImages.length,
-                  newCount: newImages.length,
+                console.log("이미지 처리:", {
+                  유지중인원본경로: !!file.originalPath,
+                  기존이미지수: existingImages.length,
+                  새이미지수: newImages.length,
                 });
 
                 // 새 이미지 처리
@@ -454,7 +467,7 @@ class ReferenceService {
                       });
 
                       imageFiles.push(imageFile);
-                      console.log("Created new image file:", encodedFileName);
+                      console.log("새 이미지 파일 생성:", encodedFileName);
                     } catch (error) {
                       console.error("이미지 처리 오류:", error);
                     }
@@ -465,7 +478,7 @@ class ReferenceService {
                     for (const imgFile of imageFiles) {
                       formData.append(`images${imageCount}`, imgFile);
                       console.log(
-                        `Added new image to FormData as images${imageCount}:`,
+                        `새 이미지를 FormData에 추가 (images${imageCount}):`,
                         imgFile.name
                       );
                     }
@@ -477,7 +490,7 @@ class ReferenceService {
               console.error(
                 "이미지 데이터 파싱 실패, 원본 경로는 유지됩니다:",
                 error,
-                file.content ? file.content.substring(0, 100) : "empty content"
+                file.content ? file.content.substring(0, 100) : "빈 내용"
               );
               // 파싱에 실패하더라도 원본 경로는 유지
             }
@@ -488,7 +501,7 @@ class ReferenceService {
           if (file.originalPath) {
             existingFilePaths.push(file.originalPath);
             console.log(
-              "Error occurred but kept existing image path:",
+              "오류 발생했지만 기존 이미지 경로 유지:",
               file.originalPath
             );
           }
@@ -500,7 +513,7 @@ class ReferenceService {
           const fileName = file.name || "document.pdf";
           const encodedFileName = normalizeAndEncodeFileName(fileName);
           formData.append("files", blobData, encodedFileName);
-          console.log("Added new PDF file:", encodedFileName);
+          console.log("새 PDF 파일 추가:", encodedFileName);
         } else if (
           file.content.startsWith("http://") ||
           file.content.startsWith("https://") ||
@@ -510,7 +523,7 @@ class ReferenceService {
           const pathToUse = file.originalPath || file.content;
           if (pathToUse) {
             existingFilePaths.push(pathToUse);
-            console.log("Added existing PDF path:", pathToUse);
+            console.log("기존 PDF 경로 유지:", pathToUse);
           }
         }
       } else if (file.type === "file") {
@@ -520,7 +533,7 @@ class ReferenceService {
           const fileName = file.name || "file";
           const encodedFileName = normalizeAndEncodeFileName(fileName);
           formData.append("otherFiles", blobData, encodedFileName);
-          console.log("Added new file:", encodedFileName);
+          console.log("새 파일 추가:", encodedFileName);
         } else if (
           file.content.startsWith("http://") ||
           file.content.startsWith("https://") ||
@@ -530,29 +543,37 @@ class ReferenceService {
           const pathToUse = file.originalPath || file.content;
           if (pathToUse) {
             existingFilePaths.push(pathToUse);
-            console.log("Added existing file path:", pathToUse);
+            console.log("기존 파일 경로 유지:", pathToUse);
           }
         }
       }
     });
 
+    // 새 링크만 links 매개변수로 추가
+    newLinks.forEach((link) => {
+      formData.append("links", link);
+      console.log("새 링크를 FormData에 추가:", link);
+    });
+
     // 기존 파일 정보를 FormData에 추가
     if (existingFilePaths.length > 0) {
       console.log(
-        "Existing files to keep (before JSON.stringify):",
+        "유지할 기존 파일 목록 (JSON.stringify 전):",
         existingFilePaths
       );
       formData.append("existingFiles", JSON.stringify(existingFilePaths));
       console.log(
-        "Added existingFiles to FormData:",
+        "FormData에 기존 파일 목록 추가:",
         JSON.stringify(existingFilePaths)
       );
     } else {
-      console.warn("No existing files found to preserve!");
+      console.log("유지할 기존 파일이 없습니다!");
+      // 빈 배열 전달하여 모든 기존 파일 삭제 명시
+      formData.append("existingFiles", JSON.stringify([]));
     }
 
     // FormData에 들어간 모든 키 출력
-    console.log("Final FormData keys:", [...formData.keys()]);
+    console.log("최종 FormData 키 목록:", [...formData.keys()]);
 
     return formData;
   }
