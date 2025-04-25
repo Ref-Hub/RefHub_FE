@@ -49,6 +49,7 @@ export default function ReferenceEditPage() {
   });
 
   // 레퍼런스 데이터 로딩
+  // 레퍼런스 데이터 로딩
   useEffect(() => {
     const fetchData = async () => {
       if (!referenceId) {
@@ -62,7 +63,7 @@ export default function ReferenceEditPage() {
         const reference = await referenceService.getReference(referenceId);
 
         console.log(
-          "==================== Original reference data ===================="
+          "==================== 원본 레퍼런스 데이터 ===================="
         );
         console.log(JSON.stringify(reference, null, 2));
         setOriginalFiles(reference.files); // 원본 파일 정보 저장
@@ -80,15 +81,14 @@ export default function ReferenceEditPage() {
               originalPath: file.path, // 원본 경로 명시적으로 저장 (중요!)
             };
 
-            console.log(
-              `Converting file type ${file.type} with path: ${file.path}`
-            );
-            console.log(`File details: ${JSON.stringify(file, null, 2)}`);
+            console.log(`파일 타입 ${file.type} 변환. 경로: ${file.path}`);
+            console.log(`파일 상세: ${JSON.stringify(file, null, 2)}`);
 
             if (file.type === "link") {
               return {
                 ...baseFile,
                 content: file.path,
+                originalPath: file.path, // 명시적으로 originalPath 설정
               };
             } else if (file.type === "image" && file.previewURLs) {
               // 이미지 배열을 적절한 형식으로 변환
@@ -117,7 +117,7 @@ export default function ReferenceEditPage() {
         );
 
         console.log(
-          "==================== Converted files ===================="
+          "==================== 변환된 파일 목록 ===================="
         );
         console.log(JSON.stringify(convertedFiles, null, 2));
 
@@ -139,7 +139,7 @@ export default function ReferenceEditPage() {
                 ],
         });
       } catch (error) {
-        console.error("Error fetching reference:", error);
+        console.error("레퍼런스 불러오기 실패:", error);
         showToast("데이터를 불러오는데 실패했습니다.", "error");
         navigate("/references");
       } finally {
@@ -260,10 +260,14 @@ export default function ReferenceEditPage() {
         originalPaths.filter((path) => !keptPaths.includes(path))
       );
 
-      // 파일 데이터 준비
       const filesFormData = referenceService.prepareFilesFormData(
         formData.files
       );
+
+      // FormData 검사
+      console.log("=== FormData 제출 직전 검사 ===");
+      console.log("링크 항목:", [...filesFormData.getAll("links")]);
+      console.log("기존 파일:", filesFormData.get("existingFiles"));
 
       // 디버깅 로그 추가
       console.log("==================== Files being sent ====================");
