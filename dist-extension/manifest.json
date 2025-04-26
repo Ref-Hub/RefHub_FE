@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "RefHub Extension",
+  "description": "지금 보고 있는 사이트를 RefHub에 저장하세요.",
+  "version": "1.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon.png",
+      "48": "images/icon.png",
+      "128": "images/icon.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://refhub.my/*",
+        "http://localhost:5173/*",
+        "https://refhub.site/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["storage", "activeTab", "scripting", "tabs", "identity"],
+  "host_permissions": [
+    "https://refhub.my/*",
+    "http://localhost:5173/*",
+    "https://refhub.site/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "images/icon.png",
+    "48": "images/icon.png",
+    "128": "images/icon.png"
+  }
+}
