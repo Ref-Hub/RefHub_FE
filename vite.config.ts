@@ -70,7 +70,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       assetsDir: "assets",
-      outDir: isExtension ? "dist-extension" : "dist-web", // 모드에 따라 빌드 폴더 구분
+      outDir: isExtension ? "dist-extension" : "dist", // 모드에 따라 빌드 폴더 구분
       rollupOptions: {
         input: isExtension
           ? {
