@@ -67,6 +67,14 @@ class AuthService {
       if (accessToken) {
         authUtils.setToken(accessToken);
 
+        window.postMessage(
+          {
+            type: "REFHUB_TOKEN",
+            token: accessToken,
+          },
+          "*"
+        );
+
         if (refreshToken) {
           authUtils.setRefreshToken(refreshToken);
         }

@@ -1,0 +1,1 @@
+window.addEventListener("message",o=>{if(!(o.source!==window||!o.data.token)&&o.data.type==="REFHUB_TOKEN"){const a=o.data.token;chrome.storage.local.set({token:a},()=>{console.log("✅ 토큰 저장 완료")})}});
