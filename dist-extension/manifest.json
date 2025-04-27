@@ -14,7 +14,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://refhub.my/*",
+        "https://www.refhub.my/*",
         "http://localhost:5173/*",
         "https://refhub.site/*"
       ],
@@ -24,7 +24,7 @@
   ],
   "permissions": ["storage", "activeTab", "scripting", "tabs"],
   "host_permissions": [
-    "https://refhub.my/*",
+    "https://www.refhub.my/*",
     "http://localhost:5173/*",
     "https://refhub.site/*"
   ],
