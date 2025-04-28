@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 function Popup() {
   const [url, setUrl] = useState("");
   const [status, setStatus] = useState("");
-  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(true);
 
   useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
