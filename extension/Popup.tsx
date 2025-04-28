@@ -19,14 +19,14 @@ function Popup() {
 
     if (!token) {
       alert("로그인이 필요합니다.");
-      chrome.tabs.create({ url: "https://refhub.my/login" });
+      chrome.tabs.create({ url: "https://www.refhub.my/auth/login" });
       return;
     }
 
     const isLoggedIn = await checkLogin(token);
     if (!isLoggedIn) {
       alert("로그인이 필요합니다.");
-      chrome.tabs.create({ url: "https://refhub.my/login" });
+      chrome.tabs.create({ url: "https://www.refhub.my/auth/login" });
       return;
     }
 
