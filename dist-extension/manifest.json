@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "RefHub Extension",
   "description": "지금 보고 있는 사이트를 RefHub에 저장하세요.",
-  "version": "1.0",
+  "version": "1.0.0",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -22,7 +22,7 @@
       "run_at": "document_idle"
     }
   ],
-  "permissions": ["storage", "activeTab", "scripting", "tabs"],
+  "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://www.refhub.my/*",
     "http://localhost:5173/*",
