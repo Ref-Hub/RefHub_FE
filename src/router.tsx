@@ -19,6 +19,7 @@ import ReferenceListPage from "@/pages/reference/ReferenceListPage";
 import ReferenceDetailPage from "@/pages/reference/ReferenceDetailPage";
 import ReferenceCreatePage from "@/pages/reference/ReferenceCreatePage";
 import ReferenceEditPage from "@/pages/reference/ReferenceEditPage";
+import MyPage from "@/pages/user/MyPage"; // 추가된 마이페이지 import
 
 // 인증 관련 라우트
 const authRoutes: RouteObject[] = [
@@ -106,6 +107,15 @@ const protectedRoutes: RouteObject[] = [
         ),
       },
     ],
+  },
+  // 마이페이지 라우트 추가
+  {
+    path: "mypage",
+    element: (
+      <ProtectedRoute>
+        <MyPage />
+      </ProtectedRoute>
+    ),
   },
 ];
 
