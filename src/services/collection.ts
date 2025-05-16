@@ -25,6 +25,12 @@ class CollectionService {
   async createCollection(title: string): Promise<CollectionResponse> {
     try {
       const response = await api.post("/api/collections", { title });
+
+      // GA4 이벤트 전송
+      (window as any).gtag("event", "create_collection", {
+        title: title,
+      });
+
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -175,81 +181,83 @@ class CollectionService {
   // 미리보기 이미지 조회
   // src/services/collection.ts - getImage function
 
-async getImage(url: string): Promise<string> {
-  if (!url) return "";
-  
-  try {
-    // S3 URL 처리 (서버에서 이미 인코딩됨)
-    if (
-      url.includes("s3.ap-northeast-2.amazonaws.com") ||
-      url.includes("refhub-bucket")
-    ) {
-      // API를 통해 프록시 요청 (인증 포함)
-      const token = authUtils.getToken();
-      const proxyUrl = `${this.baseUrl}/api/references/download?fileUrl=${encodeURIComponent(url)}`;
-      
-      const response = await fetch(proxyUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`이미지 로드 실패: ${response.status}`);
-      }
-      const blob = await response.blob();
-      return URL.createObjectURL(blob);
-    }
-    
-    // 로컬 개발 환경에서 S3 URL 처리
-    if (
-      window.location.hostname === "localhost" &&
-      (url.includes("s3.ap-northeast-2.amazonaws.com") ||
-        url.includes("refhub-bucket"))
-    ) {
-      try {
-        return await this.fetchWithAuth(url);
-      } catch (error) {
-        console.error("S3 이미지 로드 실패:", error);
-        return "/images/placeholder.svg"; // .svg로 변경
-      }
-    }
+  async getImage(url: string): Promise<string> {
+    if (!url) return "";
 
-    // 상대 경로 처리
-    if (!url.includes("://")) {
-      const fullUrl = `${this.baseUrl}${url}`;
-      if (url.includes("/api/references/file/")) {
-        return await this.fetchWithAuth(fullUrl);
-      }
-      return fullUrl;
-    }
+    try {
+      // S3 URL 처리 (서버에서 이미 인코딩됨)
+      if (
+        url.includes("s3.ap-northeast-2.amazonaws.com") ||
+        url.includes("refhub-bucket")
+      ) {
+        // API를 통해 프록시 요청 (인증 포함)
+        const token = authUtils.getToken();
+        const proxyUrl = `${
+          this.baseUrl
+        }/api/references/download?fileUrl=${encodeURIComponent(url)}`;
 
-    // API 도메인 URL 처리
-    if (url.includes("api.refhub.site")) {
-      if (url.includes("/api/references/file/")) {
-        return await this.fetchWithAuth(url);
+        const response = await fetch(proxyUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error(`이미지 로드 실패: ${response.status}`);
+        }
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
       }
+
+      // 로컬 개발 환경에서 S3 URL 처리
+      if (
+        window.location.hostname === "localhost" &&
+        (url.includes("s3.ap-northeast-2.amazonaws.com") ||
+          url.includes("refhub-bucket"))
+      ) {
+        try {
+          return await this.fetchWithAuth(url);
+        } catch (error) {
+          console.error("S3 이미지 로드 실패:", error);
+          return "/images/placeholder.svg"; // .svg로 변경
+        }
+      }
+
+      // 상대 경로 처리
+      if (!url.includes("://")) {
+        const fullUrl = `${this.baseUrl}${url}`;
+        if (url.includes("/api/references/file/")) {
+          return await this.fetchWithAuth(fullUrl);
+        }
+        return fullUrl;
+      }
+
+      // API 도메인 URL 처리
+      if (url.includes("api.refhub.site")) {
+        if (url.includes("/api/references/file/")) {
+          return await this.fetchWithAuth(url);
+        }
+        return url;
+      }
+
+      // 도메인 변환 처리
+      if (url.includes("refhub.my")) {
+        const newUrl = url.replace("refhub.my", "api.refhub.site");
+        if (newUrl.includes("/api/references/file/")) {
+          return await this.fetchWithAuth(newUrl);
+        }
+        return newUrl;
+      }
+
+      // 기타 URL은 그대로 반환
       return url;
-    }
-
-    // 도메인 변환 처리
-    if (url.includes("refhub.my")) {
-      const newUrl = url.replace("refhub.my", "api.refhub.site");
-      if (newUrl.includes("/api/references/file/")) {
-        return await this.fetchWithAuth(newUrl);
+    } catch (error) {
+      console.error("이미지 로딩 오류:", error);
+      // 무한 루프 방지
+      if (url.includes("placeholder")) {
+        return ""; // 빈 문자열 반환
       }
-      return newUrl;
+      return "/images/placeholder.svg"; // .svg로 변경
     }
-    
-    // 기타 URL은 그대로 반환
-    return url;
-  } catch (error) {
-    console.error("이미지 로딩 오류:", error);
-    // 무한 루프 방지
-    if (url.includes("placeholder")) {
-      return ""; // 빈 문자열 반환
-    }
-    return "/images/placeholder.svg"; // .svg로 변경
-  }
   }
 }
 
