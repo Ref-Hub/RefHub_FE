@@ -3,10 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import SearchBar from "../common/SearchBar";
 import { DropState } from "@/store/collection";
-import { useAuth } from "@/hooks/useAuth";
+import ProfileDropdown from "../common/ProfileDropdown"; // 프로필 드롭다운 컴포넌트 import
 
 export default function MainHeader() {
-  const { logout } = useAuth();
   const location = useLocation();
   const [, setSort] = useRecoilState(DropState);
 
@@ -27,10 +26,6 @@ export default function MainHeader() {
     return !hideSearchBarPatterns.some((pattern) =>
       pattern.test(location.pathname)
     );
-  };
-
-  const handleLogout = async () => {
-    await logout();
   };
 
   const handleReset = () => {
@@ -58,7 +53,7 @@ export default function MainHeader() {
                 />
               </Link>
             </div>
-            
+
             {/* 네비게이션 */}
             <div className="flex-1 flex justify-center space-x-8">
               <Link
@@ -84,15 +79,10 @@ export default function MainHeader() {
                 전체 레퍼런스
               </Link>
             </div>
-            
-            {/* 로그아웃 버튼 */}
+
+            {/* 프로필 드롭다운 */}
             <div className="flex-1 flex justify-end">
-              <button
-                onClick={handleLogout}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                로그아웃
-              </button>
+              <ProfileDropdown />
             </div>
           </div>
         </div>
@@ -109,14 +99,9 @@ export default function MainHeader() {
               />
             </Link>
 
-            {/* 모바일 전용: 우측 버튼 */}
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleLogout}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                로그아웃
-              </button>
+            {/* 모바일 전용: 프로필 드롭다운 */}
+            <div className="flex items-center">
+              <ProfileDropdown />
             </div>
           </div>
 
