@@ -47,6 +47,12 @@ class AuthService {
         password: data.password,
         confirmPassword: data.passwordConfirm,
       });
+
+      // GA4 이벤트 전송
+      (window as any).gtag("event", "sign_up_complete", {
+        method: "email",
+      });
+
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -82,6 +88,11 @@ class AuthService {
         if (autoLogin) {
           authUtils.setRememberMe(true);
         }
+
+        // GA4 이벤트 전송
+        (window as any).gtag("event", "login_success", {
+          method: "email",
+        });
       } else {
         throw new Error("로그인 응답에 토큰이 없습니다.");
       }

@@ -271,6 +271,12 @@ class ReferenceService {
       );
 
       console.log("Create reference response:", response.data);
+
+      // GA4 이벤트 전송
+      (window as any).gtag("event", "create_reference", {
+        title: title,
+      });
+
       return response.data;
     } catch (error) {
       console.error("Failed to create reference:", error);
