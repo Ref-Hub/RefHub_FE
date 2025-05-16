@@ -101,6 +101,13 @@ export default function LoginPage() {
     [navigate, rememberMe, showToast, isLoading, setShareModal]
   );
 
+  // 카카오 로그인 핸들러 함수
+  const handleKakaoLogin = useCallback(() => {
+    // 백엔드 API 연동 전 임시 함수
+    // 추후 카카오 로그인 API 연동 시 실제 구현 필요
+    showToast("카카오 로그인 기능이 곧 구현될 예정입니다.");
+  }, [showToast]);
+
   return (
     <div className="min-h-screen flex max-h-screen overflow-hidden">
       {/* Left Section */}
@@ -164,7 +171,7 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 accent-primary border-gray-300 rounded"
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary focus:ring-offset-0 checked:bg-primary checked:hover:bg-primary checked:focus:bg-primary"
                 />
                 <label
                   htmlFor="remember-me"
@@ -194,6 +201,38 @@ export default function LoginPage() {
               `}
             >
               {isLoading ? "로그인 중..." : "로그인"}
+            </button>
+
+            {/* 카카오 로그인 버튼 추가 */}
+            <div className="relative flex items-center justify-center">
+              <div className="absolute border-t border-gray-200 w-full"></div>
+              <span className="relative px-2 bg-white text-sm text-gray-500">
+                또는
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleKakaoLogin}
+              className="w-full h-12 sm:h-14 rounded-lg font-medium transition-colors duration-200 bg-[#FEE500] hover:bg-[#F4DC00] text-[#191919] flex items-center justify-center"
+            >
+              <span className="mr-2">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M9 0.5C4.30371 0.5 0.5 3.32075 0.5 6.80159C0.5 9.03144 1.95959 11.0105 4.16937 12.1868L3.26713 15.791C3.18344 16.1152 3.54938 16.3717 3.84438 16.1748L8.14979 13.397C8.42616 13.4272 8.70998 13.4425 9 13.4425C13.6963 13.4425 17.5 10.6218 17.5 6.80159C17.5 3.32075 13.6963 0.5 9 0.5Z"
+                    fill="black"
+                  />
+                </svg>
+              </span>
+              카카오 로그인
             </button>
 
             {/* 일반 에러 메시지 표시 영역 */}
