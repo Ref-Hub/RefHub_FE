@@ -12,7 +12,10 @@ export default function Layout() {
   const isAuthPage = location.pathname.startsWith("/auth/");
   const isLoginPage = location.pathname === "/auth/login";
   const isHomePage =
-    location.pathname === "/collections" || location.pathname === "/references";
+    location.pathname === "/collections" ||
+    location.pathname === "/references" ||
+    location.pathname === "/user/mypage" ||
+    location.pathname === "/mypage";
 
   // 현재 로그인 프로세스가 진행 중인지 확인
   const isLoggingIn = isLoginPage && authUtils.getToken();

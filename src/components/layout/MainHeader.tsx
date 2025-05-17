@@ -21,6 +21,7 @@ export default function MainHeader() {
       /\/references\/[^/]+$/, // /references/:id
       /\/references\/[^/]+\/edit$/, // /references/:id/edit
       /\/references\/new$/, // /references/new
+      /\/mypage$/, // /mypage
     ];
 
     return !hideSearchBarPatterns.some((pattern) =>
