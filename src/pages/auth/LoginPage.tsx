@@ -164,7 +164,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between mb-12">
+            <div className="flex items-center justify-between mb-20">
               {/* 자동 로그인 - 로그인 버튼 간격 증가 (my-4 sm:my-6에서 mb-8로 변경) */}
               <div className="flex items-center">
                 <input
@@ -190,7 +190,7 @@ export default function LoginPage() {
             </div>
             
             {/* 로그인 버튼 및 카카오 로그인 버튼 */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {" "}
               <button
                 type="submit"
