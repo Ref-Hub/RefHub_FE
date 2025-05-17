@@ -105,7 +105,7 @@ export default function LoginPage() {
   const handleKakaoLogin = useCallback(() => {
     // 백엔드 API 연동 전 임시 함수
     // 추후 카카오 로그인 API 연동 시 실제 구현 필요
-    showToast("카카오 로그인 기능이 곧 구현될 예정입니다.");
+    showToast("카카오 로그인 기능이 곧 구현될 예정입니다.", "info");
   }, [showToast]);
 
   return (
@@ -164,7 +164,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between my-4 sm:my-6">
+            <div className="flex items-center justify-between mb-12">
+              {/* 자동 로그인 - 로그인 버튼 간격 증가 (my-4 sm:my-6에서 mb-8로 변경) */}
               <div className="flex items-center">
                 <input
                   id="remember-me"
@@ -187,53 +188,49 @@ export default function LoginPage() {
                 비밀번호를 잊으셨나요?
               </Link>
             </div>
-
-            <button
-              type="submit"
-              disabled={!isButtonActive || isLoading}
-              className={`
-                w-full h-12 sm:h-14 rounded-lg font-medium transition-colors duration-200
-                ${
-                  isButtonActive && !isLoading
-                    ? "bg-primary hover:bg-primary-dark text-white"
-                    : "bg-[#8A8D8A] text-white cursor-not-allowed"
-                }
-              `}
-            >
-              {isLoading ? "로그인 중..." : "로그인"}
-            </button>
-
-            {/* 카카오 로그인 버튼 추가 */}
-            <div className="relative flex items-center justify-center">
-              <div className="absolute border-t border-gray-200 w-full"></div>
-              <span className="relative px-2 bg-white text-sm text-gray-500">
-                또는
-              </span>
+            
+            {/* 로그인 버튼 및 카카오 로그인 버튼 */}
+            <div className="space-y-3">
+              {" "}
+              <button
+                type="submit"
+                disabled={!isButtonActive || isLoading}
+                className={`
+                  w-full h-12 sm:h-14 rounded-lg font-medium transition-colors duration-200
+                  ${
+                    isButtonActive && !isLoading
+                      ? "bg-primary hover:bg-primary-dark text-white"
+                      : "bg-[#8A8D8A] text-white cursor-not-allowed"
+                  }
+                `}
+              >
+                {isLoading ? "로그인 중..." : "로그인"}
+              </button>
+              {/* 카카오 로그인 버튼 추가 */}
+              <button
+                type="button"
+                onClick={handleKakaoLogin}
+                className="w-full h-12 sm:h-14 rounded-lg font-medium transition-colors duration-200 bg-[#FEE500] hover:bg-[#F4DC00] text-[#191919] flex items-center justify-center"
+              >
+                <span className="mr-2">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M9 0.5C4.30371 0.5 0.5 3.32075 0.5 6.80159C0.5 9.03144 1.95959 11.0105 4.16937 12.1868L3.26713 15.791C3.18344 16.1152 3.54938 16.3717 3.84438 16.1748L8.14979 13.397C8.42616 13.4272 8.70998 13.4425 9 13.4425C13.6963 13.4425 17.5 10.6218 17.5 6.80159C17.5 3.32075 13.6963 0.5 9 0.5Z"
+                      fill="black"
+                    />
+                  </svg>
+                </span>
+                카카오 로그인
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={handleKakaoLogin}
-              className="w-full h-12 sm:h-14 rounded-lg font-medium transition-colors duration-200 bg-[#FEE500] hover:bg-[#F4DC00] text-[#191919] flex items-center justify-center"
-            >
-              <span className="mr-2">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 18 18"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M9 0.5C4.30371 0.5 0.5 3.32075 0.5 6.80159C0.5 9.03144 1.95959 11.0105 4.16937 12.1868L3.26713 15.791C3.18344 16.1152 3.54938 16.3717 3.84438 16.1748L8.14979 13.397C8.42616 13.4272 8.70998 13.4425 9 13.4425C13.6963 13.4425 17.5 10.6218 17.5 6.80159C17.5 3.32075 13.6963 0.5 9 0.5Z"
-                    fill="black"
-                  />
-                </svg>
-              </span>
-              카카오 로그인
-            </button>
 
             {/* 일반 에러 메시지 표시 영역 */}
             {loginError && (
