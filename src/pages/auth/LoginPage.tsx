@@ -105,7 +105,7 @@ export default function LoginPage() {
   const handleKakaoLogin = useCallback(() => {
     // 백엔드 API 연동 전 임시 함수
     // 추후 카카오 로그인 API 연동 시 실제 구현 필요
-    showToast("카카오 로그인 기능이 곧 구현될 예정입니다.", "info");
+    showToast("카카오 로그인 기능이 곧 구현될 예정입니다.");
   }, [showToast]);
 
   return (
