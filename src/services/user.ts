@@ -2,15 +2,9 @@
 import api from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 
-interface UserProfile {
-  name: string;
-  email: string;
-  profileImage: string | null;
-}
-
 class UserService {
-  // 마이페이지 사용자 정보 조회
-  async getMyProfile(): Promise<UserProfile> {
+  // 프로필 정보 조회
+  async getMyProfile() {
     try {
       const response = await api.get("/api/users/my-page");
       return response.data;
@@ -19,18 +13,8 @@ class UserService {
     }
   }
 
-  // 사용자 이름 변경
-  async updateUsername(newName: string): Promise<{ message: string }> {
-    try {
-      const response = await api.patch("/api/users/user-name", { newName });
-      return response.data;
-    } catch (error) {
-      throw handleApiError(error);
-    }
-  }
-
   // 프로필 이미지 업로드
-  async uploadProfileImage(file: File): Promise<{ message: string }> {
+  async uploadProfileImage(file: File) {
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -47,9 +31,21 @@ class UserService {
   }
 
   // 프로필 이미지 삭제
-  async deleteProfileImage(): Promise<{ message: string }> {
+  async deleteProfileImage() {
     try {
       const response = await api.delete("/api/users/profile-image");
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  // 사용자 이름 변경
+  async updateUsername(newName: string) {
+    try {
+      const response = await api.patch("/api/users/user-name", {
+        newName,
+      });
       return response.data;
     } catch (error) {
       throw handleApiError(error);

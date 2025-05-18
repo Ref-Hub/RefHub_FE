@@ -4,7 +4,7 @@ import { atom } from "recoil";
 export interface UserProfile {
   name: string;
   email: string;
-  profileImage: string | null;
+  profileImage?: string | null;
 }
 
 export const userProfileState = atom<UserProfile | null>({

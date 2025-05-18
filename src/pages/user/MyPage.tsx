@@ -30,8 +30,17 @@ const MyPage = () => {
       try {
         setIsLoading(true);
         const profileData = await userService.getMyProfile();
+
+        // 백엔드에서 올바른 응답이 왔는지 검증
+        if (!profileData || typeof profileData !== "object") {
+          throw new Error("프로필 정보 형식이 올바르지 않습니다.");
+        }
+
         setUserProfile(profileData);
         setNewName(profileData.name || "");
+
+        // 개발 디버깅 용도
+        console.log("Successfully loaded profile:", profileData);
       } catch (error) {
         console.error("프로필 정보 로드 실패:", error);
         showToast("프로필 정보를 불러오는데 실패했습니다.", "error");
@@ -50,6 +59,20 @@ const MyPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // 파일 유형 검증
+    const validImageTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (!validImageTypes.includes(file.type)) {
+      showToast("JPG, PNG 형식의 이미지만 업로드 가능합니다.", "error");
+      return;
+    }
+
+    // 파일 크기 제한 (10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      showToast("이미지 크기는 10MB 이하여야 합니다.", "error");
+      return;
+    }
+
     try {
       setIsUploading(true);
       await userService.uploadProfileImage(file);
@@ -59,17 +82,31 @@ const MyPage = () => {
       setUserProfile(updatedProfile);
 
       showToast("프로필 이미지가 변경되었습니다.", "success");
+
+      // 개발 디버깅 용도
+      console.log("Profile updated after image upload:", updatedProfile);
     } catch (error) {
       console.error("프로필 이미지 업로드 실패:", error);
       showToast("이미지 업로드에 실패했습니다.", "error");
     } finally {
       setIsUploading(false);
+
+      // 파일 입력 초기화 (같은 파일 재선택 가능하도록)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
   // 프로필 이미지 삭제
   const handleDeleteProfileImage = async () => {
     try {
+      // 이미지가 없는 경우 처리
+      if (!userProfile?.profileImage) {
+        showToast("삭제할 프로필 이미지가 없습니다.", "error");
+        return;
+      }
+
       await userService.deleteProfileImage();
 
       // 프로필 정보 다시 로드
@@ -77,6 +114,9 @@ const MyPage = () => {
       setUserProfile(updatedProfile);
 
       showToast("프로필 이미지가 삭제되었습니다.", "success");
+
+      // 개발 디버깅 용도
+      console.log("Profile updated after image deletion:", updatedProfile);
     } catch (error) {
       console.error("프로필 이미지 삭제 실패:", error);
       showToast("이미지 삭제에 실패했습니다.", "error");
