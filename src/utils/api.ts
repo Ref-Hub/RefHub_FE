@@ -3,8 +3,21 @@ import axios, { AxiosHeaders } from "axios";
 import { authUtils } from "@/store/auth";
 import { handleApiError } from "./errorHandler";
 
+// 환경에 따른 baseURL 설정
+const getBaseUrl = () => {
+  // Vite 개발 환경에서는 개발 서버 사용
+  if (import.meta.env.DEV) {
+    console.log("개발 환경 감지, 개발 서버 API 사용 (43.202.152.184:4000)");
+    return "http://43.202.152.184:4000";
+  }
+
+  // 운영 환경에서는 기존 API URL 사용
+  console.log("운영 환경 감지, 운영 서버 API 사용 (api.refhub.site)");
+  return "https://api.refhub.site";
+};
+
 const api = axios.create({
-  baseURL: "https://api.refhub.site",
+  baseURL: getBaseUrl(),
   headers: {
     "Content-Type": "application/json",
   },
@@ -26,6 +39,14 @@ api.interceptors.request.use(
       delete config.headers["Content-Type"];
     }
 
+    // 개발 모드에서 요청 로깅 (디버깅용)
+    if (import.meta.env.DEV) {
+      console.log(
+        `🚀 ${config.method?.toUpperCase()} 요청:`,
+        `${config.baseURL}${config.url}`
+      );
+    }
+
     return config;
   },
   (error) => handleApiError(error)
@@ -36,10 +57,20 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (axios.isAxiosError(error)) {
+      // 개발 모드에서 오류 로깅
+      if (import.meta.env.DEV) {
+        console.error(
+          "🔴 API 응답 오류:",
+          error.response?.status,
+          error.message
+        );
+      }
+
       if (error.response?.status === 401) {
         try {
           const refreshToken = authUtils.getRefreshToken();
           if (refreshToken) {
+            // baseURL은 환경에 따라 달라질 수 있으므로 현재 설정된 baseURL 사용
             const response = await axios.post(
               `${api.defaults.baseURL}/api/users/token`,
               { refreshToken },
