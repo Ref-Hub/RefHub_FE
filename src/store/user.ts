@@ -1,6 +1,11 @@
 // src/store/user.ts
 import { atom } from "recoil";
-import { UserProfile } from "@/services/user";
+
+export interface UserProfile {
+  name: string;
+  email: string;
+  profileImage: string | null;
+}
 
 export const userProfileState = atom<UserProfile | null>({
   key: "userProfileState",

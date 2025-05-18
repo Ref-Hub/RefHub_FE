@@ -1,51 +1,59 @@
 // src/services/user.ts
 import api from "@/utils/api";
+import { handleApiError } from "@/utils/errorHandler";
 
-export interface UserProfile {
+interface UserProfile {
   name: string;
   email: string;
   profileImage: string | null;
 }
 
 class UserService {
-  // 사용자 프로필 정보 조회
+  // 마이페이지 사용자 정보 조회
   async getMyProfile(): Promise<UserProfile> {
-    const response = await api.get<UserProfile>("/api/users/my-page");
-    return response.data;
+    try {
+      const response = await api.get("/api/users/my-page");
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  // 사용자 이름 변경
+  async updateUsername(newName: string): Promise<{ message: string }> {
+    try {
+      const response = await api.patch("/api/users/user-name", { newName });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
   }
 
   // 프로필 이미지 업로드
   async uploadProfileImage(file: File): Promise<{ message: string }> {
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const response = await api.patch<{ message: string }>(
-      "/api/users/profile-image",
-      formData,
-      {
+      const response = await api.patch("/api/users/profile-image", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
-    );
-    return response.data;
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
   }
 
   // 프로필 이미지 삭제
   async deleteProfileImage(): Promise<{ message: string }> {
-    const response = await api.delete<{ message: string }>(
-      "/api/users/profile-image"
-    );
-    return response.data;
-  }
-
-  // 사용자 이름 변경
-  async updateUserName(newName: string): Promise<{ message: string }> {
-    const response = await api.patch<{ message: string }>(
-      "/api/users/user-name",
-      { newName }
-    );
-    return response.data;
+    try {
+      const response = await api.delete("/api/users/profile-image");
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
   }
 }
 
