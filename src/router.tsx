@@ -19,7 +19,7 @@ import ReferenceListPage from "@/pages/reference/ReferenceListPage";
 import ReferenceDetailPage from "@/pages/reference/ReferenceDetailPage";
 import ReferenceCreatePage from "@/pages/reference/ReferenceCreatePage";
 import ReferenceEditPage from "@/pages/reference/ReferenceEditPage";
-import MyPage from "@/pages/user/MyPage"; // 추가된 마이페이지 import
+import MyPage from "@/pages/user/MyPage";
 
 // 인증 관련 라우트
 const authRoutes: RouteObject[] = [
@@ -29,7 +29,7 @@ const authRoutes: RouteObject[] = [
       <PublicRoute>
         <LoginPage />
       </PublicRoute>
-    ), // PublicRoute로 감싸기
+    ),
   },
   {
     path: "signup",
@@ -37,15 +37,12 @@ const authRoutes: RouteObject[] = [
       <PublicRoute>
         <SignupPage />
       </PublicRoute>
-    ), // PublicRoute로 감싸기
+    ),
   },
+  // 비밀번호 재설정 페이지에 래퍼 없이 직접 컴포넌트 사용
   {
     path: "reset-password",
-    element: (
-      <PublicRoute>
-        <PasswordResetPage />
-      </PublicRoute>
-    ), // PublicRoute로 감싸기
+    element: <PasswordResetPage />,
   },
 ];
 
@@ -124,7 +121,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
-    errorElement: <NotFoundRedirect />, // 오류 발생 시 인증 상태에 따라 리다이렉트
+    errorElement: <NotFoundRedirect />,
     children: [
       {
         path: "auth",
