@@ -111,7 +111,7 @@ const MyPage = () => {
     }
   };
 
-  // 프로필 이미지 삭제
+  // 프로필 이미지 삭제 - 직접 실행
   const handleDeleteProfileImage = async () => {
     try {
       // 이미지가 없는 경우 처리
@@ -135,13 +135,8 @@ const MyPage = () => {
 
   // 이름 수정 핸들러
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // 국문, 영어 외 문자 입력 불가 처리
-    const value = e.target.value;
-    const regex = /^[가-힣a-zA-Z\s]*$/;
-
-    if (regex.test(value) || value === "") {
-      setNewName(value);
-    }
+    // 모든 입력 허용 - 제한 없음
+    setNewName(e.target.value);
   };
 
   // 인풋 박스 초기화 (X 아이콘 클릭 시) - 텍스트 지우기
@@ -152,7 +147,7 @@ const MyPage = () => {
     }
   };
 
-  // 이름 변경 저장
+  // 이름 변경 저장 - 저장 시점에만 유효성 검사
   const handleSaveName = async () => {
     // 입력값이 없을 경우 기존 이름으로 복원하고 편집 모드 종료 (토스트 없음)
     if (!newName.trim()) {
@@ -167,7 +162,14 @@ const MyPage = () => {
       return;
     }
 
-    // 10글자 제한 - UI에 이미 설정되어 있지만 추가 검증
+    // 완성되지 않은 한글 자음/모음도 허용하는 정규식
+    const regex = /^[가-힣a-zA-Z\sㄱ-ㅎㅏ-ㅣ]*$/;
+    if (!regex.test(newName)) {
+      showToast("이름은 한글, 영문자만 사용 가능합니다.", "error");
+      return;
+    }
+
+    // 10글자 제한 검증
     if (newName.length > 10) {
       showToast("이름은 최대 10글자까지 입력 가능합니다.", "error");
       return;
@@ -230,7 +232,7 @@ const MyPage = () => {
 
   return (
     <div className="flex flex-col items-center min-h-full overflow-hidden bg-[#F9FAF9]">
-      {/* Alert 컴포넌트 */}
+      {/* Alert 컴포넌트 - 탈퇴 알림만 남김 */}
       {alert.isVisible && alert.type === "withdrawal" && (
         <Alert message={alert.massage} />
       )}
@@ -283,7 +285,8 @@ const MyPage = () => {
             >
               사진 변경
             </button>
-            <span className="mx-2 text-gray-300">|</span>
+            {/* 간격 유지 */}
+            <span className="mx-4 text-gray-300">|</span>
             <button
               onClick={handleDeleteProfileImage}
               className="hover:text-primary transition-colors"
@@ -358,14 +361,14 @@ const MyPage = () => {
           >
             비밀번호 재설정
           </button>
-          <span className="mx-2 text-gray-300">|</span>
+          <span className="mx-4 text-gray-300">|</span>
           <button
             onClick={logout}
             className="hover:text-primary transition-colors"
           >
             로그아웃
           </button>
-          <span className="mx-2 text-gray-300">|</span>
+          <span className="mx-4 text-gray-300">|</span>
           <button
             onClick={handleWithdrawal}
             className="hover:text-primary transition-colors"
