@@ -1,14 +1,14 @@
 // src/pages/user/MyPage.tsx
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom"; // useLocation 추가
-import { useRecoilState } from "recoil"; // useSetRecoilState 제거
+import { useNavigate } from "react-router-dom";
+import { useRecoilState } from "recoil";
 import { userProfileState } from "@/store/user";
 import { alertState } from "@/store/collection";
 import { userService } from "@/services/user";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/contexts/useToast";
-import { Edit } from "lucide-react";
-import Alert from "@/components/common/Alert"; // Alert 컴포넌트 임포트 추가
+import { Edit, X as XIcon } from "lucide-react";
+import Alert from "@/components/common/Alert";
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -20,9 +20,11 @@ const MyPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState("");
+  const [originalName, setOriginalName] = useState(""); // 원래 이름 저장용
   const [isUploading, setIsUploading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // 프로필 정보 불러오기
   useEffect(() => {
@@ -31,16 +33,13 @@ const MyPage = () => {
         setIsLoading(true);
         const profileData = await userService.getMyProfile();
 
-        // 백엔드에서 올바른 응답이 왔는지 검증
         if (!profileData || typeof profileData !== "object") {
           throw new Error("프로필 정보 형식이 올바르지 않습니다.");
         }
 
         setUserProfile(profileData);
         setNewName(profileData.name || "");
-
-        // 개발 디버깅 용도
-        console.log("Successfully loaded profile:", profileData);
+        setOriginalName(profileData.name || ""); // 원래 이름 저장
       } catch (error) {
         console.error("프로필 정보 로드 실패:", error);
         showToast("프로필 정보를 불러오는데 실패했습니다.", "error");
@@ -52,6 +51,13 @@ const MyPage = () => {
     fetchProfile();
   }, [setUserProfile, showToast]);
 
+  // 편집 모드로 진입할 때 input에 focus 주기
+  useEffect(() => {
+    if (isEditingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [isEditingName]);
+
   // 프로필 이미지 업로드
   const handleProfileImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -59,22 +65,32 @@ const MyPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 파일 유형 검증
-    const validImageTypes = ["image/jpeg", "image/png", "image/jpg"];
+    // 파일 유형 검증 - 요구사항에 맞게 확장자 목록 업데이트
+    const validImageTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
     if (!validImageTypes.includes(file.type)) {
-      showToast("JPG, PNG 형식의 이미지만 업로드 가능합니다.", "error");
+      showToast(
+        "JPG, PNG, GIF, WEBP 형식의 이미지만 첨부 가능합니다.",
+        "error"
+      );
       return;
     }
 
     // 파일 크기 제한 (10MB)
     const MAX_FILE_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
-      showToast("이미지 크기는 10MB 이하여야 합니다.", "error");
+      showToast("10MB 이하 파일만 첨부 가능합니다.", "error");
       return;
     }
 
     try {
       setIsUploading(true);
+
+      // 기존 이미지가 있는 경우, 백엔드에서 자동으로 삭제 후 첨부
       await userService.uploadProfileImage(file);
 
       // 프로필 정보 다시 로드
@@ -82,9 +98,6 @@ const MyPage = () => {
       setUserProfile(updatedProfile);
 
       showToast("프로필 이미지가 변경되었습니다.", "success");
-
-      // 개발 디버깅 용도
-      console.log("Profile updated after image upload:", updatedProfile);
     } catch (error) {
       console.error("프로필 이미지 업로드 실패:", error);
       showToast("이미지 업로드에 실패했습니다.", "error");
@@ -114,29 +127,49 @@ const MyPage = () => {
       setUserProfile(updatedProfile);
 
       showToast("프로필 이미지가 삭제되었습니다.", "success");
-
-      // 개발 디버깅 용도
-      console.log("Profile updated after image deletion:", updatedProfile);
     } catch (error) {
       console.error("프로필 이미지 삭제 실패:", error);
       showToast("이미지 삭제에 실패했습니다.", "error");
     }
   };
 
+  // 이름 수정 핸들러
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // 국문, 영어 외 문자 입력 불가 처리
+    const value = e.target.value;
+    const regex = /^[가-힣a-zA-Z\s]*$/;
+
+    if (regex.test(value) || value === "") {
+      setNewName(value);
+    }
+  };
+
+  // 인풋 박스 초기화 (X 아이콘 클릭 시) - 텍스트 지우기
+  const handleClearInput = () => {
+    setNewName("");
+    if (nameInputRef.current) {
+      nameInputRef.current.focus(); // 포커스 유지
+    }
+  };
+
   // 이름 변경 저장
   const handleSaveName = async () => {
+    // 입력값이 없을 경우 기존 이름으로 복원하고 편집 모드 종료 (토스트 없음)
     if (!newName.trim()) {
-      showToast("이름을 입력해주세요.", "error");
+      setNewName(originalName);
+      setIsEditingName(false);
       return;
     }
 
-    // 한글, 영문자만 허용 (백엔드 검증과 동일하게)
-    const regex = /^[가-힣a-zA-Z]+$/;
-    if (!regex.test(newName) || newName.length > 10) {
-      showToast(
-        "이름은 한글, 영문자만 사용 가능하며 10자 이내여야 합니다.",
-        "error"
-      );
+    // 이름이 변경되지 않은 경우: 편집 모드만 종료 (토스트 없음)
+    if (newName === originalName) {
+      setIsEditingName(false);
+      return;
+    }
+
+    // 10글자 제한 - UI에 이미 설정되어 있지만 추가 검증
+    if (newName.length > 10) {
+      showToast("이름은 최대 10글자까지 입력 가능합니다.", "error");
       return;
     }
 
@@ -149,6 +182,7 @@ const MyPage = () => {
           ...userProfile,
           name: newName,
         });
+        setOriginalName(newName); // 원래 이름 업데이트
       }
 
       setIsEditingName(false);
@@ -183,19 +217,30 @@ const MyPage = () => {
     fileInputRef.current?.click();
   };
 
+  // 엔터 키 처리 (이름 수정 완료)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSaveName();
+    } else if (e.key === "Escape") {
+      // ESC 키 누르면 편집 모드 취소
+      setIsEditingName(false);
+      setNewName(originalName); // 원래 이름으로 복원
+    }
+  };
+
   return (
     <div className="flex flex-col items-center min-h-full overflow-hidden bg-[#F9FAF9]">
-      {/* Alert 컴포넌트 추가 */}
+      {/* Alert 컴포넌트 */}
       {alert.isVisible && alert.type === "withdrawal" && (
         <Alert message={alert.massage} />
       )}
 
-      {/* 전체 컨테이너: 상하 패딩 줄이고 flex-1 추가 */}
+      {/* 전체 컨테이너 */}
       <div className="flex flex-col items-center w-full h-full py-4 flex-1">
-        {/* 프로필 섹션 */}
-        <div className="flex flex-col items-center">
+        {/* 프로필 섹션 - 상단 여백 추가 */}
+        <div className="flex flex-col items-center mt-12">
           {/* 프로필 이미지 */}
-          <div className="relative mt-4">
+          <div className="relative">
             {isLoading ? (
               <div className="w-[160px] h-[160px] rounded-full bg-gray-200 animate-pulse"></div>
             ) : (
@@ -224,7 +269,7 @@ const MyPage = () => {
               type="file"
               ref={fileInputRef}
               onChange={handleProfileImageUpload}
-              accept="image/jpeg, image/png, image/jpg"
+              accept="image/jpeg,image/png,image/gif,image/webp"
               className="hidden"
             />
           </div>
@@ -242,6 +287,7 @@ const MyPage = () => {
             <button
               onClick={handleDeleteProfileImage}
               className="hover:text-primary transition-colors"
+              disabled={isUploading || !userProfile?.profileImage}
             >
               사진 삭제
             </button>
@@ -249,42 +295,46 @@ const MyPage = () => {
 
           {/* 사용자 정보 섹션 */}
           <div className="mt-8 flex flex-col items-center">
-            {/* 이름 */}
+            {/* 이름 편집 UI 개선 */}
             <div className="mb-4 flex items-center">
               {isEditingName ? (
-                <div className="flex items-center space-x-2">
+                <div className="relative w-[300px] flex items-center">
                   <input
                     type="text"
                     value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="w-[300px] h-[50px] px-4 py-2 border border-gray-300 rounded-[50px] focus:outline-none focus:ring-2 focus:ring-primary"
+                    onChange={handleNameChange}
+                    className="w-full h-[50px] px-4 py-2 pr-10 border border-gray-300 rounded-[50px] focus:outline-none focus:ring-2 focus:ring-primary"
                     maxLength={10}
+                    ref={nameInputRef}
                     autoFocus
+                    onKeyDown={handleKeyDown}
+                    placeholder={originalName || "이름 입력"}
                   />
+                  {/* X 아이콘 추가 - 텍스트 지우기 용도로 변경 */}
+                  <button
+                    onClick={handleClearInput}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    aria-label="텍스트 지우기"
+                  >
+                    <XIcon size={18} />
+                  </button>
+                  {/* 저장 버튼 - 간격 축소 */}
                   <button
                     onClick={handleSaveName}
-                    className="text-primary hover:text-primary-dark"
+                    className="absolute -right-12 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary-dark"
                   >
                     저장
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditingName(false);
-                      setNewName(userProfile?.name || "");
-                    }}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    취소
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
                   <h2 className="text-2xl font-bold">
-                    {userProfile?.name || "name"}
+                    {userProfile?.name || "이름"}
                   </h2>
                   <button
                     onClick={() => setIsEditingName(true)}
                     className="text-gray-500 hover:text-primary"
+                    aria-label="이름 수정"
                   >
                     <Edit size={18} />
                   </button>
@@ -293,17 +343,17 @@ const MyPage = () => {
             </div>
 
             {/* 이메일 */}
-            <p className="text-gray-600">{userProfile?.email || "email"}</p>
+            <p className="text-gray-600">{userProfile?.email || "이메일"}</p>
           </div>
         </div>
 
-        {/* 늘어나는 여백 - 이메일과 하단 버튼 사이에 공간 확보 (min-height 추가) */}
+        {/* 늘어나는 여백 */}
         <div className="flex-grow min-h-[410px]"></div>
 
-        {/* 하단 버튼 섹션 - 수정된 부분 */}
+        {/* 하단 버튼 섹션 */}
         <div className="w-full mt-auto mb-0 flex justify-center text-gray-700 text-sm">
           <button
-            onClick={handlePasswordReset} // 수정된 핸들러 사용
+            onClick={handlePasswordReset}
             className="hover:text-primary transition-colors"
           >
             비밀번호 재설정
