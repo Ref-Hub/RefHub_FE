@@ -1,7 +1,18 @@
 // src/components/layout/AuthHeader.tsx
 import { Link } from "react-router-dom";
+import { useRecoilValue } from "recoil";
+import { userState, authUtils } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AuthHeader() {
+  const user = useRecoilValue(userState);
+  const isAuthenticated = !!user || !!authUtils.getToken();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
   return (
     <header className="bg-white dark:bg-dark-bg shadow-sm rounded-bl-[48px] rounded-br-[48px] shadow-[0px_4px_10px_0px_rgba(181,184,181,0.10)] dark:shadow-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,14 +35,23 @@ export default function AuthHeader() {
               {/* 내용은 비어있지만 구조상 필요 */}
             </div>
 
-            {/* 우측 로그인 버튼 */}
+            {/* 우측 버튼 (로그인 or 로그아웃) */}
             <div className="flex-1 flex justify-end">
-              <Link
-                to="/auth/login"
-                className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors"
-              >
-                로그인
-              </Link>
+              {isAuthenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors"
+                >
+                  로그아웃
+                </button>
+              ) : (
+                <Link
+                  to="/auth/login"
+                  className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors"
+                >
+                  로그인
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -48,13 +68,22 @@ export default function AuthHeader() {
               />
             </Link>
 
-            {/* 로그인 버튼 */}
-            <Link
-              to="/auth/login"
-              className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors"
-            >
-              로그인
-            </Link>
+            {/* 로그인/로그아웃 버튼 */}
+            {isAuthenticated ? (
+              <button
+                onClick={handleLogout}
+                className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors"
+              >
+                로그아웃
+              </button>
+            ) : (
+              <Link
+                to="/auth/login"
+                className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors"
+              >
+                로그인
+              </Link>
+            )}
           </div>
 
           {/* 하단 네비게이션(필요 없으므로 공간만 확보) */}
