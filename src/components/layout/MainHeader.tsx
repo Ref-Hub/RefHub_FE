@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import SearchBar from "../common/SearchBar";
 import { DropState } from "@/store/collection";
-import ProfileDropdown from "../common/ProfileDropdown"; // 프로필 드롭다운 컴포넌트 import
+import ProfileDropdown from "../common/ProfileDropdown";
 
 export default function MainHeader() {
   const location = useLocation();
