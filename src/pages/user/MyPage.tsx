@@ -1,20 +1,21 @@
 // src/pages/user/MyPage.tsx
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import { useNavigate } from "react-router-dom"; // useLocation 추가
+import { useRecoilState } from "recoil"; // useSetRecoilState 제거
 import { userProfileState } from "@/store/user";
 import { alertState } from "@/store/collection";
 import { userService } from "@/services/user";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/contexts/useToast";
 import { Edit } from "lucide-react";
+import Alert from "@/components/common/Alert"; // Alert 컴포넌트 임포트 추가
 
 const MyPage = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { showToast } = useToast();
   const [userProfile, setUserProfile] = useRecoilState(userProfileState);
-  const setAlert = useSetRecoilState(alertState);
+  const [alert, setAlert] = useRecoilState(alertState);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -118,6 +119,13 @@ const MyPage = () => {
     }
   };
 
+  const handlePasswordReset = () => {
+    // 세션 스토리지에 플래그 설정
+    sessionStorage.setItem("fromMyPage", "true");
+    // navigate로 이동하되 state에 fromMyPage 표시
+    navigate("/auth/reset-password", { state: { fromMyPage: true } });
+  };
+
   // 탈퇴하기
   const handleWithdrawal = () => {
     setAlert({
@@ -137,6 +145,11 @@ const MyPage = () => {
 
   return (
     <div className="flex flex-col items-center min-h-full overflow-hidden bg-[#F9FAF9]">
+      {/* Alert 컴포넌트 추가 */}
+      {alert.isVisible && alert.type === "withdrawal" && (
+        <Alert message={alert.massage} />
+      )}
+
       {/* 전체 컨테이너: 상하 패딩 줄이고 flex-1 추가 */}
       <div className="flex flex-col items-center w-full h-full py-4 flex-1">
         {/* 프로필 섹션 */}
@@ -248,9 +261,9 @@ const MyPage = () => {
         <div className="flex-grow min-h-[410px]"></div>
 
         {/* 하단 버튼 섹션 - 수정된 부분 */}
-        <div className="w-full mt-auto mb-0 flex justify-center text-gray-700 text-sm pb-6">
+        <div className="w-full mt-auto mb-0 flex justify-center text-gray-700 text-sm">
           <button
-            onClick={() => navigate("/auth/reset-password")}
+            onClick={handlePasswordReset} // 수정된 핸들러 사용
             className="hover:text-primary transition-colors"
           >
             비밀번호 재설정

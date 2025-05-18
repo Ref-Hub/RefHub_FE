@@ -11,14 +11,12 @@ export default function Layout() {
   const user = useRecoilValue(userState);
   const isAuthPage = location.pathname.startsWith("/auth/");
   const isLoginPage = location.pathname === "/auth/login";
+  const isPasswordResetPage = location.pathname === "/auth/reset-password";
   const isHomePage =
     location.pathname === "/collections" ||
     location.pathname === "/references" ||
     location.pathname === "/user/mypage" ||
     location.pathname === "/mypage";
-
-  // 현재 로그인 프로세스가 진행 중인지 확인
-  const isLoggingIn = isLoginPage && authUtils.getToken();
 
   // 인증이 필요한 페이지에서 비로그인 상태일 경우 로그인 페이지로 리다이렉트
   if (!isAuthPage && !user && !authUtils.getToken()) {
@@ -27,8 +25,8 @@ export default function Layout() {
   }
 
   // 로그인 상태에서 인증 페이지 접근 시 컬렉션 페이지로 리다이렉트
-  // 단, 로그인 진행 중일 때는 제외
-  if (isAuthPage && user && !isLoggingIn) {
+  // 비밀번호 재설정 페이지는 항상 접근 가능하도록 예외 처리
+  if (isAuthPage && !isPasswordResetPage && user && !isLoginPage) {
     console.log("Redirecting to collections: Already authenticated");
     return <Navigate to="/collections" replace />;
   }
