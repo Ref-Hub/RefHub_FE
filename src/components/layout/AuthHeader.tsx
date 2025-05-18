@@ -1,6 +1,5 @@
 // src/components/layout/AuthHeader.tsx
 import { Link } from "react-router-dom";
-import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 export default function AuthHeader() {
   return (
@@ -15,8 +14,7 @@ export default function AuthHeader() {
             />
           </Link>
           <div className="flex items-center space-x-4">
-            <ThemeToggle />
-            <Link 
+            <Link
               to="/auth/login"
               className="text-gray-600 dark:text-gray-300 hover:text-primary"
             >
