@@ -88,7 +88,7 @@ const ProfileDropdown: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute w-[164px] h-[118px] top-[48px] left-[-108px] rounded-[16px] shadow-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border z-20">
+        <div className="absolute w-[164px] h-[94px] top-[48px] left-[-108px] rounded-[16px] shadow-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border z-20">
           <div className="py-0 flex flex-col justify-center h-full">
             <button
               onClick={handleMyPageClick}
