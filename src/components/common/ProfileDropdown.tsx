@@ -11,7 +11,7 @@ const ProfileDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const location = useLocation(); // 현재 경로 가져오기
+  const location = useLocation();
   const { logout } = useAuth();
   const [userProfile, setUserProfile] = useRecoilState(userProfileState);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,10 +30,8 @@ const ProfileDropdown: React.FC = () => {
       }
     };
 
-    // 프로필이 null이거나 페이지 이동 후 다시 메인 헤더가 있는 페이지로 돌아올 때
-    // 프로필 정보를 다시 로드
     fetchProfile();
-  }, [location.pathname, setUserProfile]); // location.pathname을 의존성 배열에 추가
+  }, [location.pathname, setUserProfile]);
 
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
@@ -90,18 +88,18 @@ const ProfileDropdown: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border z-20">
-          <div className="py-2">
+        <div className="absolute w-[164px] h-[118px] top-[48px] left-[-108px] rounded-[16px] shadow-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border z-20">
+          <div className="py-0 flex flex-col justify-center h-full">
             <button
               onClick={handleMyPageClick}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover"
+              className="flex items-center justify-center w-full px-4 py-3 text-sm text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover"
             >
               <User className="mr-2 h-4 w-4" />
               마이페이지
             </button>
             <button
               onClick={handleLogoutClick}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover"
+              className="flex items-center justify-center w-full px-4 py-3 text-sm text-gray-700 dark:text-dark-text-primary hover:bg-gray-100 dark:hover:bg-dark-hover"
             >
               <LogOut className="mr-2 h-4 w-4" />
               로그아웃
