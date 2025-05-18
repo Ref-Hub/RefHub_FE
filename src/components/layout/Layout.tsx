@@ -55,9 +55,11 @@ export default function Layout() {
   // 인증된 사용자는 비밀번호 재설정 페이지를 포함하여 MainHeader 사용
   const shouldUseMainHeader =
     isAuthenticated && (!isAuthPage || isPasswordResetPage);
+
   // 인증되지 않은 사용자는 Auth 페이지들에서만 AuthHeader 사용
+  // 로그인 페이지에서는 헤더를 표시하지 않도록 수정
   const shouldUseAuthHeader =
-    !isAuthenticated && (isLoginPage || isSignupPage || isPasswordResetPage);
+    !isAuthenticated && (isSignupPage || isPasswordResetPage) && !isLoginPage;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F9FAF9]">
