@@ -1,6 +1,6 @@
 // src/components/common/ProfileDropdown.tsx
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRecoilState } from "recoil";
@@ -11,6 +11,7 @@ const ProfileDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation(); // 현재 경로 가져오기
   const { logout } = useAuth();
   const [userProfile, setUserProfile] = useRecoilState(userProfileState);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,10 +30,10 @@ const ProfileDropdown: React.FC = () => {
       }
     };
 
-    if (!userProfile) {
-      fetchProfile();
-    }
-  }, [userProfile, setUserProfile]);
+    // 프로필이 null이거나 페이지 이동 후 다시 메인 헤더가 있는 페이지로 돌아올 때
+    // 프로필 정보를 다시 로드
+    fetchProfile();
+  }, [location.pathname, setUserProfile]); // location.pathname을 의존성 배열에 추가
 
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
