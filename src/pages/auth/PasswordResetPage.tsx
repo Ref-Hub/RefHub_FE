@@ -1,11 +1,12 @@
 // src/pages/auth/PasswordResetPage.tsx
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
 import { useToast } from "@/contexts/useToast";
 import { authService } from "@/services/auth";
+import { authUtils } from "@/store/auth";
 import type { PasswordResetForm } from "@/types/auth";
 
 type ResetStep = "EMAIL" | "VERIFY" | "NEW_PASSWORD";
@@ -18,6 +19,7 @@ export default function PasswordResetPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     register,
@@ -126,11 +128,35 @@ export default function PasswordResetPage() {
 
   const onSubmit = async (data: PasswordResetForm) => {
     if (isLoading || !isVerified) return;
+
     setIsLoading(true);
     try {
       await authService.resetPassword(data);
+
+      // 성공 메시지 표시
       showToast("비밀번호가 변경되었습니다. 다시 로그인해주세요.", "success");
-      navigate("/auth/login");
+
+      // 마이페이지에서 왔는지 확인
+      const fromMyPage =
+        location.state?.fromMyPage ||
+        sessionStorage.getItem("fromMyPage") === "true";
+
+      // 세션 스토리지 플래그 제거
+      sessionStorage.removeItem("fromMyPage");
+
+      // 마이페이지에서 왔으면 마이페이지로, 아니면 로그인 페이지로 이동
+      if (fromMyPage) {
+        // 인증 상태 확인 후 마이페이지로 리디렉션
+        const isAuthenticated = !!authUtils.getToken();
+        if (isAuthenticated) {
+          navigate("/mypage");
+        } else {
+          // 비밀번호 변경으로 인해 로그아웃 된 경우 로그인 페이지로
+          navigate("/auth/login");
+        }
+      } else {
+        navigate("/auth/login");
+      }
     } catch (error) {
       if (error instanceof Error) {
         showToast(error.message, "error");

@@ -9,8 +9,12 @@ import Footer from "./Footer";
 export default function Layout() {
   const location = useLocation();
   const user = useRecoilValue(userState);
+  const isAuthenticated = !!user || !!authUtils.getToken();
+
+  // 페이지 타입 식별
   const isAuthPage = location.pathname.startsWith("/auth/");
   const isLoginPage = location.pathname === "/auth/login";
+  const isSignupPage = location.pathname === "/auth/signup";
   const isPasswordResetPage = location.pathname === "/auth/reset-password";
   const isHomePage =
     location.pathname === "/collections" ||
@@ -31,10 +35,36 @@ export default function Layout() {
     return <Navigate to="/collections" replace />;
   }
 
+  // 검색창을 표시할지 결정
+  const shouldShowSearchBar = () => {
+    const hideSearchBarPatterns = [
+      /\/auth\/.*/, // 모든 auth 페이지
+      /\/mypage$/, // 마이페이지
+      /\/collections\/[^/]+$/, // /collections/:id
+      /\/references\/[^/]+$/, // /references/:id
+      /\/references\/[^/]+\/edit$/, // /references/:id/edit
+      /\/references\/new$/, // /references/new
+    ];
+
+    return !hideSearchBarPatterns.some((pattern) =>
+      pattern.test(location.pathname)
+    );
+  };
+
+  // 인증 상태에 따라 헤더 타입 결정
+  // 인증된 사용자는 비밀번호 재설정 페이지를 포함하여 MainHeader 사용
+  const shouldUseMainHeader =
+    isAuthenticated && (!isAuthPage || isPasswordResetPage);
+  // 인증되지 않은 사용자는 Auth 페이지들에서만 AuthHeader 사용
+  const shouldUseAuthHeader =
+    !isAuthenticated && (isLoginPage || isSignupPage || isPasswordResetPage);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F9FAF9]">
-      {isAuthPage && !isLoginPage ? <AuthHeader /> : null}
-      {!isAuthPage && <MainHeader />}
+      {shouldUseMainHeader && (
+        <MainHeader shouldShowSearchBar={shouldShowSearchBar()} />
+      )}
+      {shouldUseAuthHeader && <AuthHeader />}
       <main className="flex-1">
         <Outlet />
       </main>
