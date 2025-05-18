@@ -5,7 +5,11 @@ import SearchBar from "../common/SearchBar";
 import { DropState } from "@/store/collection";
 import ProfileDropdown from "../common/ProfileDropdown";
 
-export default function MainHeader() {
+interface MainHeaderProps {
+  shouldShowSearchBar: boolean;
+}
+
+export default function MainHeader({ shouldShowSearchBar }: MainHeaderProps) {
   const location = useLocation();
   const [, setSort] = useRecoilState(DropState);
 
@@ -13,20 +17,6 @@ export default function MainHeader() {
     if (location.pathname.includes("/collections")) return "collection";
     if (location.pathname.includes("/references")) return "reference";
     return "collection";
-  };
-
-  const shouldShowSearchBar = () => {
-    const hideSearchBarPatterns = [
-      /\/collections\/[^/]+$/, // /collections/:id
-      /\/references\/[^/]+$/, // /references/:id
-      /\/references\/[^/]+\/edit$/, // /references/:id/edit
-      /\/references\/new$/, // /references/new
-      /\/mypage$/, // /mypage
-    ];
-
-    return !hideSearchBarPatterns.some((pattern) =>
-      pattern.test(location.pathname)
-    );
   };
 
   const handleReset = () => {
@@ -133,8 +123,8 @@ export default function MainHeader() {
           </nav>
         </div>
 
-        {/* SearchBar 컴포넌트 */}
-        {shouldShowSearchBar() && (
+        {/* SearchBar 컴포넌트 - 조건부 렌더링 */}
+        {shouldShowSearchBar && (
           <div className="mt-2 sm:mt-0">
             <SearchBar type={getCurrentType()} />
           </div>
