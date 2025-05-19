@@ -7,6 +7,7 @@ import {
 import Layout from "@/components/layout/Layout";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { PublicRoute } from "@/components/layout/PublicRoute";
+import { UnrestrictedRoute } from "@/components/layout/UnrestrictedRoute";
 import NotFoundRedirect from "@/components/layout/NotFoundRedirect";
 
 // 페이지 컴포넌트 import
@@ -40,16 +41,12 @@ const authRoutes: RouteObject[] = [
       </PublicRoute>
     ),
   },
-  // 비밀번호 재설정 페이지에 래퍼 없이 직접 컴포넌트 사용
+  // 비밀번호 재설정 페이지는 로그인 여부와 관계없이 접근 가능
   {
     path: "reset-password",
     element: <PasswordResetPage />,
   },
-  // 카카오 로그인 콜백 경로 추가
-  {
-    path: "kakao-login",
-    element: <KakaoLoginCallback />,
-  },
+  // 카카오 로그인 콜백 경로는 /auth 경로에서 제거하고 최상위 경로에 추가
 ];
 
 // 보호된 라우트 (인증 필요)
@@ -60,19 +57,24 @@ const protectedRoutes: RouteObject[] = [
   },
   {
     path: "collections",
-    element: (
-      <ProtectedRoute>
-        <CollectionPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "collections/:collectionId",
-    element: (
-      <ProtectedRoute>
-        <CollectionDetailPage />
-      </ProtectedRoute>
-    ),
+    children: [
+      {
+        index: true,
+        element: (
+          <ProtectedRoute>
+            <CollectionPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: ":collectionId",
+        element: (
+          <ProtectedRoute>
+            <CollectionDetailPage />
+          </ProtectedRoute>
+        ),
+      },
+    ],
   },
   {
     path: "references",
@@ -111,7 +113,7 @@ const protectedRoutes: RouteObject[] = [
       },
     ],
   },
-  // 마이페이지 라우트 추가
+  // 마이페이지 라우트
   {
     path: "mypage",
     element: (
@@ -132,6 +134,15 @@ export const router = createBrowserRouter([
       {
         path: "auth",
         children: authRoutes,
+      },
+      // 카카오 로그인 콜백 경로를 최상위 경로로 추가
+      {
+        path: "users/kakao-login",
+        element: (
+          <UnrestrictedRoute>
+            <KakaoLoginCallback />
+          </UnrestrictedRoute>
+        ),
       },
       ...protectedRoutes,
       // 명시적인 와일드카드 경로 추가
