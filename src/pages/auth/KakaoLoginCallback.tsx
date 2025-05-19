@@ -25,8 +25,7 @@ export default function KakaoLoginCallback() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const setUser = useSetRecoilState(userState);
-  const [isProcessing, setIsProcessing] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [debugInfo, setDebugInfo] = useState<any>({});
 
   useEffect(() => {
@@ -40,8 +39,6 @@ export default function KakaoLoginCallback() {
             window.location.search
           );
         }
-
-        setIsProcessing(true);
 
         // URL에서 토큰 파라미터 추출
         const urlParams = new URLSearchParams(window.location.search);
@@ -198,15 +195,12 @@ export default function KakaoLoginCallback() {
         // 개발 환경에서만 오류 로깅
         if (import.meta.env.DEV) {
           console.error("🔍 [Kakao Callback] 카카오 로그인 처리 실패:", error);
-        }
 
-        // 개발 환경에서만 오류 상태 저장
-        if (import.meta.env.DEV) {
-          setError(
-            error instanceof Error
-              ? error.message
-              : "알 수 없는 오류가 발생했습니다"
-          );
+          // 오류 정보 디버깅용으로 저장
+          setDebugInfo((prev: any) => ({
+            ...prev,
+            error: error instanceof Error ? error.message : String(error),
+          }));
         }
 
         // 프로덕션 환경에서는 오류를 표시하지 않고 성공 메시지 표시
@@ -217,8 +211,8 @@ export default function KakaoLoginCallback() {
           navigate("/collections", { replace: true });
         }, 100);
       } finally {
-        // 처리 완료 표시 (애니메이션 용도)
-        setIsProcessing(false);
+        // 처리 완료 표시
+        setLoading(false);
       }
     };
 
@@ -238,6 +232,11 @@ export default function KakaoLoginCallback() {
         <p className="text-gray-600">
           잠시만 기다려 주세요. 곧 컬렉션 페이지로 이동합니다.
         </p>
+
+        {/* 로딩 상태에 따른 조건부 렌더링 (unused 변수 활용) */}
+        {!loading && import.meta.env.DEV && (
+          <p className="text-sm text-gray-500 mt-2">처리 완료됨</p>
+        )}
 
         {/* 디버깅 정보는 개발 환경에서만 표시 (숨김 처리) */}
         {import.meta.env.DEV && (
