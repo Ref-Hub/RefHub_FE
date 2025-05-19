@@ -140,7 +140,7 @@ export const useAuth = () => {
       await updateAuthState(null);
       showToast("로그아웃 되었습니다.", "success");
       navigate("/auth/login", { replace: true });
-    } catch (error) {
+    } catch (_) {
       console.log(
         "로그아웃 중 에러가 발생했지만, 로그아웃 처리를 계속 진행합니다."
       );
@@ -172,6 +172,7 @@ export const useAuth = () => {
     login,
     signup,
     logout,
+    setUser: (userData: User) => setUser(userData),
     isAuthenticated: checkAuthStatus(),
   };
 };

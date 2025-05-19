@@ -103,10 +103,29 @@ export default function LoginPage() {
 
   // 카카오 로그인 핸들러 함수
   const handleKakaoLogin = useCallback(() => {
-    // 백엔드 API 연동 전 임시 함수
-    // 추후 카카오 로그인 API 연동 시 실제 구현 필요
-    showToast("카카오 로그인 기능이 곧 구현될 예정입니다.");
-  }, [showToast]);
+    // api.ts와 동일한 분기 로직 적용
+    const getBaseUrl = () => {
+      // Vite 개발 환경에서는 개발 서버 사용
+      if (import.meta.env.DEV) {
+        console.log(
+          "개발 환경에서 카카오 로그인, 개발 서버 API 사용 (43.202.152.184:4000)"
+        );
+        return "http://43.202.152.184:4000";
+      }
+
+      // 운영 환경에서는 기존 API URL 사용
+      console.log(
+        "운영 환경에서 카카오 로그인, 운영 서버 API 사용 (api.refhub.site)"
+      );
+      return "https://api.refhub.site";
+    };
+
+    // 환경에 맞는 백엔드 URL 가져오기
+    const backendUrl = getBaseUrl();
+
+    // 사용자를 카카오 로그인 페이지로 리디렉션
+    window.location.href = `${backendUrl}/api/users/kakao`;
+  }, []);
 
   return (
     <div className="min-h-screen flex max-h-screen overflow-hidden">
@@ -188,7 +207,7 @@ export default function LoginPage() {
                 비밀번호를 잊으셨나요?
               </Link>
             </div>
-            
+
             {/* 로그인 버튼 및 카카오 로그인 버튼 */}
             <div className="space-y-4">
               {" "}
