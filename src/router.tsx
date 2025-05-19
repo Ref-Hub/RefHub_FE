@@ -13,6 +13,7 @@ import NotFoundRedirect from "@/components/layout/NotFoundRedirect";
 import LoginPage from "@/pages/auth/LoginPage";
 import SignupPage from "@/pages/auth/SignupPage";
 import PasswordResetPage from "@/pages/auth/PasswordResetPage";
+import KakaoLoginCallback from "@/pages/auth/KakaoLoginCallback";
 import CollectionPage from "@/pages/collection/CollectionPage";
 import CollectionDetailPage from "@/pages/collection/CollectionDetailPage";
 import ReferenceListPage from "@/pages/reference/ReferenceListPage";
@@ -43,6 +44,11 @@ const authRoutes: RouteObject[] = [
   {
     path: "reset-password",
     element: <PasswordResetPage />,
+  },
+  // 카카오 로그인 콜백 경로 추가
+  {
+    path: "kakao-login",
+    element: <KakaoLoginCallback />,
   },
 ];
 
