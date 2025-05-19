@@ -103,29 +103,25 @@ export default function LoginPage() {
 
   // 카카오 로그인 핸들러 함수
   const handleKakaoLogin = useCallback(() => {
-    // api.ts와 동일한 분기 로직 적용
-    const getBaseUrl = () => {
-      // Vite 개발 환경에서는 개발 서버 사용
-      if (import.meta.env.DEV) {
-        console.log(
-          "개발 환경에서 카카오 로그인, 개발 서버 API 사용 (43.202.152.184:4000)"
-        );
-        return "http://43.202.152.184:4000";
-      }
+    try {
+      // 환경에 맞는 백엔드 URL 가져오기
+      const backendUrl = import.meta.env.DEV
+        ? "http://43.202.152.184:4000"
+        : "https://api.refhub.site";
 
-      // 운영 환경에서는 기존 API URL 사용
-      console.log(
-        "운영 환경에서 카카오 로그인, 운영 서버 API 사용 (api.refhub.site)"
-      );
-      return "https://api.refhub.site";
-    };
+      console.log("카카오 로그인 시도:", backendUrl);
 
-    // 환경에 맞는 백엔드 URL 가져오기
-    const backendUrl = getBaseUrl();
+      // 로그인 중임을 표시
+      setIsLoading(true);
 
-    // 사용자를 카카오 로그인 페이지로 리디렉션
-    window.location.href = `${backendUrl}/api/users/kakao`;
-  }, []);
+      // 사용자를 카카오 로그인 페이지로 리디렉션
+      window.location.href = `${backendUrl}/api/users/kakao`;
+    } catch (error) {
+      console.error("카카오 로그인 리디렉션 오류:", error);
+      showToast("카카오 로그인 페이지로 이동 중 오류가 발생했습니다.", "error");
+      setIsLoading(false);
+    }
+  }, [showToast]);
 
   return (
     <div className="min-h-screen flex max-h-screen overflow-hidden">

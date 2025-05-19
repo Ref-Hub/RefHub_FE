@@ -36,6 +36,10 @@ export const useAuth = () => {
       if (userData && accessToken) {
         // 토큰 저장
         authUtils.setToken(accessToken);
+
+        // 디버그를 위한 로깅 추가
+        console.log("[Auth] 토큰 저장 완료:", !!accessToken);
+
         if (refreshToken) {
           authUtils.setRefreshToken(refreshToken);
         }
@@ -43,6 +47,9 @@ export const useAuth = () => {
         // 유저 데이터 저장
         authUtils.setStoredUser(userData);
         setUser(userData);
+
+        // 디버그를 위한 로깅 추가
+        console.log("[Auth] 유저 데이터 저장 완료:", !!userData);
 
         // 저장 확인
         const storedToken = authUtils.getToken();
@@ -116,7 +123,6 @@ export const useAuth = () => {
     }
   };
 
-  // 나머지 코드는 그대로 유지
   const signup = async (data: SignupForm) => {
     try {
       await authService.signup(data);
@@ -134,16 +140,28 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
-      // API 호출 추가
+      // 로그아웃 시도 전 현재 인증 상태 로깅
+      console.log("[Auth] 로그아웃 시도. 현재 인증 상태:", {
+        hasToken: !!authUtils.getToken(),
+        hasUser: !!user,
+      });
+
+      // API 호출 - 로그아웃 요청
       await authService.logout();
-      // 기존 코드: 로컬 상태 및 저장소 정리
+
+      // 로컬 상태 및 저장소 정리
       await updateAuthState(null);
       showToast("로그아웃 되었습니다.", "success");
+
+      // 로그아웃 후 로그인 페이지로 리디렉션
       navigate("/auth/login", { replace: true });
-    } catch (_) {
+    } catch (error) {
       console.log(
-        "로그아웃 중 에러가 발생했지만, 로그아웃 처리를 계속 진행합니다."
+        "로그아웃 중 에러가 발생했지만, 로그아웃 처리를 계속 진행합니다.",
+        error
       );
+
+      // 에러가 발생해도 로그아웃 처리는 진행
       await updateAuthState(null);
       showToast("로그아웃 중 오류가 발생했습니다.", "error");
       navigate("/auth/login", { replace: true });
@@ -155,16 +173,63 @@ export const useAuth = () => {
     const storedUser = authUtils.getStoredUser();
 
     if (token && storedUser && !user) {
+      // 토큰과 사용자 정보는 있지만 상태에는 없는 경우 상태 업데이트
+      console.log(
+        "[Auth] 토큰과 사용자 정보가 있지만 상태에 없음. 상태 업데이트"
+      );
       setUser(storedUser);
       return true;
     }
 
     if (!token && user) {
+      // 토큰은 없지만 상태에는 사용자 정보가 있는 경우 상태 초기화
+      console.log(
+        "[Auth] 토큰이 없지만 상태에 사용자 정보가 있음. 상태 초기화"
+      );
       updateAuthState(null);
       return false;
     }
 
     return !!token && !!user;
+  };
+
+  // 카카오 로그인 성공 후 처리
+  const processKakaoLogin = async (token: string) => {
+    try {
+      console.log("[Auth] 카카오 로그인 처리 시작:", !!token);
+
+      if (!token) {
+        throw new Error("유효하지 않은 토큰입니다.");
+      }
+
+      // 토큰에서 사용자 정보 추출
+      const userData = extractUserFromToken(token);
+      if (!userData) {
+        throw new Error("토큰에서 사용자 정보를 추출할 수 없습니다.");
+      }
+
+      // 인증 상태 업데이트
+      const updateSuccess = await updateAuthState(userData, token);
+      if (!updateSuccess) {
+        throw new Error("인증 상태 업데이트에 실패했습니다.");
+      }
+
+      // 자동 로그인 설정 (카카오 로그인은 기본적으로 자동 로그인)
+      authUtils.setRememberMe(true);
+
+      showToast("카카오 로그인이 완료되었습니다.", "success");
+      return true;
+    } catch (error) {
+      console.error("[Auth] 카카오 로그인 처리 실패:", error);
+      updateAuthState(null);
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "카카오 로그인 처리 중 오류가 발생했습니다.",
+        "error"
+      );
+      return false;
+    }
   };
 
   return {
@@ -174,5 +239,6 @@ export const useAuth = () => {
     logout,
     setUser: (userData: User) => setUser(userData),
     isAuthenticated: checkAuthStatus(),
+    processKakaoLogin, // 카카오 로그인 처리 함수 추가
   };
 };
