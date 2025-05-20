@@ -26,7 +26,7 @@ export default function KakaoLoginCallback() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const setUser = useSetRecoilState(userState);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [linkModalData, setLinkModalData] = useState<{
     show: boolean;
     email: string;
