@@ -6,8 +6,6 @@ import { useToast } from "@/contexts/useToast";
 import { Input } from "@/components/common/Input";
 import { authService } from "@/services/auth";
 import type { LoginForm } from "@/types/auth";
-import { useSetRecoilState } from "recoil";
-import { shareModalState } from "@/store/collection";
 
 // window.gtag에 대한 전역 타입 정의 추가
 declare global {
@@ -29,7 +27,6 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isKakaoLoading, setIsKakaoLoading] = useState(false);
-  const setShareModal = useSetRecoilState(shareModalState);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
