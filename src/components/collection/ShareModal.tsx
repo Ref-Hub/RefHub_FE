@@ -225,7 +225,15 @@ const ShareModal: React.FC<{ collectionId: string }> = ({ collectionId }) => {
                       key={user._id}
                       className="flex justify-between gap-2.5 items-center bg-white py-2 px-4 rounded-lg"
                     >
-                      <img src={UserIcon} alt="User" className="w-7 h-7" />
+                      <img
+                        src={
+                          user.userId.profileImage == "default image"
+                            ? UserIcon
+                            : user.userId.profileImage
+                        }
+                        alt="User"
+                        className="w-7 h-7 rounded-[50%]"
+                      />
                       <p className="text-base text-black font-semibold w-12 truncate">
                         {user.userId.name || ""}
                       </p>
