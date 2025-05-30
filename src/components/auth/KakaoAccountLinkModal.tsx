@@ -46,6 +46,7 @@ const KakaoAccountLinkModal: React.FC<KakaoAccountLinkModalProps> = ({
         id: decoded.id,
         email: decoded.email,
         name: name || decoded.email.split("@")[0],
+        provider: "kakao", // 추가: 카카오 계정 연동이므로 provider를 kakao로 설정
       };
 
       // 토큰 저장 및 사용자 정보 저장
