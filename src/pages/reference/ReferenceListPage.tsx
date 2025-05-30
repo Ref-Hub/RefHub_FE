@@ -46,7 +46,6 @@ export interface ReferenceListItem {
 export default function ReferenceListPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [view, setView] = useState("card");
   const sort = useRecoilValue(DropState);
   const modal = useRecoilValue(modalState);
   const alert = useRecoilValue(alertState);
@@ -57,6 +56,18 @@ export default function ReferenceListPage() {
   const modalPrevIsOpen = useRef<boolean>(modal.isOpen);
   const [isFloatOpen, setIsFloatOpen] = useState(false);
   const [modeValue, setModeValue] = useRecoilState(floatingModeState);
+
+  // localStorage에서 뷰 모드 불러오기, 기본값은 "card"
+  const [view, setView] = useState(() => {
+    const savedView = localStorage.getItem("referenceListView");
+    return savedView === "list" || savedView === "card" ? savedView : "card";
+  });
+
+  // 뷰 모드 변경 시 localStorage에 저장하는 함수
+  const handleViewChange = (newView: "card" | "list") => {
+    setView(newView);
+    localStorage.setItem("referenceListView", newView);
+  };
 
   // 컬렉션 데이터 로드
   useEffect(() => {
@@ -261,11 +272,11 @@ export default function ReferenceListPage() {
           <div className="flex gap-2">
             <LayoutGrid
               className={viewStyles("card")}
-              onClick={() => setView("card")}
+              onClick={() => handleViewChange("card")}
             />
             <Text
               className={viewStyles("list")}
-              onClick={() => setView("list")}
+              onClick={() => handleViewChange("list")}
             />
           </div>
         </div>
