@@ -6,6 +6,7 @@ import { useToast } from "@/contexts/useToast";
 import { Input } from "@/components/common/Input";
 import { authService } from "@/services/auth";
 import type { LoginForm } from "@/types/auth";
+import { authUtils } from "@/store/auth";
 
 // window.gtag에 대한 전역 타입 정의 추가
 declare global {
@@ -89,6 +90,16 @@ export default function LoginPage() {
         await authService.login(data, rememberMe);
         localStorage.setItem("email", data.email);
 
+        // 일반 이메일 로그인이므로 현재 로그인한 사용자 정보를 업데이트
+        const currentUser = authUtils.getStoredUser();
+        if (currentUser) {
+          const updatedUser = {
+            ...currentUser,
+            provider: "local" as const,
+          };
+          authUtils.setStoredUser(updatedUser);
+        }
+
         // GA4 이벤트 전송 (로그인 성공)
         if (typeof window.gtag === "function") {
           window.gtag("event", "login_success", {
@@ -137,7 +148,15 @@ export default function LoginPage() {
         setIsLoading(false);
       }
     },
-    [navigate, rememberMe, showToast, isLoading]
+    [
+      navigate,
+      rememberMe,
+      showToast,
+      isLoading,
+      loginError,
+      emailError,
+      passwordError,
+    ]
   );
 
   // 카카오 로그인 핸들러 함수
