@@ -39,7 +39,7 @@ const MyPage = () => {
 
         setUserProfile(profileData);
         setNewName(profileData.name || "");
-        setOriginalName(profileData.name || ""); // 원래 이름 저장
+        setOriginalName(profileData.name || "");
       } catch (error) {
         console.error("프로필 정보 로드 실패:", error);
         showToast("프로필 정보를 불러오는데 실패했습니다.", "error");
@@ -50,6 +50,9 @@ const MyPage = () => {
 
     fetchProfile();
   }, [setUserProfile, showToast]);
+
+  // 카카오 로그인 사용자인지 확인하는 헬퍼 함수 추가
+  const isKakaoUser = userProfile?.provider === "kakao";
 
   // 편집 모드로 진입할 때 input에 focus 주기
   useEffect(() => {
@@ -355,13 +358,17 @@ const MyPage = () => {
 
         {/* 하단 버튼 섹션 */}
         <div className="w-full mt-auto mb-0 flex justify-center text-gray-700 text-sm">
-          <button
-            onClick={handlePasswordReset}
-            className="hover:text-primary transition-colors"
-          >
-            비밀번호 재설정
-          </button>
-          <span className="mx-4 text-gray-300">|</span>
+          {!isKakaoUser && (
+            <>
+              <button
+                onClick={handlePasswordReset}
+                className="hover:text-primary transition-colors"
+              >
+                비밀번호 재설정
+              </button>
+              <span className="mx-4 text-gray-300">|</span>
+            </>
+          )}
           <button
             onClick={logout}
             className="hover:text-primary transition-colors"
