@@ -34,6 +34,27 @@ export default function ReferenceDetailPage() {
     downloadUrl?: string;
   } | null>(null);
 
+  const formatDateTime = (dateString?: string): string => {
+    if (!dateString) return "-";
+
+    try {
+      const date = new Date(dateString);
+      return date
+        .toLocaleDateString("ko-KR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+        .replace(/\. /g, ".")
+        .replace(/\.$/, "");
+    } catch (error) {
+      console.error("날짜 포맷팅 오류:", error);
+      return "-";
+    }
+  };
+
   useEffect(() => {
     const fetchReference = async () => {
       if (!referenceId) return;
@@ -364,6 +385,7 @@ export default function ReferenceDetailPage() {
     <div className="min-h-screen">
       {alert.isVisible && <Alert message={alert.massage} />}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
+        {/* 헤더 영역 - 날짜 정보 제거 */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
             <h2 className="flex items-center gap-2 text-base text-gray-500 mb-2">
@@ -376,50 +398,64 @@ export default function ReferenceDetailPage() {
               {reference.title}
             </h1>
           </div>
-          <div className="flex flex-col items-end gap-4">
-            <div className="flex items-center gap-2">
-              {!reference.viewer && (
-                <button
-                  onClick={handleDelete}
-                  className="px-6 py-2 text-red-500 border border-gray-200 bg-white rounded-full hover:bg-red-50 transition-colors"
-                >
-                  삭제
-                </button>
-              )}
-              {!reference.viewer && (
-                <button
-                  onClick={handleEdit}
-                  className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-hover transition-colors flex items-center gap-2"
-                >
-                  수정
-                </button>
-              )}
-            </div>
-            <p className="text-sm text-gray-500">
-              생성일시{" "}
-              {reference.createdAt
-                ? new Date(reference.createdAt).toLocaleDateString("ko-KR", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                  })
-                : "-"}
-            </p>
+          <div className="flex items-center gap-2">
+            {!reference.viewer && (
+              <button
+                onClick={handleDelete}
+                className="px-6 py-2 text-red-500 border border-gray-200 bg-white rounded-full hover:bg-red-50 transition-colors"
+              >
+                삭제
+              </button>
+            )}
+            {!reference.viewer && (
+              <button
+                onClick={handleEdit}
+                className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-hover transition-colors flex items-center gap-2"
+              >
+                수정
+              </button>
+            )}
           </div>
         </div>
+
         <div className="h-px bg-gray-200 mb-4" />
-        {reference.keywords && reference.keywords.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {reference.keywords.map((keyword, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center px-[10px] py-1 h-[27px] bg-[#0a306c] text-white text-sm rounded"
-              >
-                {keyword}
-              </span>
-            ))}
+
+        <div className="flex items-center justify-between mb-6">
+          {/* 키워드 영역 */}
+          <div className="flex flex-wrap gap-2">
+            {reference.keywords && reference.keywords.length > 0 ? (
+              reference.keywords.map((keyword, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-[10px] py-1 h-[27px] bg-[#0a306c] text-white text-sm rounded"
+                >
+                  {keyword}
+                </span>
+              ))
+            ) : (
+              <div></div> // 키워드가 없을 때 빈 div로 공간 유지
+            )}
           </div>
-        )}
+
+          {/* 날짜 정보 영역 */}
+          <div className="flex items-center text-sm text-gray-500 ml-4">
+            {/* 수정일시가 있고 생성일시와 다른 경우에만 표시 */}
+            {reference.updatedAt &&
+              reference.updatedAt !== reference.createdAt && (
+                <>
+                  <span className="whitespace-nowrap">
+                    수정일시 {formatDateTime(reference.updatedAt)}
+                  </span>
+                  <span className="mx-2 text-gray-300">|</span>
+                </>
+              )}
+            <span className="whitespace-nowrap">
+              생성일시 {formatDateTime(reference.createdAt)}
+            </span>
+          </div>
+        </div>
+
+        {/* 메모 영역 */}
         {reference.memo && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">메모</h3>
@@ -430,6 +466,8 @@ export default function ReferenceDetailPage() {
             </div>
           </div>
         )}
+
+        {/* 첨부 자료 영역 */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">첨부 자료</h3>
           <div className="space-y-4">
@@ -439,6 +477,7 @@ export default function ReferenceDetailPage() {
           </div>
         </div>
       </div>
+
       <ImagePreviewModal
         isOpen={!!selectedImage}
         onClose={() => setSelectedImage(null)}
