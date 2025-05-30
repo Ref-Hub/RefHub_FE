@@ -19,7 +19,8 @@ export const useAuth = () => {
       return {
         id: decoded.id,
         email: decoded.email,
-        name: decoded.email.split("@")[0], // 이메일에서 임시로 이름 추출
+        name: decoded.email.split("@")[0],
+        // provider 정보는 토큰에 없으므로 마이페이지 API에서 가져올 예정
       };
     } catch (error) {
       console.error("Token decode error:", error);
@@ -208,13 +209,16 @@ export const useAuth = () => {
         throw new Error("토큰에서 사용자 정보를 추출할 수 없습니다.");
       }
 
+      // 카카오 로그인이므로 provider 정보 추가
+      userData.provider = "kakao";
+
       // 인증 상태 업데이트
       const updateSuccess = await updateAuthState(userData, token);
       if (!updateSuccess) {
         throw new Error("인증 상태 업데이트에 실패했습니다.");
       }
 
-      // 자동 로그인 설정 (카카오 로그인은 기본적으로 자동 로그인)
+      // 자동 로그인 설정
       authUtils.setRememberMe(true);
 
       showToast("카카오 로그인이 완료되었습니다.", "success");
