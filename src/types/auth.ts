@@ -60,6 +60,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  provider?: "local" | "kakao"; 
 }
 
 // API 응답 타입들
