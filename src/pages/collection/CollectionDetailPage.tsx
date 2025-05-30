@@ -27,7 +27,11 @@ export default function CollectionDetailPage() {
   const { collectionId } = useParams<{ collectionId: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [view, setView] = useState("card");
+
+  const [view, setView] = useState(() => {
+    const savedView = localStorage.getItem("referenceListView");
+    return savedView === "list" || savedView === "card" ? savedView : "card";
+  });
   const sort = useRecoilValue(DropState);
   const shareModal = useRecoilValue(shareModalState);
   const [alert, setAlert] = useRecoilState(alertState);
@@ -45,6 +49,12 @@ export default function CollectionDetailPage() {
     () => collectionDatas.data.find((item) => item._id === collectionId),
     [collectionDatas.data, collectionId]
   );
+
+  // 뷰 모드 변경 시 localStorage에 저장하는 함수
+  const handleViewChange = (newView: "card" | "list") => {
+    setView(newView);
+    localStorage.setItem("referenceListView", newView);
+  };
 
   // 데이터 페칭을 하나의 useEffect로 통합
   const fetchData = async () => {
@@ -241,11 +251,11 @@ export default function CollectionDetailPage() {
           <div className="flex gap-2">
             <LayoutGrid
               className={viewStyles("card")}
-              onClick={() => setView("card")}
+              onClick={() => handleViewChange("card")} 
             />
             <Text
               className={viewStyles("list")}
-              onClick={() => setView("list")}
+              onClick={() => handleViewChange("list")}
             />
           </div>
         </div>
