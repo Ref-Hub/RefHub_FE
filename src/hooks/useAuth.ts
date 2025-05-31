@@ -1,5 +1,6 @@
 // src/hooks/useAuth.ts
 import { useRecoilState } from "recoil";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import { userState, authUtils } from "@/store/auth";
@@ -10,6 +11,7 @@ import type { LoginForm, SignupForm, User, TokenPayload } from "@/types/auth";
 
 export const useAuth = () => {
   const [user, setUser] = useRecoilState(userState);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -98,17 +100,19 @@ export const useAuth = () => {
         authUtils.setRememberMe(true);
       }
 
-      showToast("로그인이 완료되었습니다.", "success");
+      if (rememberMe) {
+        authUtils.setRememberMe(true);
+      }
 
-      // 약간의 지연 후 네비게이션 실행
-      setTimeout(() => {
-        if (authUtils.getToken() && authUtils.getStoredUser()) {
+      // 👈 복구 상태 체크
+      if (response.recovered) {
+        setShowRecoveryModal(true);
+      } else {
+        showToast("로그인이 완료되었습니다.", "success");
+        setTimeout(() => {
           navigate("/collections", { replace: true });
-        } else {
-          console.error("Navigation failed: Missing auth data");
-          showToast("로그인 처리 중 오류가 발생했습니다.", "error");
-        }
-      }, 100);
+        }, 100);
+      }
 
       return response;
     } catch (error) {
@@ -122,6 +126,13 @@ export const useAuth = () => {
       }
       throw error;
     }
+  };
+
+  // 복구 모달 확인 핸들러 추가
+  const handleRecoveryModalConfirm = () => {
+    setShowRecoveryModal(false);
+    showToast("로그인이 완료되었습니다.", "success");
+    navigate("/collections", { replace: true });
   };
 
   const signup = async (data: SignupForm) => {
@@ -243,6 +254,8 @@ export const useAuth = () => {
     logout,
     setUser: (userData: User) => setUser(userData),
     isAuthenticated: checkAuthStatus(),
-    processKakaoLogin, // 카카오 로그인 처리 함수 추가
+    processKakaoLogin,
+    showRecoveryModal,
+    handleRecoveryModalConfirm,
   };
 };

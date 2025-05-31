@@ -60,7 +60,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  provider?: "local" | "kakao"; 
+  provider?: "local" | "kakao";
 }
 
 // API 응답 타입들
@@ -72,6 +72,7 @@ export interface AuthResponse extends ApiResponse {
   accessToken: string;
   refreshToken?: string;
   autoLogin: boolean;
+  recovered?: boolean; // 👈 이미 있는 필드 활용
 }
 
 export interface ApiErrorResponse {

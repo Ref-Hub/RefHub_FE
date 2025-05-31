@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/contexts/useToast";
 import { Input } from "@/components/common/Input";
 import { authService } from "@/services/auth";
+import AccountRecoveryModal from "@/components/auth/AccountRecoveryModal";
 import type { LoginForm } from "@/types/auth";
 import { authUtils } from "@/store/auth";
 
@@ -31,6 +32,7 @@ export default function LoginPage() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false); // 👈 복구 모달 상태 추가
 
   const {
     register,
@@ -76,6 +78,13 @@ export default function LoginPage() {
   const isButtonActive =
     emailValue && validateEmail(emailValue) && passwordValue?.length > 0;
 
+  // 👈 복구 모달 확인 핸들러 추가
+  const handleRecoveryModalConfirm = () => {
+    setShowRecoveryModal(false);
+    showToast("로그인이 완료되었습니다.", "success");
+    navigate("/collections", { replace: true });
+  };
+
   const onSubmit = useCallback(
     async (data: LoginForm) => {
       if (isLoading) return;
@@ -87,7 +96,7 @@ export default function LoginPage() {
       setIsLoading(true);
 
       try {
-        await authService.login(data, rememberMe);
+        const response = await authService.login(data, rememberMe); // 👈 응답 받기
         localStorage.setItem("email", data.email);
 
         // 일반 이메일 로그인이므로 현재 로그인한 사용자 정보를 업데이트
@@ -107,8 +116,13 @@ export default function LoginPage() {
           });
         }
 
-        navigate("/collections");
-        showToast("로그인이 완료되었습니다.", "success");
+        // 👈 복구 상태 체크
+        if (response.recovered) {
+          setShowRecoveryModal(true);
+        } else {
+          showToast("로그인이 완료되었습니다.", "success");
+          navigate("/collections");
+        }
       } catch (error) {
         if (error instanceof Error) {
           const errorMessage = error.message;
@@ -192,6 +206,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex max-h-screen overflow-hidden">
+      {/* 👈 복구 모달 추가 */}
+      <AccountRecoveryModal 
+        isOpen={showRecoveryModal}
+        onConfirm={handleRecoveryModalConfirm}
+      />
+
       {/* Left Section */}
       <div className="hidden lg:block lg:w-1/2 flex-shrink-0 overflow-hidden">
         <img

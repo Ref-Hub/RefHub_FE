@@ -7,6 +7,7 @@ import { useToast } from "@/contexts/useToast";
 import { jwtDecode } from "jwt-decode";
 import type { TokenPayload, User } from "@/types/auth";
 import KakaoAccountLinkModal from "@/components/auth/KakaoAccountLinkModal";
+import AccountRecoveryModal from "@/components/auth/AccountRecoveryModal"; // 👈 추가
 
 // window.gtag에 대한 전역 타입 정의
 declare global {
@@ -27,6 +28,7 @@ export default function KakaoLoginCallback() {
   const { showToast } = useToast();
   const setUser = useSetRecoilState(userState);
   const [, setLoading] = useState(true);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false); // 👈 복구 모달 상태 추가
   const [linkModalData, setLinkModalData] = useState<{
     show: boolean;
     email: string;
@@ -39,6 +41,13 @@ export default function KakaoLoginCallback() {
     profileImage: "",
   });
 
+  // 👈 복구 모달 확인 핸들러 추가
+  const handleRecoveryModalConfirm = () => {
+    setShowRecoveryModal(false);
+    showToast("카카오 로그인이 완료되었습니다.", "success");
+    navigate("/collections", { replace: true });
+  };
+
   useEffect(() => {
     const processKakaoLogin = async () => {
       try {
@@ -46,6 +55,7 @@ export default function KakaoLoginCallback() {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get("token");
         const linkRequired = urlParams.get("link") === "true";
+        const recovered = urlParams.get("recovered") === "true"; // 👈 복구 상태 파라미터 추가
 
         // 계정 연동이 필요한 경우
         if (linkRequired) {
@@ -91,9 +101,6 @@ export default function KakaoLoginCallback() {
             console.error("토큰 디코딩 실패:", decodeError);
           }
 
-          // 로그인 성공 메시지 표시
-          showToast("카카오 로그인이 완료되었습니다.", "success");
-
           // GA4 이벤트 전송
           if (typeof window.gtag === "function") {
             window.gtag("event", "login_success", {
@@ -101,10 +108,18 @@ export default function KakaoLoginCallback() {
             });
           }
 
-          // 홈페이지로 리디렉션
-          setTimeout(() => {
-            navigate("/collections", { replace: true });
-          }, 100);
+          // 👈 복구 상태 체크
+          if (recovered) {
+            setShowRecoveryModal(true);
+          } else {
+            // 로그인 성공 메시지 표시
+            showToast("카카오 로그인이 완료되었습니다.", "success");
+
+            // 홈페이지로 리디렉션
+            setTimeout(() => {
+              navigate("/collections", { replace: true });
+            }, 100);
+          }
         } else {
           // 토큰이 없는 경우
           console.error("카카오 로그인 처리 실패: 토큰이 없습니다");
@@ -139,6 +154,16 @@ export default function KakaoLoginCallback() {
     setLinkModalData({ show: false, email: "", name: "", profileImage: "" });
     navigate("/auth/login", { replace: true });
   };
+
+  // 👈 복구 모달이 표시되는 경우
+  if (showRecoveryModal) {
+    return (
+      <AccountRecoveryModal 
+        isOpen={showRecoveryModal}
+        onConfirm={handleRecoveryModalConfirm}
+      />
+    );
+  }
 
   // 계정 연동 팝업이 표시되는 경우 로딩 화면을 표시하지 않음
   if (linkModalData.show) {
