@@ -50,16 +50,17 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
           authUtils.clearAll(); // 로컬 스토리지 정리
           setUser(null); // Recoil 상태 초기화
 
-          // 토스트 메시지 표시
-          showToast(
-            "회원 탈퇴가 정상적으로 완료되었습니다. 7일 이내 재 로그인 시 계정이 복구됩니다.",
-            "success"
-          );
-
-          // React Router를 사용하여 로그인 페이지로 이동
+          // 즉시 로그인 페이지로 이동하면서 토스트 메시지 표시
+          navigate("/auth/login", { replace: true });
+          
+          // 페이지 이동 후 토스트 메시지 표시
           setTimeout(() => {
-            navigate("/auth/login", { replace: true });
-          }, 1000); // 토스트 메시지를 보여줄 시간
+            showToast(
+              "회원 탈퇴가 정상적으로 완료되었습니다. 7일 이내 재 로그인 시 계정이 복구됩니다.",
+              "success"
+            );
+          }, 100); // 페이지 이동 후 약간의 지연으로 토스트 표시
+
         } catch (error) {
           // 에러 처리
           if (error instanceof Error) {
