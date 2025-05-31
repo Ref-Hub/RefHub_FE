@@ -7,7 +7,7 @@ import { useToast } from "@/contexts/useToast";
 import { jwtDecode } from "jwt-decode";
 import type { TokenPayload, User } from "@/types/auth";
 import KakaoAccountLinkModal from "@/components/auth/KakaoAccountLinkModal";
-import AccountRecoveryModal from "@/components/auth/AccountRecoveryModal"; // 👈 추가
+import AccountRecoveryModal from "@/components/auth/AccountRecoveryModal";
 
 // window.gtag에 대한 전역 타입 정의
 declare global {
@@ -28,7 +28,7 @@ export default function KakaoLoginCallback() {
   const { showToast } = useToast();
   const setUser = useSetRecoilState(userState);
   const [, setLoading] = useState(true);
-  const [showRecoveryModal, setShowRecoveryModal] = useState(false); // 👈 복구 모달 상태 추가
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [linkModalData, setLinkModalData] = useState<{
     show: boolean;
     email: string;
@@ -41,7 +41,7 @@ export default function KakaoLoginCallback() {
     profileImage: "",
   });
 
-  // 👈 복구 모달 확인 핸들러 추가
+  // 복구 모달 확인 핸들러
   const handleRecoveryModalConfirm = () => {
     setShowRecoveryModal(false);
     showToast("카카오 로그인이 완료되었습니다.", "success");
@@ -55,7 +55,7 @@ export default function KakaoLoginCallback() {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get("token");
         const linkRequired = urlParams.get("link") === "true";
-        const recovered = urlParams.get("recovered") === "true"; // 👈 복구 상태 파라미터 추가
+        const recovered = urlParams.get("recovered") === "true";
 
         // 계정 연동이 필요한 경우
         if (linkRequired) {
@@ -108,7 +108,7 @@ export default function KakaoLoginCallback() {
             });
           }
 
-          // 👈 복구 상태 체크
+          // 복구 상태 체크
           if (recovered) {
             setShowRecoveryModal(true);
           } else {
@@ -155,7 +155,7 @@ export default function KakaoLoginCallback() {
     navigate("/auth/login", { replace: true });
   };
 
-  // 👈 복구 모달이 표시되는 경우
+  // 복구 모달이 표시되는 경우
   if (showRecoveryModal) {
     return (
       <AccountRecoveryModal 
