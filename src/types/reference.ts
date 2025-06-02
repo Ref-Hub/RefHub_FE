@@ -4,7 +4,7 @@
 export interface Reference {
   _id: string;
   collectionId: string;
-  collectionTitle?: string; // 추가
+  collectionTitle?: string;
   title: string;
   keywords?: string[];
   memo?: string;
@@ -15,6 +15,7 @@ export interface Reference {
   viewer?: boolean;
   previewData?: string[];
   createdAt: string;
+  updatedAt?: string; // 이 필드 추가
 }
 
 // API 조회 파라미터
@@ -86,6 +87,7 @@ export interface ReferenceDetailResponse {
     collectionTitle: string;
     referenceTitle: string;
     createdAt: string;
+    updatedAt?: string; // 이 필드 추가
     keywords: string[];
     memo: string;
     attachments: Array<{
@@ -95,7 +97,6 @@ export interface ReferenceDetailResponse {
       images?: string[];
       previewURL?: string;
       previewURLs?: string[];
-      // 여기에 추가
       filename?: string;
       filenames?: string[];
     }>;

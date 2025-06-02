@@ -1,5 +1,5 @@
 // src/components/common/Alert.tsx
-import React from "react";
+import React, { useState } from "react";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { collectionService } from "@/services/collection";
@@ -28,12 +28,18 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
   const setModal = useSetRecoilState(modalState);
   const setShareModal = useSetRecoilState(shareModalState);
   const setUser = useSetRecoilState(userState);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleDelete = async () => {
+    // 중복 실행 방지
+    if (isProcessing) return;
+
     try {
       // 회원탈퇴 확인 케이스
       if (alert.type === "withdrawal") {
         try {
+          setIsProcessing(true);
+
           // Alert 창 즉시 닫기
           setAlert((prev) => ({ ...prev, isVisible: false }));
 
@@ -44,15 +50,17 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
           authUtils.clearAll(); // 로컬 스토리지 정리
           setUser(null); // Recoil 상태 초기화
 
-          // 두 번째 Alert 표시 (탈퇴 완료 알림)
-          setAlert({
-            type: "withdrawalComplete",
-            massage:
-              "탈퇴가 완료되었습니다.\n7일 이내 로그인 시 계정을 복구할 수 있습니다.",
-            isVisible: true,
-            ids: [],
-            title: "",
-          });
+          // 즉시 로그인 페이지로 이동하면서 토스트 메시지 표시
+          navigate("/auth/login", { replace: true });
+          
+          // 페이지 이동 후 토스트 메시지 표시
+          setTimeout(() => {
+            showToast(
+              "회원 탈퇴가 정상적으로 완료되었습니다. 7일 이내 재 로그인 시 계정이 복구됩니다.",
+              "success"
+            );
+          }, 100); // 페이지 이동 후 약간의 지연으로 토스트 표시
+
         } catch (error) {
           // 에러 처리
           if (error instanceof Error) {
@@ -60,19 +68,21 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
           } else {
             showToast("회원탈퇴 중 오류가 발생했습니다.", "error");
           }
+        } finally {
+          setIsProcessing(false);
         }
 
         // 더 이상 진행하지 않고 종료
         return;
       }
 
-      // 회원탈퇴 완료 알림 케이스
+      // 회원탈퇴 완료 알림 케이스 - 레거시 처리 (혹시 모를 상황 대비)
       if (alert.type === "withdrawalComplete") {
         // Alert 창 닫기
         setAlert((prev) => ({ ...prev, isVisible: false }));
 
-        // 즉시 로그인 페이지로 이동 - 완전한 페이지 새로고침을 통해 API 요청 방지
-        window.location.href = "/auth/login";
+        // React Router를 사용하여 로그인 페이지로 이동
+        navigate("/auth/login", { replace: true });
 
         // 더 이상 진행하지 않고 종료
         return;
@@ -144,8 +154,8 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
     }
   };
 
-  // 두 번째 Alert (withdrawalComplete)에는 취소 버튼 없이 확인 버튼만 표시
-  const showCancelButton = alert.type !== "withdrawalComplete";
+  // withdrawal 타입에만 취소 버튼 표시 (withdrawalComplete는 더 이상 사용하지 않음)
+  const showCancelButton = alert.type === "withdrawal";
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/25 z-50 p-4">
@@ -168,10 +178,11 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
             {showCancelButton && (
               <>
                 <button
-                  className="flex justify-center items-center w-[50%] h-[50px] px-6 py-4 rounded-lg text-gray-700 text-lg font-bold hover:bg-gray-100 transition-colors"
+                  className="flex justify-center items-center w-[50%] h-[50px] px-6 py-4 rounded-lg text-gray-700 text-lg font-bold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() =>
                     setAlert((prev) => ({ ...prev, isVisible: false }))
                   }
+                  disabled={isProcessing}
                 >
                   취소
                 </button>
@@ -181,10 +192,37 @@ const Alert: React.FC<AlertProps> = ({ message }) => {
             <button
               className={`flex justify-center items-center ${
                 showCancelButton ? "w-[50%]" : "w-full"
-              } h-[50px] px-6 py-4 rounded-lg text-primary text-lg font-bold hover:bg-gray-100 transition-colors`}
+              } h-[50px] px-6 py-4 rounded-lg text-primary text-lg font-bold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
               onClick={handleDelete}
+              disabled={isProcessing}
             >
-              확인
+              {isProcessing && alert.type === "withdrawal" ? (
+                <div className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-5 w-5 text-primary"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  처리 중...
+                </div>
+              ) : (
+                "확인"
+              )}
             </button>
           </div>
         </div>

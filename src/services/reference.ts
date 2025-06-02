@@ -169,6 +169,7 @@ class ReferenceService {
         collectionId: referenceDetail.collectionId,
         collectionTitle: referenceDetail.collectionTitle,
         createdAt: referenceDetail.createdAt,
+        updatedAt: referenceDetail.updatedAt, // 이 필드 추가
         title: referenceDetail.referenceTitle,
         keywords: referenceDetail.keywords || [],
         memo: referenceDetail.memo || "",
@@ -179,7 +180,6 @@ class ReferenceService {
             path: attachment.path,
             size: attachment.size,
             images: attachment.images,
-            // 파일명 디코딩 처리
             filename: attachment.filename
               ? decodeURIComponent(attachment.filename)
               : undefined,

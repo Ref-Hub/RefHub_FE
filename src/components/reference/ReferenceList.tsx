@@ -1,3 +1,4 @@
+// src/components/reference/ReferenceList.tsx
 import { useNavigate } from "react-router-dom";
 import { Reference as ReferenceCardProps } from "@/types/reference";
 import {
@@ -18,7 +19,7 @@ const headers = [
   { title: "컬렉션", width: "15%" },
   { title: "제목", width: "35%" },
   { title: "키워드", width: "25%" },
-  { title: "등록 일시", width: "15%" },
+  { title: "최근 수정일시", width: "15%" }, // 수정: "등록 일시" → "최근 수정일시"
   { title: "", width: "5%" },
 ];
 
@@ -195,6 +196,38 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
     setOpenMenuId(null);
   };
 
+  // 날짜 포맷팅 함수 추가 - 시간 포함
+  const formatDate = (createdAt: string, updatedAt?: string): string => {
+    // 수정일시가 있고 생성일시와 다른 경우 → 수정일시 표시
+    if (updatedAt && updatedAt !== createdAt) {
+      const date = new Date(updatedAt);
+      return formatDateTime(date);
+    } else {
+      // 수정일시가 없거나 생성일시와 같은 경우 → 생성일시 표시
+      const date = new Date(createdAt);
+      return formatDateTime(date);
+    }
+  };
+
+  // 날짜와 시간을 한국어 형식으로 포맷팅하는 함수
+  const formatDateTime = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+
+    const hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const seconds = date.getSeconds().toString().padStart(2, "0");
+
+    // 오전/오후 결정
+    const period = hours < 12 ? "오전" : "오후";
+    // 12시간 형식으로 변환
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    const formattedHours = displayHours.toString().padStart(2, "0");
+
+    return `${year}.${month}.${day} ${period} ${formattedHours}:${minutes}:${seconds}`;
+  };
+
   return (
     <table
       className="table-auto border-collapse w-full"
@@ -300,14 +333,10 @@ export default function ReferenceList({ items = [] }: DataTableProps) {
                   )}
                 </div>
               </td>
-              <td className="py-4">{`${new Date(
-                item.createdAt
-              ).getFullYear()}.${(new Date(item.createdAt).getMonth() + 1)
-                .toString()
-                .padStart(2, "0")}.${new Date(item.createdAt)
-                .getDate()
-                .toString()
-                .padStart(2, "0")}`}</td>
+              {/* 수정된 날짜 표시 로직 */}
+              <td className="py-4">
+                {formatDate(item.createdAt, item.updatedAt)}
+              </td>
               <td
                 className="relative py-4"
                 ref={(el) => (menuRefs.current[item._id] = el)}

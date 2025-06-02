@@ -3,72 +3,86 @@
 export interface LoginForm {
   email: string;
   password: string;
- }
- 
- export interface SignupForm {
+}
+
+export interface SignupForm {
   name: string;
   email: string;
   verificationCode: string;
   password: string;
   passwordConfirm: string;
- }
- 
- export interface PasswordResetForm {
+}
+
+export interface PasswordResetForm {
   email: string;
   verificationCode: string;
   newPassword: string;
   newPasswordConfirm: string;
- }
- 
- export interface VerifyCodeForm {
+}
+
+export interface VerifyCodeForm {
   email: string;
   verificationCode: string;
- }
- 
- // API 요청 타입들
- export interface VerifySignupRequest {
+}
+
+// 카카오 연동 관련 타입
+export interface KakaoLinkRequest {
+  email: string;
+  name: string;
+  profileImage?: string;
+}
+
+export interface KakaoLinkResponse {
+  message: string;
+  token: string;
+}
+
+// API 요청 타입들
+export interface VerifySignupRequest {
   email: string;
   verificationCode: string;
- }
- 
- export interface SignupRequest {
+}
+
+export interface SignupRequest {
   verifiedEmail: string;
   password: string;
   confirmPassword: string;
- }
- 
- export interface ResetPasswordRequest {
+}
+
+export interface ResetPasswordRequest {
   email: string;
   verificationCode: string;
   newPassword: string;
   confirmPassword: string;
- }
- 
- export interface User {
+}
+
+export interface User {
   id: string;
   name: string;
   email: string;
- }
- 
- // API 응답 타입들
- export interface ApiResponse {
+  provider?: "local" | "kakao";
+}
+
+// API 응답 타입들
+export interface ApiResponse {
   message: string;
- }
- 
- export interface AuthResponse extends ApiResponse {
+}
+
+export interface AuthResponse extends ApiResponse {
   accessToken: string;
   refreshToken?: string;
   autoLogin: boolean;
- }
- 
- export interface ApiErrorResponse {
+  recovered?: boolean; // 👈 이미 있는 필드 활용
+}
+
+export interface ApiErrorResponse {
   error: string;
- }
- 
- // Token 관련 타입
- export interface TokenPayload {
+}
+
+// Token 관련 타입
+export interface TokenPayload {
   id: string;
   email: string;
   iat: number;
   exp: number;
- }
+}

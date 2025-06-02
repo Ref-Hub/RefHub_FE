@@ -5,6 +5,7 @@ import type {
   PasswordResetForm,
   AuthResponse,
   VerifyCodeForm,
+  KakaoLinkResponse,
 } from "@/types/auth";
 import api from "@/utils/api";
 import axios, { AxiosError } from "axios";
@@ -19,8 +20,15 @@ class AuthService {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 400) {
+        const errorMsg = error.response.data;
+        // 카카오 로그인으로 가입된 이메일인 경우 처리
+        if (errorMsg === "카카오 로그인으로 가입된 이메일입니다.") {
+          throw new Error(
+            "카카오 로그인으로 가입된 이메일입니다. 카카오 로그인을 이용해주세요."
+          );
+        }
         // 이미 존재하는 계정일 경우 에러 메시지 던지기
-        throw new Error("이미 가입된 계정입니다.");
+        throw new Error("이미 가입된 이메일입니다.");
       }
       throw handleApiError(error);
     }
@@ -49,12 +57,23 @@ class AuthService {
       });
 
       // GA4 이벤트 전송
-      (window as any).gtag("event", "sign_up_complete", {
-        method: "email",
-      });
+      if (typeof window.gtag === "function") {
+        window.gtag("event", "sign_up_complete", {
+          method: "email",
+        });
+      }
 
       return response.data;
     } catch (error) {
+      // 카카오 로그인 계정 처리
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        const errorMsg = error.response.data;
+        if (errorMsg === "카카오 로그인으로 가입된 이메일입니다.") {
+          throw new Error(
+            "카카오 로그인으로 가입된 이메일입니다. 카카오 로그인을 이용해주세요."
+          );
+        }
+      }
       throw handleApiError(error);
     }
   }
@@ -90,9 +109,11 @@ class AuthService {
         }
 
         // GA4 이벤트 전송
-        (window as any).gtag("event", "login_success", {
-          method: "email",
-        });
+        if (typeof window.gtag === "function") {
+          window.gtag("event", "login_success", {
+            method: "email",
+          });
+        }
       } else {
         throw new Error("로그인 응답에 토큰이 없습니다.");
       }
@@ -102,6 +123,16 @@ class AuthService {
       const error = err as Error | AxiosError;
 
       if (axios.isAxiosError(error) && error.response) {
+        // 카카오 로그인 계정 처리
+        if (
+          error.response.status === 400 &&
+          error.response.data === "카카오 로그인 전용 계정입니다."
+        ) {
+          throw new Error(
+            "카카오 로그인으로 가입된 계정입니다. 카카오 로그인을 이용해주세요."
+          );
+        }
+
         // HTTP 상태 코드에 따른 처리
         if (error.response.status === 404) {
           // 등록되지 않은 계정(404)은 항상 동일한 메시지로 처리
@@ -135,11 +166,20 @@ class AuthService {
       const response = await api.post("/api/users/password/email", { email });
       return response.data;
     } catch (error) {
+      // 카카오 로그인 계정 처리
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        const errorMsg = error.response.data;
+        if (errorMsg === "카카오 로그인으로 가입된 이메일입니다.") {
+          throw new Error(
+            "카카오 로그인으로 가입된 이메일입니다. 카카오 로그인을 이용해주세요."
+          );
+        }
+      }
       throw handleApiError(error);
     }
   }
 
-  // verifyResetCode 메서드 수정
+  // 비밀번호 재설정 인증번호 검증
   async verifyResetCode(data: VerifyCodeForm): Promise<void> {
     try {
       // /api/users/password/verify-code 대신 /api/users/verify-code 사용
@@ -168,6 +208,7 @@ class AuthService {
     }
   }
 
+  // 회원 탈퇴
   async deleteUser(): Promise<{ message: string }> {
     try {
       const response = await api.delete("/api/users/delete");
@@ -197,6 +238,32 @@ class AuthService {
       return response.data;
     } catch (error) {
       authUtils.clearAll();
+      throw handleApiError(error);
+    }
+  }
+
+  // 카카오 계정 연동 API
+  async linkKakaoAccount(
+    email: string,
+    name: string,
+    profileImage?: string
+  ): Promise<KakaoLinkResponse> {
+    try {
+      const response = await api.post("/api/users/kakao/link", {
+        email,
+        name,
+        profileImage,
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        const errorMsg = error.response.data.error || error.response.data;
+        throw new Error(
+          errorMsg === "카카오 계정으로 연동할 수 없는 계정입니다."
+            ? "카카오 계정으로 연동할 수 없는 계정입니다. 관리자에게 문의하세요."
+            : errorMsg
+        );
+      }
       throw handleApiError(error);
     }
   }

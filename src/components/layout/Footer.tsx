@@ -1,24 +1,7 @@
 // src/components/layout/Footer.tsx
-import { useState } from "react";
 import { Mail, Instagram } from "lucide-react";
-import { useSetRecoilState } from "recoil";
-import { alertState } from "@/store/collection";
 
 export default function Footer() {
-  const [isLoading] = useState(false);
-  const setAlert = useSetRecoilState(alertState);
-
-  const handleWithdrawal = () => {
-    // 첫 번째 Alert: 탈퇴 확인 여부
-    setAlert({
-      type: "withdrawal",
-      massage:
-        "정말 탈퇴하시겠습니까?\n등록된 컬렉션 및 레퍼런스가 모두 삭제됩니다.",
-      isVisible: true,
-      ids: [],
-      title: "",
-    });
-  };
   return (
     <footer className="bg-[#F9FAF9] dark:bg-dark-bg mt-auto py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,13 +37,6 @@ export default function Footer() {
             >
               개인정보처리방침
             </a>
-            <button
-              onClick={handleWithdrawal}
-              disabled={isLoading}
-              className="underline hover:text-red-500 transition-colors disabled:opacity-50"
-            >
-              {isLoading ? "처리 중..." : "탈퇴하기"}
-            </button>
           </div>
         </div>
 
